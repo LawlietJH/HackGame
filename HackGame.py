@@ -1,12 +1,12 @@
 
 
-import pygame
+import pygame						# python -m pip install pygame
 
-from win32api import GetKeyState
-from win32con import VK_CAPITAL
+from win32api import GetKeyState	# python -m pip install pywin32
+from win32con import VK_CAPITAL		# python -m pip install pywin32
 
 TITULO  = 'Hack Game'
-__version__ = 'v1.0.1'
+__version__ = 'v1.0.2'
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
@@ -45,11 +45,14 @@ def u_puntero(con, l_con, p_pos):	# Actualizar puntero. U = Update.
 	
 	return puntero
 
-#===================================================================================================
-
 def i_let(t, c, p):		# Insertar letra. T = Texto, C = Caracter, P = Posicion
 	t = t[:p-1] + c + t[p-1:]		# Se agrega el texto desde el inicio hasta la posicion p -1, agrega el nuevo caracter en dicha posicion y se agrega el resto desde p -1.
 	return t
+
+def add_comand(l_comandos, textos):	# Inserta Comandos a la Lista
+	cont = l_comandos[-1][1]
+	for t in textos: l_comandos.append(('    '+t, cont))
+	return l_comandos
 
 #===================================================================================================
 
@@ -169,25 +172,54 @@ def main():
 					l_com_ps -= 1
 					
 			elif evento.type == pygame.KEYDOWN:		# Manipulación del Teclado.
-				
+				# Al presionar cualquier tecla.
 				k_down = True
 				k_wait = 1
 				
+				#=================================================================================
+				
 				if evento.key == pygame.K_ESCAPE: game_over = True		# Tecla ESC Cierra el Juego.
+				
+				#=================================================================================
+				# Teclas Bloq Mayus, y las teclas Shift izquerdo y derecho.
 				if evento.key == pygame.K_RSHIFT or evento.key == pygame.K_LSHIFT \
 				or evento.key == pygame.K_CAPSLOCK:
 					a_shift = False if a_shift else True
 				
+				#=================================================================================
+				# Felchas de direcciones
 				if   evento.key == pygame.K_LEFT:
 					if p_pos > 0: p_pos -= 1
 					k_izq = True
+					
 				elif evento.key == pygame.K_RIGHT:
 					if p_pos < len(Comando): p_pos += 1
 					k_der = True
-				# ~ elif evento.key == pygame.K_UP:
-					# ~ Comando = 
-				# ~ elif evento.key == pygame.K_DOWN:
-				
+					
+				elif evento.key == pygame.K_UP:
+					if len(cache_com) > 0:
+						k_arr = True
+						if cache_com[cache_pos] != Comando and cache_pos == 0:
+							cache_com.insert(0, Comando)	# Inserta el Comando en la posicion 0 de la lista
+						if cache_pos < len(cache_com)-1:    cache_pos += 1					# Aumenta la posicion en 1, o sea, para mostrar uno anterior.
+						if cache_com[cache_pos] == '':
+							cache_com.pop(cache_pos)		# Elimina los que sean cadenas vacias.
+							cache_pos -= 1
+						Comando = cache_com[cache_pos]
+						p_pos = len(Comando)
+					
+				elif evento.key == pygame.K_DOWN:
+					if cache_pos > 0:
+						k_aba = True
+						cache_pos -= 1
+						if cache_com[cache_pos] == '' and not cache_pos == 0:
+							cache_com.pop(cache_pos)
+							cache_pos -= 1
+						Comando = cache_com[cache_pos]
+						p_pos = len(Comando)
+						
+				#=================================================================================
+				# Eliminar Caracteres
 				if evento.key == pygame.K_BACKSPACE:
 					
 					if p_pos > 0:
@@ -201,7 +233,9 @@ def main():
 						Comando = Comando[:p_pos]+Comando[p_pos+1:]
 						k_del   = True
 				
-				if evento.key == pygame.K_RETURN:		# Acciones al Presionar ENTER.
+				#=================================================================================
+				# Acciones al Presionar ENTER.
+				if evento.key == pygame.K_RETURN:
 					
 					if not Comando == '':
 						
@@ -214,8 +248,17 @@ def main():
 						else:
 							l_comandos.append(('01 '+Comando, 1))
 						
+						# Si el comando ya existe en Cache, se eliminan todas sus replicas, dejando solo el nuevo en la lista.
+						while Comando in cache_com:
+							temp_pos = cache_com.index(Comando)
+							cache_com.pop(temp_pos)
+						
+						cache_com.insert(0, Comando)
+						cache_pos = 0
+						
 						p_pos = 0
-					
+				
+				#=================================================================================
 				if p_pos < pos_limit:
 					
 					# Se actualizan los valores por si se presiono alguna de las siguientes teclas.
@@ -265,9 +308,10 @@ def main():
 						# Si no, se restablecen los valores, significa que no se presiono ninguna de las teclas anteriores a partir del ultimo IF.
 						p_pos -= 1
 						k_char = False
+				#=================================================================================
 				
 			elif evento.type == pygame.KEYUP:
-				
+				# Al soltar cualquier tecla.
 				k_down = False
 				k_back = False
 				k_del  = False
@@ -286,7 +330,7 @@ def main():
 		#=====================================================================================================================================================
 		#=====================================================================================================================================================
 		#=====================================================================================================================================================
-		
+		# Logica de Linea de Comandos
 		if k_down:
 			if not (k_wait > 0 and k_wait < 30) and len(Comando) > 0 and p_pos < pos_limit:
 				if (k_wait % T_rep) == 0 and Comando[-1] in CARACTERES:
@@ -298,7 +342,21 @@ def main():
 						if p_pos < len(Comando):
 							Comando = Comando[:p_pos]+Comando[p_pos+1:]
 					elif k_izq:
-						p_pos -= 1
+						if p_pos > 0: p_pos -= 1
+					elif k_der:
+						if p_pos < len(Comando): p_pos += 1
+					elif k_aba and (k_wait % (T_rep*2)) == 0:
+						if cache_pos > 0: cache_pos -= 1
+						if cache_com[cache_pos] == '' and not cache_pos == 0:
+							cache_com.pop(cache_pos)
+							cache_pos -= 1
+						Comando = cache_com[cache_pos]
+						p_pos = len(Comando)
+					elif k_arr and (k_wait % (T_rep*2)) == 0:
+						if cache_pos < len(cache_com)-1: cache_pos += 1
+						if cache_com[cache_pos] == '': cache_com.pop(cache_pos)
+						Comando = cache_com[cache_pos]
+						p_pos = len(Comando)
 					else:
 						if k_char:						# Mientras se este presionado una letra, un numero o un espacio, se seguira agregando caracteres.
 							Comando += Comando[-1]
@@ -330,14 +388,14 @@ def main():
 		
 		#======================================================================================
 		
-		# Si se activo el Ejecutar un Comando.
+		# Si se activa un Comando Lo Ejecuta.
 		if exe:
 			
 			if   Comando == 'exit': game_over = True
 			elif Comando == 'cls':  l_comandos = []
+			elif Comando == 'xD': l_comandos[-1] = (l_comandos[-1][0]+': Hola.', l_comandos[-1][1])
 			elif Comando == 'help':
-				cont = l_comandos[-1][1]
-				texto = [
+				textos = [
 					'',
 					'Los Posibles Comandos a Utilizar Son:',
 					'',
@@ -346,8 +404,8 @@ def main():
 					'    cls     Limpia la Consola de Comandos.',
 					''
 				]
-				for t in texto: l_comandos.append(('    '+t, cont))
-			
+				l_comandos = add_comand(l_comandos, textos)
+				
 			Comando = ''
 		
 		# limita la cantidad de lineas que se mostraran en consola.
@@ -420,7 +478,7 @@ CARACTERES = [
 		'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
 	]
 
-COMANDOS = ['help', 'exit', 'cls']
+COMANDOS = ['help', 'exit', 'cls', 'xD: Hola.']
 
 T_pix_y   = 20		# Tamaño de Pixeles entre cada salto de linea en la linea de comandos.
 T_pix     = 8		# Tamaño de Pixeles entre cada letra en linea de comandos.
