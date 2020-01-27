@@ -8,7 +8,7 @@ from win32api import GetKeyState	# python -m pip install pywin32
 from win32con import VK_CAPITAL		# python -m pip install pywin32
 
 TITULO  = 'Hack Game'
-__version__ = 'v1.0.6'
+__version__ = 'v1.0.7'
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
@@ -57,6 +57,14 @@ def dibujarTexto(texto, posicion, fuente, color):		# Dibuja Texto En Pantalla.
 	Texto = fuente.render(texto, 1, color)		# Se Pasa El Texto Con La Fuente Especificada.
 	screen.blit(Texto, posicion)				# Se Dibuja En Pantalla El Texto en la Posición Indicada.
 
+def rect_opaco(screen, surface, color=(0,0,0), alpha=128):		# Rectangulo Opaco, sirve para crear rectangulos transparentes.
+	
+	img = pygame.Surface(surface[2:])
+	img.set_alpha(alpha)
+	img.fill(color)
+	screen.blit(img, surface[:2])
+	
+
 #===================================================================================================
 
 def u_puntero(con, l_con, p_pos):	# Actualizar puntero. U = Update.
@@ -86,19 +94,23 @@ def main():
 	
 	# Inicializaciones =================================================
 	
-	screen = pygame.display.set_mode(RESOLUCION[s_res])	# Objeto Que Crea La Ventana.	# Objeto Que Crea La Ventana.
-	BGimg  = load_image('images/background.jpg')		# Carga el Fondo de la Ventana.
-	Icono  = pygame.image.load('images/Icon.png')		# Carga el icono del Juego.
+	screen = pygame.display.set_mode(RESOLUCION[s_res])			# Objeto Que Crea La Ventana.
+	screen.fill(COLOR['Negro'])									# Rellena el Fondo de Negro.
 	
-	btn_ajustes = Boton('images/Ajustes.bmp')			# Boton de Ajustes.
-	btn_consola = Boton('images/Consola.bmp')			# Boton de Consola.
-	btn_atajos  = Boton('images/Atajos.bmp')			# Boton de Consola.
+	BGimg  = load_image('images/background.bmp')				# Carga el Fondo de la Ventana.
+	BGimg = pygame.transform.scale(BGimg, RESOLUCION[s_res])	# Cambia la resolucion de la imagen.
 	
-	pygame.display.set_icon(Icono)						# Agrega el icono a la ventana.
-	pygame.display.set_caption(TITULO+' '+__version__)	# Titulo de la Ventana del Juego.
+	Icono  = pygame.image.load('images/Icon.png')				# Carga el icono del Juego.
 	
-	pygame.init()										# Inicia El Juego.
-	pygame.mixer.init()									# Inicializa el Mesclador.
+	btn_ajustes = Boton('images/Ajustes.bmp')					# Boton de Ajustes.
+	btn_consola = Boton('images/Consola.bmp')					# Boton de Consola.
+	btn_atajos  = Boton('images/Atajos.bmp')					# Boton de Consola.
+	
+	pygame.display.set_icon(Icono)								# Agrega el icono a la ventana.
+	pygame.display.set_caption(TITULO+' '+__version__)			# Titulo de la Ventana del Juego.
+	
+	pygame.init()												# Inicia El Juego.
+	pygame.mixer.init()											# Inicializa el Mesclador.
 	
 	FUENTES = {
 		   'Inc-R 14':pygame.font.Font("fuentes/Inconsolata-Regular.ttf", 14),
@@ -226,11 +238,14 @@ def main():
 								if y > (i*30)+15 and y < (i*30)+40 and c_res:
 									s_res = ((s_res+i)%len(RESOLUCION))
 									
-									if s_full: screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.FULLSCREEN)
+									if s_full: screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.FULLSCREEN | pygame.HWSURFACE | pygame.DOUBLEBUF)
 									else: screen = pygame.display.set_mode(RESOLUCION[s_res])
 									
-									l_com_lim = ( RESOLUCION_CMD[s_res][1] - 45 ) // T_pix_y
-									pos_limit = ( RESOLUCION_CMD[s_res][0] - 45 ) // T_pix
+									BGimg  = load_image('images/background.bmp')				# Carga el Fondo de la Ventana.
+									BGimg = pygame.transform.scale(BGimg, RESOLUCION[s_res])	# Cambia la resolucion de la imagen.
+									
+									l_com_lim = ( RESOLUCION_CMD[s_res][1] - 45 ) // T_pix_y												# limite de lineas en consola
+									pos_limit = ( RESOLUCION_CMD[s_res][0] - 45 ) // T_pix													# limite de caracteres en linea de comandos.
 									con = { 'P_x':5, 'P_y':5, 'L_x':None, 'L_y':20,
 											'T_x':RESOLUCION_CMD[s_res][0]-10, 'T_y':RESOLUCION_CMD[s_res][1]-10, 'T_m':5 }					# Dimensiones Generales para la Consola.
 									con['L_x'] = con['T_x'] - ( con['T_m']*2 )																# Agrega los valores para L_x.
@@ -360,6 +375,7 @@ def main():
 				
 				#=================================================================================
 				# Combinacion de Teclas
+				xD = False
 				# Ctrl + P o F10 para tomar una Captura de Pantalla.
 				if evento.key == pygame.K_p and evento.mod == 64 or evento.key == pygame.K_F10:
 					
@@ -378,6 +394,7 @@ def main():
 					pygame.image.save(screen, s_path)
 					
 					s_shot = True
+					xD = True
 				
 				# Ctrl + F o F11 para poner Pantalla Completa.
 				elif evento.key == pygame.K_f and evento.mod == 64 or evento.key == pygame.K_F11:
@@ -388,10 +405,12 @@ def main():
 					else:
 						screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.FULLSCREEN | pygame.HWSURFACE | pygame.DOUBLEBUF)
 						s_full = True
+					
+					xD = True
 				
 				#=================================================================================
 				if vista_actual == l_vistas['Consola']:
-					if len(Comando) < pos_limit:
+					if len(Comando) < pos_limit and xD == False:
 						
 						# Se actualizan los valores por si se presiono alguna de las siguientes teclas.
 						p_pos += 1
@@ -521,7 +540,7 @@ def main():
 		#===================================================================================================
 		
 		if not s_full:	# Dibuja un margen en la pantalla.
-			pygame.draw.rect(screen, AZUL,  [0, 0, RESOLUCION[s_res][0], RESOLUCION[s_res][1]], 1)	# Margen de Pantalla.
+			pygame.draw.rect(screen, VERDE,  [0, 0, RESOLUCION[s_res][0], RESOLUCION[s_res][1]], 1)	# Margen de Pantalla.
 		
 		#===================================================================================================
 		if vista_actual == l_vistas['Consola']:
@@ -535,16 +554,26 @@ def main():
 			for i, btn in enumerate(l_icons):
 				i += 1
 				i_x = RESOLUCION[s_res][0]-btn_x*i-10*i
-				pygame.draw.rect(screen, AZUL_C, [i_x, 10, btn_x, btn_y], 0)				# Recuadro de Icono.
-				pygame.draw.rect(screen, AZUL_C, [i_x, 10, btn_x, btn_y], 3)				# Recuadro de Icono.
-				pygame.draw.rect(screen, AZUL, [i_x+1, 10+1, btn_x-2, btn_y-2], 1)			# Recuadro de Icono.
-				pygame.draw.rect(screen, AZUL, [i_x-1, 10-1, btn_x+2, btn_y+2], 1)			# Recuadro de Icono.
+				
+				rect_opaco(screen, [i_x, 10, btn_x, btn_y], AZUL_C, 220)
+				# ~ pygame.draw.rect(screen, COLOR['Blanco'], [i_x, 10, btn_x, btn_y], 0)				# Recuadro de Icono.
+				
+				pygame.draw.rect(screen, AZUL, [i_x, 10, btn_x, btn_y], 3)				# Recuadro de Icono.
+				pygame.draw.rect(screen, AZUL_C, [i_x, 10, btn_x, btn_y], 1)			# Recuadro de Icono.
+				pygame.draw.rect(screen, COLOR['Negro'], [i_x-1, 10-1, btn_x+2, btn_y+2], 1)			# Recuadro de Icono.
 				btn_pos = ( i_x, 10 )
 				screen.blit(btn.image, btn_pos)
 			
 			#===================================================================================================
 			
-			pygame.draw.rect(screen, COLOR['Negro'], t_con, 0)	# Ventana de Consola.
+			# ~ black = pygame.Surface(t_con[2:])
+			# ~ black.set_alpha(128)
+			# ~ black.fill((0,0,0))
+			# ~ screen.blit(black, t_con[:2])
+			
+			rect_opaco(screen, t_con)							# Ventana de Consola.
+			
+			# ~ pygame.draw.rect(screen, COLOR['Negro'], t_con, 0)	# Ventana de Consola.
 			pygame.draw.rect(screen, VERDE, t_con, 2)			# Margen de Consola.
 			pygame.draw.rect(screen, VERDE, l_con, 1)			# Dibuja linea de Consola.
 			
@@ -636,22 +665,21 @@ def main():
 			dibujarTexto('Tiempo Transcurrido: '+str(segundos), [con['P_x'], 10], FUENTES['Inc-R 14'], VERDE_C)
 			
 			# Resolucion Actual
-			pygame.draw.rect(screen, AZUL_C, [RESOLUCION[s_res][0]-_tempX+5, 15, v_tamX-10, 25], 1)
+			pygame.draw.rect(screen, VERDE, [RESOLUCION[s_res][0]-_tempX+5, 15, v_tamX-10, 25], 1)
 			dibujarTexto('Resolución: '+str(RESOLUCION[s_res][0])+'x'+str(RESOLUCION[s_res][1]), [RESOLUCION[s_res][0]-_tempX+10, 20], FUENTES['Inc-R 14'], VERDE_C)
 			
 			if c_res:
 				
-				pygame.draw.rect(screen, COLOR['Verde N'], [RESOLUCION[s_res][0]-_tempX,   10, v_tamX,    5+(30*len(RESOLUCION))], 0)	# Ventana de Resolucion.
-				pygame.draw.rect(screen, AZUL,   [RESOLUCION[s_res][0]-_tempX,   10, v_tamX,    5+(30*len(RESOLUCION))], 1)	# Ventana de Resolucion Contorno.
-				pygame.draw.rect(screen, COLOR['Verde S'], [RESOLUCION[s_res][0]-_tempX+5, 15, v_tamX-10, 25], 0)						# Color fondo a Resolucion de Consola actual.
+				rect_opaco(screen, [RESOLUCION[s_res][0]-_tempX, 10, v_tamX, 5+(30*len(RESOLUCION))], COLOR['Verde N'])			# Ventana de Resolucion.
+				rect_opaco(screen, [RESOLUCION[s_res][0]-_tempX+5, 15, v_tamX-10, 25], COLOR['Verde S'])						# Color fondo a Resolucion de Consola actual.
+				pygame.draw.rect(screen, VERDE,   [RESOLUCION[s_res][0]-_tempX,   10, v_tamX,    5+(30*len(RESOLUCION))], 1)	# Ventana de Resolucion Contorno.
 				
 				for i in range(len(RESOLUCION)):
 					
-					color = VERDE_C if i == 0 else AZUL_C
-					
+					color = VERDE_C if i == 0 else VERDE
 					pygame.draw.rect(screen, color, [RESOLUCION[s_res][0]-_tempX+5, 15+(i*30), v_tamX-10, 25], 1)				# Recuedro individual de cada Resolucion de Consola.
-					
-					dibujarTexto('Resolución: '+str(RESOLUCION[(s_res+i)%len(RESOLUCION)][0])+'x'+str(RESOLUCION[(s_res+i)%len(RESOLUCION)][1]), [RESOLUCION[s_res][0]-_tempX+10, 20+(30*i)], FUENTES['Inc-R 14'], VERDE_C)
+					dibujarTexto('Resolución: '+str(RESOLUCION[(s_res+i)%len(RESOLUCION)][0])+'x'+str(RESOLUCION[(s_res+i)%len(RESOLUCION)][1]), 
+								[RESOLUCION[s_res][0]-_tempX+10, 20+(30*i)], FUENTES['Inc-R 14'], VERDE_C)						# Imprime el texto.
 		
 		#===================================================================================================
 		
@@ -661,9 +689,9 @@ def main():
 				texto = 'Captura de Pantalla'
 				len_t = len(texto)
 				t_temp = ((RESOLUCION[s_res][0]//2)-((len_t*T_pix)//2), (RESOLUCION[s_res][1]//2)-(T_pix*2))
-				pygame.draw.rect(screen, COLOR['Negro'], [t_temp[0]-5, t_temp[1]-5, (len_t*T_pix)+10, (T_pix*2)+10], 0)	# Resolucion de Consola.
-				pygame.draw.rect(screen, AZUL, [t_temp[0]-5, t_temp[1]-5, (len_t*T_pix)+10, (T_pix*2)+10], 1)	# Resolucion de Consola.
-				dibujarTexto(texto, [t_temp[0], t_temp[1]], FUENTES['Inc-R 14'], VERDE_C)
+				rect_opaco(screen, [t_temp[0]-5, t_temp[1]-5, (len_t*T_pix)+10, (T_pix*2)+10], COLOR['Blanco'], 192)		# Resolucion de Consola.
+				pygame.draw.rect(screen, COLOR['Gris'], [t_temp[0]-5, t_temp[1]-5, (len_t*T_pix)+10, (T_pix*2)+10], 1)		# Resolucion de Consola.
+				dibujarTexto(texto, [t_temp[0], t_temp[1]], FUENTES['Inc-R 14'], COLOR['Negro'])
 			else:
 				s_text = 0
 				s_shot = False
@@ -705,15 +733,18 @@ resoluciones = [
 		(1280,  720),
 		(1366,  768),
 		(1536,  864),
-		(1920, 1080)
+		(1920, 1080),
+		(2560, 1600)
 	]
 
 RESOLUCION = []
 size = get_screen_size()
 
 for i, (x, y) in enumerate(resoluciones):
-	if size[0] >= x and size[1] >= y:
+	if size[0] > x and size[1] > y:
 		RESOLUCION.append(resoluciones[i])
+
+if size in resoluciones: RESOLUCION.append(size)
 
 px = .5
 py = 1
@@ -734,8 +765,8 @@ CARACTERES = [
 
 COMANDOS = ['help', 'exit', 'cls', 'xD: Hola.']
 
-# ~ s_res     = -2		# Seleccion de Resolucion Por defecto. -2: la penultima Resolucion agregada.
-s_res     = 0		# Seleccion de Resolucion Por defecto. -2: la penultima Resolucion agregada.
+s_res     = -2		# Seleccion de Resolucion Por defecto. -2: la penultima Resolucion agregada.
+# ~ s_res     = 0		# Seleccion de Resolucion Por defecto. -2: la penultima Resolucion agregada.
 T_pix_y   = 16		# Tamaño de Pixeles entre cada salto de linea en la linea de comandos.
 T_pix     = 7		# Tamaño de Pixeles entre cada letra en linea de comandos.
 T_rep     = 3		# Tiempo de repeticion entre caracteres al dejar tecla presionada.

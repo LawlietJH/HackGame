@@ -1,5 +1,11 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+
+# Carpetas a Ignorar.
+images/otras/
+fuentes/otras/
+capturas/otras/
+
 *.py[cod]
 *$py.class
 
