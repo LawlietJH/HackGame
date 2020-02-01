@@ -2,6 +2,8 @@
 
 from os import path, mkdir, environ
 
+from consola import Console
+
 import keyboard
 import pygame						# python -m pip install pygame
 import ctypes
@@ -10,7 +12,7 @@ from win32api import GetKeyState	# python -m pip install pywin32
 from win32con import VK_CAPITAL		# python -m pip install pywin32
 
 TITULO  = 'Hack Game'
-__version__ = 'v1.0.8'
+__version__ = 'v1.0.9'
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
@@ -38,6 +40,14 @@ def get_screen_size():
     screenSize =  user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
     return screenSize
 
+def setFontSize(tam):
+	global Font_tam, Font_def, T_pix, T_pix_y
+	Font_tam = tam						# Constante, para hacer manipulación del tamaño de algunas letras y en la matriz para tener un margen correcto y otras cosas más.
+	Font_def = 'Inc-R '+str(Font_tam)	# Fuente por defecto.
+	T_pix     = tam//2					# Tamaño de Pixeles entre cada letra en linea de comandos.
+	T_pix_y   = T_pix*2					# Tamaño de Pixeles entre cada salto de linea en la linea de comandos.
+
+
 def load_image(filename, transparent=False):
 	
 	try: image = pygame.image.load(filename)
@@ -59,19 +69,32 @@ def dibujarTexto(texto, posicion, fuente, color):		# Dibuja Texto En Pantalla.
 	Texto = fuente.render(texto, 1, color)		# Se Pasa El Texto Con La Fuente Especificada.
 	screen.blit(Texto, posicion)				# Se Dibuja En Pantalla El Texto en la Posición Indicada.
 
+def dibujarTextoTemporal(c_ticks, msn, ticks, ret=True):
+	c_ticks += 1			# Aumento en el contador de ticks.
+	if c_ticks < ticks:		# Cantidad de ticks que durara el mensaje en pantalla. 60 ticks = 1 segundo.
+		texto = msn
+		len_t = len(texto)
+		t_temp = ((RESOLUCION[s_res][0]//2)-((len_t*T_pix)//2), (RESOLUCION[s_res][1]//2)-(T_pix*2))				# Centrará el mensaje.
+		rect_opaco(screen, [t_temp[0]-5, t_temp[1]-5, (len_t*T_pix)+10, (T_pix*2)+10], COLOR['Blanco'], 192)		# Recuadro Degradado.
+		pygame.draw.rect(screen, COLOR['Gris'], [t_temp[0]-5, t_temp[1]-5, (len_t*T_pix)+10, (T_pix*2)+10], 1)		# Contorno.
+		dibujarTexto(texto, [t_temp[0], t_temp[1]], FUENTES[Font_def], COLOR['Negro'])
+	else:
+		if ret: return 0		# Resetea el contador de ticks.
+		else: return c_ticks	# Resetea el contador de ticks.
+	return c_ticks
+
 def rect_opaco(screen, surface, color=(0,0,0), alpha=128):		# Rectangulo Opaco, sirve para crear rectangulos transparentes.
 	
 	img = pygame.Surface(surface[2:])
 	img.set_alpha(alpha)
 	img.fill(color)
 	screen.blit(img, surface[:2])
-	
 
 #===================================================================================================
 
-def u_puntero(con, l_con, p_pos):	# Actualizar puntero. U = Update.
+def u_puntero(con, l_con, cant, p_pos):	# Actualizar puntero. U = Update.
 	
-	p_p_pos = ((p_pos+2)*T_pix)		# Posicion de Puntero en Pixeles.
+	p_p_pos = ((p_pos+cant)*T_pix)		# Posicion de Puntero en Pixeles.
 	puntero = [
 			[ l_con[0]+5 + p_p_pos, l_con[1]+5 ],				# Posicion Inicial en X
 			[ l_con[0]+5 + p_p_pos, l_con[1]+con['L_y']-5 ]		# Posicion Inicial en Y
@@ -99,20 +122,8 @@ def clic_boton(screen, pos, rec=0):	# Detecta un Clic en las coordenadas de un b
 	
 	return False
 
-def dibujarTextoTemporal(c_ticks, msn, ticks, ret=True):
-	c_ticks += 1			# Aumento en el contador de ticks.
-	if c_ticks < ticks:		# Cantidad de ticks que durara el mensaje en pantalla. 60 ticks = 1 segundo.
-		texto = msn
-		len_t = len(texto)
-		t_temp = ((RESOLUCION[s_res][0]//2)-((len_t*T_pix)//2), (RESOLUCION[s_res][1]//2)-(T_pix*2))				# Centrará el mensaje.
-		rect_opaco(screen, [t_temp[0]-5, t_temp[1]-5, (len_t*T_pix)+10, (T_pix*2)+10], COLOR['Blanco'], 192)		# Recuadro Degradado.
-		pygame.draw.rect(screen, COLOR['Gris'], [t_temp[0]-5, t_temp[1]-5, (len_t*T_pix)+10, (T_pix*2)+10], 1)		# Contorno.
-		dibujarTexto(texto, [t_temp[0], t_temp[1]], FUENTES['Inc-R 14'], COLOR['Negro'])
-	else:
-		if ret: return 0		# Resetea el contador de ticks.
-		else: return c_ticks	# Resetea el contador de ticks.
-	return c_ticks
-
+#===================================================================================================
+#===================================================================================================
 #===================================================================================================
 
 def main():
@@ -125,7 +136,7 @@ def main():
 	s_x = ss_x//2-RESOLUCION[s_res][0]//2
 	s_y = ss_y//2-RESOLUCION[s_res][1]//2
 	
-	print(ss_x, ss_y, RESOLUCION[s_res], s_x, s_y)
+	# ~ print(ss_x, ss_y, RESOLUCION[s_res], s_x, s_y)
 	
 	environ['SDL_VIDEO_WINDOW_POS'] = '{},{}'.format(s_x, s_y)
 	
@@ -148,6 +159,8 @@ def main():
 	
 	pygame.init()												# Inicia El Juego.
 	pygame.mixer.init()											# Inicializa el Mesclador.
+	
+	console = Console('Eny', 'HG'+__version__)
 	
 	FUENTES = {
 		   'Inc-R 18':pygame.font.Font("fuentes/Inconsolata-Regular.ttf", 18),
@@ -173,12 +186,10 @@ def main():
 	
 	game_over = False				# Variable Que Permite indicar si se termino el juego o no.
 	clock = pygame.time.Clock()		# Obtiener El Tiempo para pasar la cantidad de FPS más adelante.
-	tamanio_fuente = 14				# Constante, para hacer manipulación del tamaño de algunas letras y en la matriz
-									# para tener un margen correcto y otras cosas más.
 	
 	segundos = 0		# Contador de Tiempo, 1 seg por cada 60 Ticks.
 	ticks    = 0		# Contador de Ticks.
-	Prefijo  = '> '		# Simbolo de prefijo para comandos.
+	Prefijo  = console.actualPath()+' '		# Simbolo de prefijo para comandos.
 	Comando  = ''		# Comando en linea actual.
 	l_comandos = []		# Lista de comandos ejecutados.
 	l_com_ps = 0		# Poicion actual de lista de comandos ejecutados mostrados, 0 equivale a los mas recientes.
@@ -237,6 +248,7 @@ def main():
 	while game_over is False:
 		
 		ticks += 1
+		# ~ Prefijo  = console.actualPath()+' '		# Simbolo de prefijo para comandos.
 		
 		# Chequeo Constante de Eventos del Teclado:
 		events = pygame.event.get()
@@ -365,12 +377,21 @@ def main():
 							k_arr = True
 							if cache_com[cache_pos] != Comando and cache_pos == 0:
 								cache_com.insert(0, Comando)	# Inserta el Comando en la posicion 0 de la lista
-							if cache_pos < len(cache_com)-1:    cache_pos += 1					# Aumenta la posicion en 1, o sea, para mostrar uno anterior.
-							if cache_com[cache_pos] == '':
-								cache_com.pop(cache_pos)		# Elimina los que sean cadenas vacias.
-								cache_pos -= 1
+							
+							if cache_pos < len(cache_com)-1:
+								cache_pos += 1					# Aumenta la posicion en 1, o sea, para mostrar uno anterior.
+							if '' in cache_com[1:]: 
+								cache_com = cache_com[::-1]
+								cache_com.remove('')
+								cache_com = cache_com[::-1]
+							# ~ elif cache_com[cache_pos] == '':
+								# ~ cache_com.pop(cache_pos)		# Elimina los que sean cadenas vacias.
+								# ~ cache_pos -= 1
+							
 							Comando = cache_com[cache_pos]
 							p_pos = len(Comando)
+							
+							print(cache_com)
 					
 				elif evento.key == pygame.K_DOWN:
 					if vista_actual == l_vistas['Consola']:
@@ -409,9 +430,9 @@ def main():
 							
 							if len(l_comandos) > 0:
 								cont = l_comandos[-1][1]+1
-								l_comandos.append((str(cont).zfill(2)+' '+Comando, cont))
+								l_comandos.append((Prefijo+Comando, cont))
 							else:
-								l_comandos.append(('01 '+Comando, 1))
+								l_comandos.append((Prefijo+Comando, 1))
 							
 							# Si el comando ya existe en Cache, se eliminan todas sus replicas, dejando solo el nuevo en la lista.
 							while Comando in cache_com:
@@ -478,11 +499,53 @@ def main():
 						#=================================================================================
 						
 						# Inserta un espacio en la posicion p_pos del Comando.
+						# ~ print(evento)
+						
 						if evento.key == pygame.K_SPACE:   Comando = i_let(Comando, ' ',  p_pos)
-						elif keyboard.is_pressed('/'):  Comando = i_let(Comando, '/',  p_pos)
-						elif keyboard.is_pressed('+'):  Comando = i_let(Comando, '+',  p_pos)
-						elif keyboard.is_pressed('-'):  Comando = i_let(Comando, '-',  p_pos)
-						# ~ elif keyboard.is_pressed('.'):  Comando = i_let(Comando, '.',  p_pos)
+						
+						elif evento.unicode == ',': Comando = i_let(Comando, ',',  p_pos)
+						elif evento.unicode == '.': Comando = i_let(Comando, '.',  p_pos)
+						elif evento.unicode == '-': Comando = i_let(Comando, '-',  p_pos)
+						elif evento.unicode == '\'': Comando = i_let(Comando, '\'',  p_pos)
+						elif evento.unicode == '¡': Comando = i_let(Comando, '¡',  p_pos)
+						elif evento.unicode == '+': Comando = i_let(Comando, '+',  p_pos)
+						elif evento.unicode == '[': Comando = i_let(Comando, '[',  p_pos)
+						elif evento.unicode == ']': Comando = i_let(Comando, ']',  p_pos)
+						elif evento.unicode == '{': Comando = i_let(Comando, '{',  p_pos)
+						elif evento.unicode == '}': Comando = i_let(Comando, '}',  p_pos)
+						elif evento.unicode == 'Ç': Comando = i_let(Comando, 'Ç',  p_pos)
+						elif evento.unicode == '<': Comando = i_let(Comando, '<',  p_pos)
+						elif evento.unicode == '>': Comando = i_let(Comando, '>',  p_pos)
+						elif evento.unicode == '*': Comando = i_let(Comando, '*',  p_pos)
+						# ~ elif evento.unicode == '`': Comando = i_let(Comando, '`',  p_pos)
+						# ~ elif evento.unicode == '´': Comando = i_let(Comando, '´',  p_pos)
+						# ~ elif evento.unicode == '¨': Comando = i_let(Comando, '¨',  p_pos)
+						# ~ elif evento.unicode == '^': Comando = i_let(Comando, '^',  p_pos)
+						
+						elif evento.unicode == ';': Comando = i_let(Comando, ';',  p_pos)
+						elif evento.unicode == ':': Comando = i_let(Comando, ':',  p_pos)
+						elif evento.unicode == '_': Comando = i_let(Comando, '_',  p_pos)
+						
+						elif evento.unicode == 'º': Comando = i_let(Comando, 'º',  p_pos)
+						elif evento.unicode == 'ª': Comando = i_let(Comando, 'ª',  p_pos)
+						elif evento.unicode == '!': Comando = i_let(Comando, '!',  p_pos)
+						elif evento.unicode == '"': Comando = i_let(Comando, '"',  p_pos)
+						elif evento.unicode == '·': Comando = i_let(Comando, '·',  p_pos)
+						elif evento.unicode == '$': Comando = i_let(Comando, '$',  p_pos)
+						elif evento.unicode == '%': Comando = i_let(Comando, '%',  p_pos)
+						elif evento.unicode == '&': Comando = i_let(Comando, '&',  p_pos)
+						elif evento.unicode == '/': Comando = i_let(Comando, '/',  p_pos)
+						elif evento.unicode == '(': Comando = i_let(Comando, '(',  p_pos)
+						elif evento.unicode == ')': Comando = i_let(Comando, ')',  p_pos)
+						elif evento.unicode == '=': Comando = i_let(Comando, '=',  p_pos)
+						elif evento.unicode == '?': Comando = i_let(Comando, '?',  p_pos)
+						elif evento.unicode == '¿': Comando = i_let(Comando, '¿',  p_pos)
+						
+						elif evento.unicode == '\\': Comando = i_let(Comando, '\\',  p_pos)
+						elif evento.unicode == '|': Comando = i_let(Comando, '|',  p_pos)
+						elif evento.unicode == '@': Comando = i_let(Comando, '@',  p_pos)
+						elif evento.unicode == '#': Comando = i_let(Comando, '#',  p_pos)
+						elif evento.unicode == '¬': Comando = i_let(Comando, '¬',  p_pos)
 						
 						# Inserta una letra Mayuscula si a_shift es True, sino una Minuscula en la posicion p_pos del Comando.
 						elif evento.key == pygame.K_a: Comando = i_let(Comando, 'A' if a_shift else 'a', p_pos)
@@ -626,9 +689,9 @@ def main():
 			pygame.draw.rect(screen, VERDE, t_con, 2)			# Margen de Consola.
 			pygame.draw.rect(screen, VERDE, l_con, 1)			# Dibuja linea de Consola.
 			
-			p_puntero = u_puntero(con, l_con, p_pos)
+			p_puntero = u_puntero(con, l_con, len(Prefijo), p_pos)
 			
-			if ticks < 30: pygame.draw.line(screen, COLOR['Gris'], p_puntero[0], p_puntero[1], 2)
+			if ticks < 30: pygame.draw.line(screen, COLOR['Gris'], p_puntero[0], p_puntero[1], 2)		# Dibuja el puntero en pantalla.
 			
 			temp_y, temp_x = t_con[1], t_con[2]
 			dibujarTexto('Consola HG'+__version__, [temp_x-100, temp_y+1], FUENTES['Inc-R 12'], VERDE_C)
@@ -637,23 +700,17 @@ def main():
 				
 			# Si se activa un Comando Lo Ejecuta.
 			if exe:
-				
-				if   Comando == 'exit': game_over = True
-				elif Comando == 'cls':  l_comandos = []
-				elif Comando == 'xD': l_comandos[-1] = (l_comandos[-1][0]+': Hola.', l_comandos[-1][1])
-				elif Comando == 'help':
-					textos = [
-						'',
-						'Los Posibles Comandos a Utilizar Son:',
-						'',
-						'    help    Muestra Este Mensaje de Ayuda.',
-						'    exit    Cierra la Consola de Comandos.',
-						'    cls     Limpia la Consola de Comandos.',
-						''
-					]
-					l_comandos = add_comand(l_comandos, textos)
+				if console.validate(Comando):
 					
+					textos = console.execute(Comando)
+					l_comandos = add_comand(l_comandos, textos)
+					# ~ print(l_comandos)
+					if   Comando == 'exit': game_over = True
+					elif Comando == 'cls':  l_comandos = []
+					elif Comando.split(' ')[0] == 'cd':
+						Prefijo = console.actualPath() + ' '		# Actualiza el Path
 				Comando = ''
+				exe = False
 			
 			#===================================================================================================
 			
@@ -672,19 +729,22 @@ def main():
 				
 				p_texto = [ l_con[0]+5, l_con[1] - ((len(temp)-i)*T_pix_y) -2 ]
 				
+				if com: valid = console.validate(com.split(' ')[1])		# Si el comando es valido sera igual a True.
+				else: valid = True										# Si la linea esta vacia '' en automatico sera True.
+				
 				# Validamos que sea un comando valido y que sus lineas correspondientes tambien se muestren como validas.
-				temp_col = VERDE_C if (com[3:] in COMANDOS or com[0] == ' ') else COLOR['Rojo Claro']
-				com = com if (com[3:] in COMANDOS or com[0] == ' ') else (
+				temp_col = VERDE_C if (valid or com[0] == ' ' and not (com[:3] == ' No')) else COLOR['Rojo Claro']
+				com = com if (valid or com[0] == ' ') else (
 					com+error if len(com)+len(error) <= pos_limit else (
 						com[:(pos_limit-len(error))]+'...'+error
 					)
 				)
 				
-				dibujarTexto(com, p_texto, FUENTES['Inc-R 14'], temp_col)			# Imprime el texto en consola.
+				dibujarTexto(com, p_texto, FUENTES[Font_def], temp_col)			# Imprime el texto en consola.
 				
 			#===================================================================================================
 			# Dibuja el texto en la linea de comandos
-			dibujarTexto(Prefijo+Comando, p_letra, FUENTES['Inc-R 14'], VERDE_C)	# Dibuja lo que vas escribiendo.
+			dibujarTexto(Prefijo+Comando, p_letra, FUENTES[Font_def], VERDE_C)	# Dibuja lo que vas escribiendo.
 			
 			#===================================================================================================
 			
@@ -767,7 +827,7 @@ resoluciones = [
 		( 720,  480),	# 480p. Tamaño de La Ventana, Ancho (640) y Alto  (480).
 		(1280,  720),	# 720p
 		(1366,  768),
-		# ~ (1536,  864),
+		(1600,  900),	# 1080p Escalado 125%
 		(1920, 1080)	# 1080p
 		#(2560, 1600)	# Resolucion Maxima, Este es el tamaño Original de la imagen del Fondo.
 	]
@@ -798,13 +858,15 @@ CARACTERES = [
 		' ', '/', '+', '-', '.'
 	]
 
-COMANDOS = ['help', 'exit', 'cls', 'xD: Hola.']
+COMANDOS = ['help', 'exit', 'cls', 'cd']
 
-s_res     = -2		# Seleccion de Resolucion Por defecto. -2: la penultima Resolucion agregada.
-# ~ s_res     = 0		# Seleccion de Resolucion Por defecto. -2: la penultima Resolucion agregada.
-T_pix_y   = 16		# Tamaño de Pixeles entre cada salto de linea en la linea de comandos.
-T_pix     = 7		# Tamaño de Pixeles entre cada letra en linea de comandos.
-T_rep     = 3		# Tiempo de repeticion entre caracteres al dejar tecla presionada.
+s_res     = -2			# Seleccion de Resolucion Por defecto. -2: la penultima Resolucion agregada.
+# ~ s_res     = 0			# Seleccion de Resolucion Por defecto. -2: la penultima Resolucion agregada.
+T_pix     = 7			# Tamaño de Pixeles entre cada letra en linea de comandos.
+T_pix_y   = T_pix*2		# Tamaño de Pixeles entre cada salto de linea en la linea de comandos.
+T_rep     = 3			# Tiempo de repeticion entre caracteres al dejar tecla presionada.
+Font_tam = 14						# Para hacer manipulación del tamaño de algunos textos en pantalla.
+Font_def = 'Inc-R '+str(Font_tam)	# Fuente por defecto y tamaño de Fuente.
 
 l_com_lim = ( RESOLUCION_CMD[s_res][1] - 45 ) // T_pix_y		# Limite de lineas en consola
 pos_limit = ( RESOLUCION_CMD[s_res][0] - 45 ) // T_pix			# Limite de letras en linea de comandos.
