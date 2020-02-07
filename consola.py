@@ -5,7 +5,7 @@ from datetime import datetime
 #https://sites.google.com/site/programacioniiuno/temario/unidad-5---grafos/rboles?tmpl=%2Fsystem%2Fapp%2Ftemplates%2Fprint%2F&showPrintDialog=1
 
 TITULO  = 'Hack Game'
-__version__ = 'v1.0.9'
+__version__ = 'v1.1.0'
 
 class Arbol:
 	
@@ -71,11 +71,11 @@ class Console:
 			'exit',			# Salir de Consola, cerrar el Juego.
 			'cd',			# Permite cambiar de directorio.
 			'dir',			# Lista los Archivos y Carpetas.
-			'mkdir',		# Crear Carpeta
-			'rm',			# Eliminar Archivo o Carpeta
-			'cat',			# Leer Archivo como texto plano.
-			'connect',		# Conectar a una IP
-			'disconnect'	# Desconectarse de una IP.
+			# ~ 'mkdir',		# Crear Carpeta
+			# ~ 'rm',			# Eliminar Archivo o Carpeta
+			# ~ 'cat',			# Leer Archivo como texto plano.
+			# ~ 'connect',		# Conectar a una IP
+			# ~ 'disconnect'	# Desconectarse de una IP.
 		]
 		
 	def getResponse(self):
@@ -90,9 +90,9 @@ class Console:
 		except: pass
 		return path[:-1]+'>'
 	
-	def getChilds(self, raiz):
+	def getChilds(self, raiz, path=[]):
 		h = None
-		for x in self.pathPos:
+		for x in path:
 			h = raiz.hijos[x]
 			raiz = h
 		return raiz.hijos
@@ -151,7 +151,10 @@ class Console:
 		
 		self.response = []
 		
-		if command == 'help':
+		command = command.split()
+		cnd = command[0]
+		
+		if cnd == 'help':
 			self.response = [
 				'',
 				'Los Posibles Comandos a Utilizar Son:',
@@ -160,61 +163,95 @@ class Console:
 				'             Puedes escribir el nombre de',
 				'             un comando para mas detalles.',
 				'  cd    dir  Cambia de Directorio.',
+				'  dir   name Lista los archivos y carpetas.',
 				'  exit       Cierra la Consola de Comandos',
 				'  cls        Limpia la Consola de Comandos',
-				'  mkdir name Crea un Carpeta',
-				'  rm    file Elimina un Archivo o Carpeta',
-				'  cat   file Leer Archivo como texto plano',
-				'  con   IP   Conectar a una IP',
-				'  dc    IP   Desconectarse de una IP.',
-				'  dir   name Lista los archivos y carpetas.',
+				# ~ '  mkdir name Crea un Carpeta',
+				# ~ '  rm    file Elimina un Archivo o Carpeta',
+				# ~ '  cat   file Leer Archivo como texto plano',
+				# ~ '  con   IP   Conectar a una IP',
+				# ~ '  dc    IP   Desconectarse de una IP.',
 				''
 			]
 		
-		elif command == 'cls': pass
+		elif cnd == 'cls': pass
 		
-		elif command == 'exit': self.response = ['','Cerrando...','']
+		elif cnd == 'exit': self.response = ['','Cerrando...','']
 		
-		elif command[:6] == 'mkdir ': pass
+		elif cnd == 'mkdir': pass
 			
-		elif command[:3] == 'cd ':
+		elif cnd == 'cd':
 			
-			command = command[3:].split('/')				# separa la cadena en fragmentos, dividiendola en cada '/', ejemplo: /Hola/Mundo/ ---> ['','Hola','Mundo','']
+			init  = False
+			valid = False
+			temp_path = self.pathPos[:]							# Generamos una copia exacta de la lista de la Ruta Actual.
 			
-			if command == ['','']: self.pathPos = []		# Si la lista solo contiene dos cadenas vacias, significa que el comando solo indicaba '/'
+			if   len(command) == 1: command = command[0]
+			elif len(command) == 2: command = command[1]
+			else:
+				self.response = None
+				return self.response
 			
-			while '' in command: command.remove('')			# Elimina los elementos de cadena vacia '' existente.
+			if command[0] == '/': init = True
 			
-			for elem in command:							# Estrae cada elemento de la lista.
+			command = command.split('/')						# separa la cadena en fragmentos, dividiendola en cada '/', ejemplo: /Hola/Mundo/ ---> ['','Hola','Mundo','']
+			
+			if command == ['',''] or command == ['cd']:			# Si la lista solo contiene dos cadenas vacias, significa que el comando solo indicaba '/'
+				self.pathPos = []
+				return self.response
+			
+			while '' in command: command.remove('')				# Elimina los elementos de cadena vacia '' existente.
+			
+			if init:											# Si init es True entra, si es así significa que la ruta se inicio con el caracter '/'.
+				childs = self.getChilds(self.arbol)				# Obtenemos los Archivos y Carpetas de la Carpeta Raiz.
+				for i, ch in enumerate(childs):					# Recorremos la lista
+					if command[0] == str(ch):					# Si la primera ruta es igual a una Carpeta en la Carpeta Raiz.
+						valid = True							# Se toma como valido
+						temp_path = [i]							# Y se viaja a esa Carpeta de la Carpeta Raiz
+						command.pop(0)							# Para finalizar se elimina esa carpeta del Command para procesar si existen más.
+						break
+			
+			for elem in command:								# Extrae cada elemento de la lista.
+				
+				valid = False
+				folders = []
+				ch = self.getChilds(self.arbol, temp_path)		# Obtiene la lista de Hijos en la Ruta (Path) actual.
 				
 				if elem == '..':
-					if self.pathPos: self.pathPos.pop()		# Si el pathPos no es una lista vacia, elimina el ultimo elemento de la lista. 
+					if temp_path: temp_path.pop()				# Si el temp_path no es una lista vacia, elimina el ultimo elemento de la lista.
+					valid = True
+					continue
+				elif '.' in elem:
+					# ~ if elem.endswith(self.valid_ext):			# Si tiene extension, entonces no es una Carpeta.
+					self.response = ['','No es una carpeta: "'+elem+'"','']
+					return self.response
+					# ~ else:
+						# ~ self.response = ['','No es una carpeta: "'+elem+'"','']
+						# ~ return self.response
+				
+				for i, x in enumerate(ch):
+					y = str(x)									# Convierte el elemento hijo a String.
+					if not y.endswith(self.valid_ext):			# Si no tiene extension, entonces es una Carpeta.
+						folders.append((i, x))					# La agregamos a la lista de Carpetas.
+				
+				if folders:										# Si la lista no es vacia...
+					for i, f in folders:						# Recorre la lista y enumera cada elemento a partir del 0.
+						if elem == str(f):						# Si el elemento es igual a uno de los hijos...
+							valid = True
+							temp_path.append(i)					# Se agrega la posicion del hijo para indicar en que carpeta se adentrara.
+							break
+					if not valid:
+						self.response = ['','No existe la carpeta: "'+elem+'"','']
+						break
 				else:
-					valid = False
-					folders = []
-					ch = self.getChilds(self.arbol)			# Obtiene la lista de Hijos en la Ruta (Path) actual.
-					
-					for i, x in enumerate(ch):
-						y = str(x)							# Extraemos cada elemento.
-						if not y.endswith(self.valid_ext):	# Si no tiene extension, entonces es una Carpeta.
-							folders.append((i, x))			# La agregamos a la lista de Carpetas.
-					
-					if folders:								# Si la lista no es vacia...
-						for i, f in folders:				# Recorre la liste y enumera cada elemento a partir del 0.
-							if elem == str(f):				# Si el elemento es igual a uno de los hijos...
-								valid = True
-								self.pathPos.append(i)		# Se agrega la posicion del hijo para indicar en que carpeta se adentrara.
-								break
-						if not valid:
-							if elem.endswith(self.valid_ext):
-								self.response = ['',elem+' No es una Carpeta.','']
-							else:
-								self.response = ['','No existe la carpeta: '+elem,'']
-					else: self.response = ['','No existe la carpeta: '+elem,'']
-		
-		elif command == 'dir':
+					self.response = ['','No existe la carpeta: "'+elem+'"','']
+					break
 			
-			childs = self.getChilds(self.arbol)
+			if valid: self.pathPos = temp_path
+					
+		elif cnd == 'dir':
+			
+			childs = self.getChilds(self.arbol, self.pathPos)
 			
 			if len(childs) > 0:
 				

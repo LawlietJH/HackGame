@@ -12,7 +12,7 @@ from win32api import GetKeyState	# python -m pip install pywin32
 from win32con import VK_CAPITAL		# python -m pip install pywin32
 
 TITULO  = 'Hack Game'
-__version__ = 'v1.0.9'
+__version__ = 'v1.1.0'
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
@@ -128,7 +128,7 @@ def clic_boton(screen, pos, rec=0):	# Detecta un Clic en las coordenadas de un b
 
 def main():
 	
-	global screen, s_res, pos_limit, l_com_lim, FUENTES
+	global screen, s_res, pos_limit, l_com_lim, FUENTES, Prefijo
 	
 	# Inicializaciones =================================================
 	
@@ -160,8 +160,6 @@ def main():
 	pygame.init()												# Inicia El Juego.
 	pygame.mixer.init()											# Inicializa el Mesclador.
 	
-	console = Console('Eny', 'HG'+__version__)
-	
 	FUENTES = {
 		   'Inc-R 18':pygame.font.Font("fuentes/Inconsolata-Regular.ttf", 18),
 		   'Inc-R 14':pygame.font.Font("fuentes/Inconsolata-Regular.ttf", 14),
@@ -189,7 +187,6 @@ def main():
 	
 	segundos = 0		# Contador de Tiempo, 1 seg por cada 60 Ticks.
 	ticks    = 0		# Contador de Ticks.
-	Prefijo  = console.actualPath()+' '		# Simbolo de prefijo para comandos.
 	Comando  = ''		# Comando en linea actual.
 	l_comandos = []		# Lista de comandos ejecutados.
 	l_com_ps = 0		# Poicion actual de lista de comandos ejecutados mostrados, 0 equivale a los mas recientes.
@@ -205,7 +202,7 @@ def main():
 		'T_m':5
 	}
 	
-	con['L_x'] = con['T_x'] - ( con['T_m']*2 )	# Agrega los valores para L_x.
+	con['L_x'] = con['T_x'] - ( con['T_m']*2 )						# Agrega los valores para L_x.
 	
 	t_con = [ con['P_x'], con['P_y'], con['T_x'], con['T_y'] ]		# Tamanios de Consola
 	l_con = [														# Linea de Consola para los comandos
@@ -248,7 +245,6 @@ def main():
 	while game_over is False:
 		
 		ticks += 1
-		# ~ Prefijo  = console.actualPath()+' '		# Simbolo de prefijo para comandos.
 		
 		# Chequeo Constante de Eventos del Teclado:
 		events = pygame.event.get()
@@ -309,11 +305,12 @@ def main():
 												environ['SDL_VIDEO_WINDOW_POS'] = '{},{}'.format(s_x, s_y)
 												screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.NOFRAME)			# Objeto Que Crea La Ventana.
 												
-										BGimg  = load_image('images/background.bmp')				# Carga el Fondo de la Ventana.
-										BGimg = pygame.transform.scale(BGimg, RESOLUCION[s_res])	# Cambia la resolucion de la imagen.
+										BGimg = load_image('images/background.bmp')											# Carga el Fondo de la Ventana.
+										BGimg = pygame.transform.scale(BGimg, RESOLUCION[s_res])							# Cambia la resolucion de la imagen.
 										
-										l_com_lim = ( RESOLUCION_CMD[s_res][1] - 45 ) // T_pix_y												# limite de lineas en consola
-										pos_limit = ( RESOLUCION_CMD[s_res][0] - 45 ) // T_pix													# limite de caracteres en linea de comandos.
+										l_com_lim = ( RESOLUCION_CMD[s_res][1]-45) // T_pix_y								# Limite de lineas en consola
+										pos_limit = ( RESOLUCION_CMD[s_res][0]-30 - (len(Prefijo)*(T_pix))) // T_pix		# Limite de letras en linea de comandos.
+										
 										con = { 'P_x':5, 'P_y':5, 'L_x':None, 'L_y':20,
 												'T_x':RESOLUCION_CMD[s_res][0]-10, 'T_y':RESOLUCION_CMD[s_res][1]-10, 'T_m':5 }					# Dimensiones Generales para la Consola.
 										con['L_x'] = con['T_x'] - ( con['T_m']*2 )																# Agrega los valores para L_x.
@@ -391,7 +388,7 @@ def main():
 							Comando = cache_com[cache_pos]
 							p_pos = len(Comando)
 							
-							print(cache_com)
+							# ~ print(cache_com)
 					
 				elif evento.key == pygame.K_DOWN:
 					if vista_actual == l_vistas['Consola']:
@@ -477,7 +474,7 @@ def main():
 							screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.NOFRAME)			# Objeto Que Crea La Ventana.
 							s_x = ss_x//2-RESOLUCION[s_res][0]//2
 							s_y = ss_y//2-RESOLUCION[s_res][1]//2
-							print(ss_x, ss_y, s_res, RESOLUCION[s_res], s_x, s_y)
+							# ~ print(ss_x, ss_y, s_res, RESOLUCION[s_res], s_x, s_y)
 							environ['SDL_VIDEO_WINDOW_POS'] = '{},{}'.format(s_x, s_y)					# <---- <---- <---- <---- <---- <---- <---- Bugs de Resolucion, Cambiar a maxima Resolucion, luego cabiar a cualquier otra y presionar F11, no se ajusta correctamente.
 							screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.NOFRAME)			# Objeto Que Crea La Ventana.
 							s_full = False
@@ -499,97 +496,14 @@ def main():
 						#=================================================================================
 						
 						# Inserta un espacio en la posicion p_pos del Comando.
-						# ~ print(evento)
 						
-						if evento.key == pygame.K_SPACE:   Comando = i_let(Comando, ' ',  p_pos)
-						
-						elif evento.unicode == ',': Comando = i_let(Comando, ',',  p_pos)
-						elif evento.unicode == '.': Comando = i_let(Comando, '.',  p_pos)
-						elif evento.unicode == '-': Comando = i_let(Comando, '-',  p_pos)
-						elif evento.unicode == '\'': Comando = i_let(Comando, '\'',  p_pos)
-						elif evento.unicode == '¡': Comando = i_let(Comando, '¡',  p_pos)
-						elif evento.unicode == '+': Comando = i_let(Comando, '+',  p_pos)
-						elif evento.unicode == '[': Comando = i_let(Comando, '[',  p_pos)
-						elif evento.unicode == ']': Comando = i_let(Comando, ']',  p_pos)
-						elif evento.unicode == '{': Comando = i_let(Comando, '{',  p_pos)
-						elif evento.unicode == '}': Comando = i_let(Comando, '}',  p_pos)
-						elif evento.unicode == 'Ç': Comando = i_let(Comando, 'Ç',  p_pos)
-						elif evento.unicode == '<': Comando = i_let(Comando, '<',  p_pos)
-						elif evento.unicode == '>': Comando = i_let(Comando, '>',  p_pos)
-						elif evento.unicode == '*': Comando = i_let(Comando, '*',  p_pos)
-						# ~ elif evento.unicode == '`': Comando = i_let(Comando, '`',  p_pos)
-						# ~ elif evento.unicode == '´': Comando = i_let(Comando, '´',  p_pos)
-						# ~ elif evento.unicode == '¨': Comando = i_let(Comando, '¨',  p_pos)
-						# ~ elif evento.unicode == '^': Comando = i_let(Comando, '^',  p_pos)
-						
-						elif evento.unicode == ';': Comando = i_let(Comando, ';',  p_pos)
-						elif evento.unicode == ':': Comando = i_let(Comando, ':',  p_pos)
-						elif evento.unicode == '_': Comando = i_let(Comando, '_',  p_pos)
-						
-						elif evento.unicode == 'º': Comando = i_let(Comando, 'º',  p_pos)
-						elif evento.unicode == 'ª': Comando = i_let(Comando, 'ª',  p_pos)
-						elif evento.unicode == '!': Comando = i_let(Comando, '!',  p_pos)
-						elif evento.unicode == '"': Comando = i_let(Comando, '"',  p_pos)
-						elif evento.unicode == '·': Comando = i_let(Comando, '·',  p_pos)
-						elif evento.unicode == '$': Comando = i_let(Comando, '$',  p_pos)
-						elif evento.unicode == '%': Comando = i_let(Comando, '%',  p_pos)
-						elif evento.unicode == '&': Comando = i_let(Comando, '&',  p_pos)
-						elif evento.unicode == '/': Comando = i_let(Comando, '/',  p_pos)
-						elif evento.unicode == '(': Comando = i_let(Comando, '(',  p_pos)
-						elif evento.unicode == ')': Comando = i_let(Comando, ')',  p_pos)
-						elif evento.unicode == '=': Comando = i_let(Comando, '=',  p_pos)
-						elif evento.unicode == '?': Comando = i_let(Comando, '?',  p_pos)
-						elif evento.unicode == '¿': Comando = i_let(Comando, '¿',  p_pos)
-						
-						elif evento.unicode == '\\': Comando = i_let(Comando, '\\',  p_pos)
-						elif evento.unicode == '|': Comando = i_let(Comando, '|',  p_pos)
-						elif evento.unicode == '@': Comando = i_let(Comando, '@',  p_pos)
-						elif evento.unicode == '#': Comando = i_let(Comando, '#',  p_pos)
-						elif evento.unicode == '¬': Comando = i_let(Comando, '¬',  p_pos)
-						
-						# Inserta una letra Mayuscula si a_shift es True, sino una Minuscula en la posicion p_pos del Comando.
-						elif evento.key == pygame.K_a: Comando = i_let(Comando, 'A' if a_shift else 'a', p_pos)
-						elif evento.key == pygame.K_b: Comando = i_let(Comando, 'B' if a_shift else 'b', p_pos)
-						elif evento.key == pygame.K_c: Comando = i_let(Comando, 'C' if a_shift else 'c', p_pos)
-						elif evento.key == pygame.K_d: Comando = i_let(Comando, 'D' if a_shift else 'd', p_pos)
-						elif evento.key == pygame.K_e: Comando = i_let(Comando, 'E' if a_shift else 'e', p_pos)
-						elif evento.key == pygame.K_f: Comando = i_let(Comando, 'F' if a_shift else 'f', p_pos)
-						elif evento.key == pygame.K_g: Comando = i_let(Comando, 'G' if a_shift else 'g', p_pos)
-						elif evento.key == pygame.K_h: Comando = i_let(Comando, 'H' if a_shift else 'h', p_pos)
-						elif evento.key == pygame.K_i: Comando = i_let(Comando, 'I' if a_shift else 'i', p_pos)
-						elif evento.key == pygame.K_j: Comando = i_let(Comando, 'J' if a_shift else 'j', p_pos)
-						elif evento.key == pygame.K_k: Comando = i_let(Comando, 'K' if a_shift else 'k', p_pos)
-						elif evento.key == pygame.K_l: Comando = i_let(Comando, 'L' if a_shift else 'l', p_pos)
-						elif evento.key == pygame.K_m: Comando = i_let(Comando, 'M' if a_shift else 'm', p_pos)
-						elif evento.key == pygame.K_n: Comando = i_let(Comando, 'N' if a_shift else 'n', p_pos)
-						elif evento.key == pygame.K_o: Comando = i_let(Comando, 'O' if a_shift else 'o', p_pos)
-						elif evento.key == pygame.K_p: Comando = i_let(Comando, 'P' if a_shift else 'p', p_pos)
-						elif evento.key == pygame.K_q: Comando = i_let(Comando, 'Q' if a_shift else 'q', p_pos)
-						elif evento.key == pygame.K_r: Comando = i_let(Comando, 'R' if a_shift else 'r', p_pos)
-						elif evento.key == pygame.K_s: Comando = i_let(Comando, 'S' if a_shift else 's', p_pos)
-						elif evento.key == pygame.K_t: Comando = i_let(Comando, 'T' if a_shift else 't', p_pos)
-						elif evento.key == pygame.K_u: Comando = i_let(Comando, 'U' if a_shift else 'u', p_pos)
-						elif evento.key == pygame.K_v: Comando = i_let(Comando, 'V' if a_shift else 'v', p_pos)
-						elif evento.key == pygame.K_w: Comando = i_let(Comando, 'W' if a_shift else 'w', p_pos)
-						elif evento.key == pygame.K_x: Comando = i_let(Comando, 'X' if a_shift else 'x', p_pos)
-						elif evento.key == pygame.K_y: Comando = i_let(Comando, 'Y' if a_shift else 'y', p_pos)
-						elif evento.key == pygame.K_z: Comando = i_let(Comando, 'Z' if a_shift else 'z', p_pos)
-						# Inserta un Numero en la posicion p_pos en Comando.
-						elif evento.key == pygame.K_0: Comando = i_let(Comando, '0', p_pos)
-						elif evento.key == pygame.K_1: Comando = i_let(Comando, '1', p_pos)
-						elif evento.key == pygame.K_2: Comando = i_let(Comando, '2', p_pos)
-						elif evento.key == pygame.K_3: Comando = i_let(Comando, '3', p_pos)
-						elif evento.key == pygame.K_4: Comando = i_let(Comando, '4', p_pos)
-						elif evento.key == pygame.K_5: Comando = i_let(Comando, '5', p_pos)
-						elif evento.key == pygame.K_6: Comando = i_let(Comando, '6', p_pos)
-						elif evento.key == pygame.K_7: Comando = i_let(Comando, '7', p_pos)
-						elif evento.key == pygame.K_8: Comando = i_let(Comando, '8', p_pos)
-						elif evento.key == pygame.K_9: Comando = i_let(Comando, '9', p_pos)
+						# ~ if evento.key == pygame.K_SPACE:   Comando = i_let(Comando, ' ',  p_pos)
+						if not evento.unicode == '' and evento.unicode in CARACTERES: Comando = i_let(Comando, evento.unicode,  p_pos)
 						else:
 							# Si no, se restablecen los valores, significa que no se presiono ninguna de las teclas anteriores a partir del ultimo IF.
 							p_pos -= 1
 							k_char = False
-					
+							
 				#=================================================================================
 				
 			elif evento.type == pygame.KEYUP:
@@ -618,6 +532,7 @@ def main():
 			# Logica de Linea de Comandos
 			if k_down:
 				if not (k_wait > 0 and k_wait < 30) and len(Comando) > 0 and p_pos < pos_limit:
+					# ~ print(Comando)
 					if (k_wait % T_rep) == 0 and Comando[-1] in CARACTERES:
 						if k_back:
 							if p_pos > 0:
@@ -645,7 +560,7 @@ def main():
 						else:
 							if k_char:						# Mientras se este presionado una letra, un numero o un espacio, se seguira agregando caracteres.
 								if len(Comando) < pos_limit:
-									print(p_pos, Comando[p_pos-1])
+									# ~ print(p_pos, [Comando])
 									Comando = Comando[:p_pos] + Comando[p_pos-1] + Comando[p_pos:]
 									p_pos += 1
 				
@@ -703,12 +618,20 @@ def main():
 				if console.validate(Comando):
 					
 					textos = console.execute(Comando)
+					
+					if textos == None:
+						temp_pos = l_comandos.pop()[1]
+						l_comandos.append((Prefijo+' '+Comando, temp_pos))
+						textos = []
+					
 					l_comandos = add_comand(l_comandos, textos)
-					# ~ print(l_comandos)
+					
 					if   Comando == 'exit': game_over = True
 					elif Comando == 'cls':  l_comandos = []
 					elif Comando.split(' ')[0] == 'cd':
-						Prefijo = console.actualPath() + ' '		# Actualiza el Path
+						Prefijo = console.actualPath() + ' '											# Actualiza el Path
+						pos_limit = ( RESOLUCION_CMD[s_res][0]-30 - (len(Prefijo)*(T_pix))) // T_pix	# Limite de letras en linea de comandos.
+					
 				Comando = ''
 				exe = False
 			
@@ -824,7 +747,7 @@ COLOR  = {
 		 }	# Diccionario de Colores.
 
 resoluciones = [
-		( 720,  480),	# 480p. Tamaño de La Ventana, Ancho (640) y Alto  (480).
+		# ~ ( 720,  480),	# 480p. Tamaño de La Ventana, Ancho (640) y Alto  (480).
 		(1280,  720),	# 720p
 		(1366,  768),
 		(1600,  900),	# 1080p Escalado 125%
@@ -849,16 +772,14 @@ RESOLUCION_CMD = [
 		for i in range(len(RESOLUCION))
 	]
 
-CARACTERES = [
-		'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-		'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-		'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-		'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-		' ', '/', '+', '-', '.'
-	]
+# Esta es la lista de caracteres que permiten ser multiplicados al dejar la tecla presionada.
+CARACTERES  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + 'abcdefghijklmnopqrstuvwxyz'
+CARACTERES += '1234567890' + 'º\'¡+ç,.-<' + 'ª!"·$%&/()=?¿*Ç;:_>'
+CARACTERES += '\\|@#~€¬[]{} '
 
-COMANDOS = ['help', 'exit', 'cls', 'cd']
+console = Console('Eny', 'HG'+__version__)
+Prefijo = console.actualPath()+' '		# Simbolo de prefijo para comandos.
+
 
 s_res     = -2			# Seleccion de Resolucion Por defecto. -2: la penultima Resolucion agregada.
 # ~ s_res     = 0			# Seleccion de Resolucion Por defecto. -2: la penultima Resolucion agregada.
@@ -868,8 +789,8 @@ T_rep     = 3			# Tiempo de repeticion entre caracteres al dejar tecla presionad
 Font_tam = 14						# Para hacer manipulación del tamaño de algunos textos en pantalla.
 Font_def = 'Inc-R '+str(Font_tam)	# Fuente por defecto y tamaño de Fuente.
 
-l_com_lim = ( RESOLUCION_CMD[s_res][1] - 45 ) // T_pix_y		# Limite de lineas en consola
-pos_limit = ( RESOLUCION_CMD[s_res][0] - 45 ) // T_pix			# Limite de letras en linea de comandos.
+l_com_lim = ( RESOLUCION_CMD[s_res][1]-45) // T_pix_y							# Limite de lineas en consola
+pos_limit = ( RESOLUCION_CMD[s_res][0]-30 -  (len(Prefijo)*(T_pix))) // T_pix	# Limite de letras en linea de comandos.
 
 # Variables Globales: ==================================================
 
