@@ -12,7 +12,7 @@ from win32api import GetKeyState	# python -m pip install pywin32
 from win32con import VK_CAPITAL		# python -m pip install pywin32
 
 TITULO  = 'Hack Game'
-__version__ = 'v1.1.0'
+__version__ = 'v1.1.1'
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
@@ -107,8 +107,12 @@ def i_let(t, c, p):		# Insertar letra. T = Texto, C = Caracter, P = Posicion
 	return t
 
 def add_comand(l_comandos, textos):	# Inserta Comandos a la Lista
+	plus = ' '
+	if textos and textos[-1] == 0:
+		textos.pop()
+		plus = ''
 	cont = l_comandos[-1][1]
-	for t in textos: l_comandos.append((' '+t, cont))
+	for text in textos: l_comandos.append((plus+text, cont))
 	return l_comandos
 
 def clic_boton(screen, pos, rec=0):	# Detecta un Clic en las coordenadas de un boton, contando la posicion de botones derecha a izquierda.
@@ -656,12 +660,15 @@ def main():
 				else: valid = True										# Si la linea esta vacia '' en automatico sera True.
 				
 				# Validamos que sea un comando valido y que sus lineas correspondientes tambien se muestren como validas.
-				temp_col = VERDE_C if (valid or com[0] == ' ' and not (com[:3] == ' No')) else COLOR['Rojo Claro']
-				com = com if (valid or com[0] == ' ') else (
-					com+error if len(com)+len(error) <= pos_limit else (
-						com[:(pos_limit-len(error))]+'...'+error
-					)
-				)
+				temp_col = VERDE_C if (valid or com[0] == ' ') else COLOR['Rojo Claro']
+				# ~ print([com[:17]], com[:17] == 'Faltan Argumentos') #
+				
+				if com[:17] == 'Faltan Argumentos' or com[:3] == 'No ': pass
+				elif valid or com[0] == ' ': pass
+				elif len(com+error) <= pos_limit+len(Prefijo)+1:
+					com = com+error
+				else:
+					com = com[:(pos_limit+len(Prefijo)-len(error)-2)]+'...'+error
 				
 				dibujarTexto(com, p_texto, FUENTES[Font_def], temp_col)			# Imprime el texto en consola.
 				

@@ -1,24 +1,26 @@
 
+import random
 import operator
 from datetime import datetime
 
 #https://sites.google.com/site/programacioniiuno/temario/unidad-5---grafos/rboles?tmpl=%2Fsystem%2Fapp%2Ftemplates%2Fprint%2F&showPrintDialog=1
 
 TITULO  = 'Hack Game'
-__version__ = 'v1.1.0'
+__version__ = 'v1.1.1'
 
 class Arbol:
 	
-	def __init__(self, elemento):
-		self.hijos = []
+	def __init__(self, elemento, content=''):
+		self.hijos    = []
 		self.elemento = elemento
+		self.content  = content
 	
 	def __str__(self):
 		return self.elemento
 	
-	def agregarElemento(self, arbol, elementoPadre, elemento):
+	def agregarElemento(self, arbol, elementoPadre, elemento, content='folder'):
 		subarbol = self.buscarSubarbol(arbol, elementoPadre);
-		subarbol.hijos.append(Arbol(elemento))
+		subarbol.hijos.append(Arbol(elemento, content))
 		subarbol.hijos = self.sortChilds(subarbol)
 	
 	def sortChilds(self, arbol):
@@ -62,6 +64,7 @@ class Console:
 		self.sysname  = sysname
 		self.response = ''
 		self.valid_ext = ('.txt', '.log', '.exe')
+		self.rand = lambda li, le: ''.join([str(random.choice(li)) for _ in range(le)])
 		self.fileSystem()
 		self.pathPos = self.searchDir(self.arbol, self.username)
 		self.path = self.getPath(self.arbol)
@@ -71,10 +74,12 @@ class Console:
 			'exit',			# Salir de Consola, cerrar el Juego.
 			'cd',			# Permite cambiar de directorio.
 			'dir',			# Lista los Archivos y Carpetas.
-			# ~ 'mkdir',		# Crear Carpeta
-			# ~ 'rm',			# Eliminar Archivo o Carpeta
-			# ~ 'cat',			# Leer Archivo como texto plano.
-			# ~ 'connect',		# Conectar a una IP
+			'ls',			# Lista los Archivos y Carpetas.
+			'cat',			# Leer Archivo como texto plano.
+			'type',			# Leer Archivo como texto plano.
+			# ~ 'mkdir',		# Crear Carpeta.
+			# ~ 'rm',			# Eliminar Archivo o Carpeta.
+			# ~ 'connect',		# Conectar a una IP.
 			# ~ 'disconnect'	# Desconectarse de una IP.
 		]
 		
@@ -113,31 +118,31 @@ class Console:
 		
 		return self.path
 	
-	def fileSystem(self):						                          # <--------------------------------------- pendiente el sistema de carpetas.
-		
-		self.arbol.agregarElemento(self.arbol, 'Root', 'System')
-		self.arbol.agregarElemento(self.arbol, 'Root', 'User')
-		self.arbol.agregarElemento(self.arbol, 'System', 'Logs')
-		self.arbol.agregarElemento(self.arbol, 'User', self.username)
-		self.arbol.agregarElemento(self.arbol, 'Logs', self.createLogFile('Connection'))
-		# ~ self.arbol.agregarElemento(self.arbol, 'Logs', 'Connection 29-01-2020 03-54-12.log')
-		
-		self.arbol.agregarElemento(self.arbol, self.username, 'Documents')
-		self.arbol.agregarElemento(self.arbol, self.username, 'Escritorio')
-		self.arbol.agregarElemento(self.arbol, self.username, 'Papelera')
-		
-		self.arbol.agregarElemento(self.arbol, 'Documents', 'Nueva')
-		self.arbol.agregarElemento(self.arbol, 'Documents', 'EnyScan.exe')
-		
-		self.arbol.ejecutarProfundidadPrimero(self.arbol, self.arbol.printElement)
-		
-		
 	def createLogFile(self, typeFile):
 		now = str(datetime.now())
 		now = now.replace(':','-')
 		now = now.replace(' ','_')
 		log = '{} {}.log'.format(typeFile, now)
 		return log
+	
+	def fileSystem(self):
+		
+		self.arbol.agregarElemento(self.arbol, 'Root', 'System')
+		self.arbol.agregarElemento(self.arbol, 'Root', 'User')
+		self.arbol.agregarElemento(self.arbol, 'System', 'Logs')
+		self.arbol.agregarElemento(self.arbol, 'User', self.username)
+		self.arbol.agregarElemento(self.arbol, 'Logs', self.createLogFile('Connection'), self.createLogFile('Connection')[:-4])
+		# ~ self.arbol.agregarElemento(self.arbol, 'Logs', 'Connection 29-01-2020 03-54-12.log')
+		
+		self.arbol.agregarElemento(self.arbol, self.username, 'Documents')
+		self.arbol.agregarElemento(self.arbol, self.username, 'Desktop')
+		
+		self.arbol.agregarElemento(self.arbol, 'Documents', 'New')
+		
+		binary = self.rand([0,1], random.randrange(32,81,8))
+		self.arbol.agregarElemento(self.arbol, 'Documents', 'EnyScan.exe', binary )
+		
+		self.arbol.ejecutarProfundidadPrimero(self.arbol, self.arbol.printElement)
 	
 	def validate(self, command):
 		command = command.split(' ')[0]
@@ -159,16 +164,16 @@ class Console:
 				'',
 				'Los Posibles Comandos a Utilizar Son:',
 				'',
-				'  help  com? Muestra un Mensaje de Ayuda.',
-				'             Puedes escribir el nombre de',
-				'             un comando para mas detalles.',
-				'  cd    dir  Cambia de Directorio.',
-				'  dir   name Lista los archivos y carpetas.',
-				'  exit       Cierra la Consola de Comandos',
-				'  cls        Limpia la Consola de Comandos',
+				'  help  com?  Muestra un Mensaje de Ayuda.',
+				'              Puedes escribir el nombre de',
+				'              un comando para mas detalles.',
+				'  cd    dir   Cambia de Directorio.',
+				'  ls          Lista los archivos y carpetas. ALT: dir',
+				'  exit        Cierra la Consola de Comandos',
+				'  cls         Limpia la Consola de Comandos',
+				'  cat   file  Leer Archivo como texto plano. ALT: type',
 				# ~ '  mkdir name Crea un Carpeta',
 				# ~ '  rm    file Elimina un Archivo o Carpeta',
-				# ~ '  cat   file Leer Archivo como texto plano',
 				# ~ '  con   IP   Conectar a una IP',
 				# ~ '  dc    IP   Desconectarse de una IP.',
 				''
@@ -179,7 +184,7 @@ class Console:
 		elif cnd == 'exit': self.response = ['','Cerrando...','']
 		
 		elif cnd == 'mkdir': pass
-			
+		
 		elif cnd == 'cd':
 			
 			init  = False
@@ -223,7 +228,7 @@ class Console:
 					continue
 				elif '.' in elem:
 					# ~ if elem.endswith(self.valid_ext):			# Si tiene extension, entonces no es una Carpeta.
-					self.response = ['','No es una carpeta: "'+elem+'"','']
+					self.response = ['','No es una carpeta: "'+elem+'"','', 0]
 					return self.response
 					# ~ else:
 						# ~ self.response = ['','No es una carpeta: "'+elem+'"','']
@@ -241,15 +246,15 @@ class Console:
 							temp_path.append(i)					# Se agrega la posicion del hijo para indicar en que carpeta se adentrara.
 							break
 					if not valid:
-						self.response = ['','No existe la carpeta: "'+elem+'"','']
+						self.response = ['','No existe la carpeta: "'+elem+'"','', 0]
 						break
 				else:
-					self.response = ['','No existe la carpeta: "'+elem+'"','']
+					self.response = ['','No existe la carpeta: "'+elem+'"','', 0]
 					break
 			
 			if valid: self.pathPos = temp_path
-					
-		elif cnd == 'dir':
+		
+		elif cnd == 'dir' or cnd == 'ls':
 			
 			childs = self.getChilds(self.arbol, self.pathPos)
 			
@@ -279,7 +284,63 @@ class Console:
 				
 			else:
 				self.response = ['', 'La Carpeta Esta Vacia', '']
+		
+		elif cnd == 'cat' or cnd == 'type':
+			
+			if   len(command) == 1: self.response = ['','Faltan Argumentos','', 0]
+			elif len(command) == 2:
+				command = command[1]
 				
+				if   command[0] == '"' and command[-1] == '"': command = command[1:-1]
+				elif command[0] == '"' or  command[-1] == '"':
+					self.response = None
+					return self.response
+				
+				childs = self.getChilds(self.arbol, self.pathPos)
+				for ch in childs:
+					if str(ch) == command:
+						if ch.content == 'folder':
+							self.response = ['', 'No puedes leer una Carpeta.', '', 0]
+							break
+						self.response = ['', ch.content, '']
+						break
+					else:
+						self.response = ['', 'No existe el archivo: "'+command+'"', '', 0]
+			elif len(command) > 2:
+				# ~ temp = ''
+				command = command[1:]
+				if command[0][0] == '"' and command[-1][-1] == '"':
+					
+					command = ' '.join(command)
+					command = command[1:-1]
+					
+					if '"' in command:
+						self.response = None
+						return self.response
+					
+					childs = self.getChilds(self.arbol, self.pathPos)
+					
+					for ch in childs:
+						if str(ch) == command:
+							if ch.content == 'folder':
+								self.response = ['', 'No puedes leer una Carpeta.', '', 0]
+								break
+							self.response = ['', ch.content, '']
+							break
+						else:
+							self.response = ['', 'No existe el archivo: '+command, '', 0]
+				else:
+					self.response = None
+					return self.response
+				
+			else:
+				self.response = None
+				return self.response
+			
+			if '/' in command:				# Pendiente <---- Leer archivo en carpetas de otra ubicacion.
+				self.response = None
+				return self.response
+			
 		else: pass
 		
 		return self.response
@@ -296,62 +357,13 @@ if __name__ == "__main__":
 	
 	print('\n', console.actualPath(), end=' ')
 	
-	com = 'cd Documents'
-	# ~ if console.validate(com):
+	com = 'cd Documents/'
 	res = console.execute(com)
 	res = '\n'.join(res)
-	print(com, res, '\n', console.actualPath(), end=' ')
+	print(com, '\n', res, console.actualPath(), end=' ')
 	
-	com = 'cd Nueva'
+	com = 'cat EnyScan.exe'
 	res = console.execute(com)
 	res = '\n'.join(res)
-	print(com, res, '\n', console.actualPath(), end=' ')
-	
-	com = 'cd ../../Documents/Nuevo'
-	res = console.execute(com)
-	res = '\n'.join(res)
-	print(com, res, console.actualPath(), end='\n')
-	
-	# ~ for x in range(2):
-		
-		# ~ com = 'cd ..'
-		# ~ print(com)
-		
-		# ~ res = console.execute(com)
-		# ~ res = '\n'.join(res)
-		# ~ print(res)
-		
-		# ~ print('\n', console.actualPath(), end=' ')
-		
-	# ~ for x in range(2):
-		
-		# ~ com = 'cd /'
-		# ~ print(com)
-		
-		# ~ res = console.execute(com)
-		# ~ res = '\n'.join(res)
-		# ~ print(res)
-		
-		# ~ print('\n', console.actualPath(), end=' ')
-	
-	
-	# ~ for x in range(2):
-		
-		# ~ com = 'cd ..'
-		# ~ print(com)
-		
-		# ~ res = console.execute(com)
-		# ~ res = '\n'.join(res)
-		# ~ print(res)
-		
-		# ~ print('\n', console.actualPath(), end=' ')
-		
-		# ~ com = 'cd /'
-		# ~ print(com)
-		
-		# ~ res = console.execute(com)
-		# ~ res = '\n'.join(res)
-		# ~ print(res)
-		
-		# ~ print('\n', console.actualPath(), end=' ')
+	print(com, '\n', res, console.actualPath(), end=' ')
 	
