@@ -62,6 +62,7 @@ class Console:
 		self.arbol = Arbol('Root')
 		self.username = username
 		self.sysname  = sysname
+		self.consize  = 0
 		self.response = ''
 		self.valid_ext = ('.txt', '.log', '.exe')
 		self.rand = lambda li, le: ''.join([str(random.choice(li)) for _ in range(le)])
@@ -82,7 +83,10 @@ class Console:
 			# ~ 'connect',		# Conectar a una IP.
 			# ~ 'disconnect'	# Desconectarse de una IP.
 		]
-		
+	
+	def setConSize(self, consize):
+		self.consize = consize
+	
 	def getResponse(self):
 		return self.response
 	
@@ -101,6 +105,13 @@ class Console:
 			h = raiz.hijos[x]
 			raiz = h
 		return raiz.hijos
+	
+	def splitText(self, t_c):
+		l_c = len(t_c)
+		t_r = l_c//self.consize
+		if l_c%self.consize > 0: t_r += 1
+		t_c  = [ t_c[x*self.consize:(x+1)*self.consize] for x in range(t_r) ]
+		return t_c
 	
 	def searchDir(self, raiz, _dir, x=0, l=[]):
 		t = None
@@ -139,8 +150,16 @@ class Console:
 		
 		self.arbol.agregarElemento(self.arbol, 'Documents', 'New')
 		
-		binary = self.rand([0,1], random.randrange(32,81,8))
-		self.arbol.agregarElemento(self.arbol, 'Documents', 'EnyScan.exe', binary )
+		binary = self.rand([0,1], random.randrange(128,256,8))
+		# ~ binary  = 'HolaSoyUnTextoDemasiadoLargoComoParaPoderProcesarloEnUna'
+		# ~ binary += 'SolaLineaDeComandosParaQueSsiSeMePuedaAsignarMasDeUna'
+		# ~ binary += 'LineaParaPoderMostrarmeCorrectamente.'
+		self.arbol.agregarElemento(self.arbol, 'Documents', 'Scan.exe', binary )
+		
+		# ~ binary  = 'hola soy un texto demasiado largo como para poder procesarlo en una '
+		# ~ binary += 'sola linea de comandos para que asi se me pueda asignar mas de una '
+		# ~ binary += 'linea para poder mostrarme correctamente.'
+		# ~ self.arbol.agregarElemento(self.arbol, 'Documents', 'EnyScan.txt', binary )
 		
 		self.arbol.ejecutarProfundidadPrimero(self.arbol, self.arbol.printElement)
 	

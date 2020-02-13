@@ -12,7 +12,7 @@ from win32api import GetKeyState	# python -m pip install pywin32
 from win32con import VK_CAPITAL		# python -m pip install pywin32
 
 TITULO  = 'Hack Game'
-__version__ = 'v1.1.1'
+__version__ = 'v1.1.2'
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
@@ -126,13 +126,86 @@ def clic_boton(screen, pos, rec=0):	# Detecta un Clic en las coordenadas de un b
 	
 	return False
 
+def splitText2(c_t):							# Recive la cadena temporal.		PENDIENTE!!!!
+	des = 0
+	t_c = []
+	l_c = len(c_t)							# Obtiene la longitud de caracteres.
+	t_r = l_c//pos_limit_r					# Rango temporal = cantidad de lineas en las que se dividira la cadena. 
+	
+	if l_c % pos_limit_r > 0:				# Si el residuo de la longitud de caracteres entre la cantidad limite real de caracteres en consola es mayor a 0
+		t_r += 1							# Entonces se agrega una linea mas.
+	
+	if len(c_t.strip().split(' ')) == 1:
+		# ~ print(c_t.strip().split(' '))
+		t_c = [ c_t[x*pos_limit_r:(x+1)*pos_limit_r] for x in range(t_r) ]	# Se extraen los segmentos de texto de la longitud calculada pero cortando las palabras por mitades.
+	
+	else:
+		
+		# Se extraen los segmentos de texto de la longitud calculada y pasando la ultima palabra completa a la siguiente linea.
+		for x in range(t_r):
+			c = c_t[(x*pos_limit_r)-des:((x+1)*pos_limit_r)-des]
+			cs = c.split(' ')[-1]
+			if cs != '':
+				des += len(c.split(' ')[-1])
+				c = c[:-des]
+			t_c.append(c)
+	
+	return t_c
+
+def splitText(text):
+	
+	t = []				# Lista de Fragmentos del Texto original
+	s = []				# Lista de Salida.
+	
+	while True:
+		
+		if text.endswith(text[:pos_limit_r]):				# Si el final del texto restante es igual a el texto de inicio a la posicion pos_limit_r 
+			t.append(text[:pos_limit_r])					# Se agrega a la lista de fragmentos, el fragmento final de texto.
+			break											# Se rompe el ciclo, ya que esto anterior indica que ya no hay nada que procesar de la cadena de texto.
+		
+		t.append(text[:pos_limit_r])						# Se agrega el fragemto de texto desde el inicio del texto hasta la posicion pos_limit_r
+		
+		if len(t[-1].split(' ')) == 1:						# Si el ultimo fragmento agregado solo es 1 sola cadena sin espacios, entonces
+			text = text[pos_limit_r:]						# Se corta el texto dejando desde pos_limit_r en adelante.
+		else:												# Si el ultimo fragmento si tenia espacios, entonces
+			if t[-1][0] != ' ':								# Si el ultimo fragmento de texto en su ultimo caracter NO era un espacio
+				t[-1] = t[-1].split(' ')					# Se separa el texto dividido en cada espacio 
+				text = t[-1].pop() + text[pos_limit_r:]		# la ultima palabra del ultimo fragmento de texto se saca de la lista de fragmentos y se devuelve al texto original. Esto evita que las palabras queden cortadas por mitad.
+			else:											# Si, si habia un espacio al final, la ultima palabra del texto entonces NO se considera cortada
+				text = text[pos_limit_r:]					# Entonces el fragmento de texto ya procesado, se elimina del texto original.
+	
+	for x in t:												# Por ultimo se extrae cada fragmento de texto, que se encuentra cada uno como una lista de palabras. 
+		if type(x) == list:									# Si el fragmento si es una lista
+			s.append(' '.join(x))							# Se agrega a la lista de Salida, todas las palabras del fragmento unidas de nuevo con un espacio.
+		else:												# Si no era una lista, significa que era una sola palabra
+			s.append(x)										# Se agrega tal cual a la lista de salida
+		
+	return s
+
+def normalizeListComand():		# Si al cambiar resolucion algun texto en pantalla se sale de la consola, pasa el texto sobrante a una nueva linea.
+	
+	global l_comandos
+	
+	temp = l_comandos[:]
+	t_des = 0
+	
+	for i, (com, pos) in enumerate(temp):
+		sT = splitText(com[1:])
+		if len(sT) > 1:
+			t_chr = l_comandos[i+t_des][0][0]
+			if t_chr == ' ':
+				l_comandos[i+t_des] = (t_chr+sT.pop(0), pos)
+				while len(sT) > 0:
+					t_des += 1
+					l_comandos.insert(i+t_des, (t_chr+sT.pop(0), pos))
+
 #===================================================================================================
 #===================================================================================================
 #===================================================================================================
 
 def main():
 	
-	global screen, s_res, pos_limit, l_com_lim, FUENTES, Prefijo
+	global screen, s_res, pos_limit, pos_limit_r, l_com_lim, FUENTES, Prefijo, l_comandos
 	
 	# Inicializaciones =================================================
 	
@@ -314,6 +387,8 @@ def main():
 										
 										l_com_lim = ( RESOLUCION_CMD[s_res][1]-45) // T_pix_y								# Limite de lineas en consola
 										pos_limit = ( RESOLUCION_CMD[s_res][0]-30 - (len(Prefijo)*(T_pix))) // T_pix		# Limite de letras en linea de comandos.
+										pos_limit_r = ((RESOLUCION_CMD[s_res][0]-30)//T_pix)-1								# Limite Real de letras en linea de comandos. 
+										console.setConSize(pos_limit_r)														# Se indica el limite de caracteres para consola.
 										
 										con = { 'P_x':5, 'P_y':5, 'L_x':None, 'L_y':20,
 												'T_x':RESOLUCION_CMD[s_res][0]-10, 'T_y':RESOLUCION_CMD[s_res][1]-10, 'T_m':5 }					# Dimensiones Generales para la Consola.
@@ -322,6 +397,8 @@ def main():
 										l_con = [ con['P_x']+con['T_m'], con['P_y']+con['T_y']-con['L_y']-con['T_m'], con['L_x'], con['L_y'] ]	# Linea de Consola para los comandos.
 										p_letra = [ l_con[0]+5, l_con[1]+2 ]																	# Posicion Inicial de texto.
 										c_res = False
+										
+										normalizeListComand()
 							
 						else: c_res = False
 						
@@ -389,7 +466,7 @@ def main():
 								# ~ cache_com.pop(cache_pos)		# Elimina los que sean cadenas vacias.
 								# ~ cache_pos -= 1
 							
-							Comando = cache_com[cache_pos]
+							Comando = cache_com[cache_pos][:pos_limit_r-len(Prefijo)+1]
 							p_pos = len(Comando)
 							
 							# ~ print(cache_com)
@@ -444,7 +521,7 @@ def main():
 							cache_pos = 0
 							
 							p_pos = 0
-				
+							
 				#=================================================================================
 				# Combinacion de Teclas
 				xD = False
@@ -608,6 +685,8 @@ def main():
 			pygame.draw.rect(screen, VERDE, t_con, 2)			# Margen de Consola.
 			pygame.draw.rect(screen, VERDE, l_con, 1)			# Dibuja linea de Consola.
 			
+			if p_pos > pos_limit: p_pos = pos_limit
+			
 			p_puntero = u_puntero(con, l_con, len(Prefijo), p_pos)
 			
 			if ticks < 30: pygame.draw.line(screen, COLOR['Gris'], p_puntero[0], p_puntero[1], 2)		# Dibuja el puntero en pantalla.
@@ -628,6 +707,17 @@ def main():
 						l_comandos.append((Prefijo+' '+Comando, temp_pos))
 						textos = []
 					
+					temp = textos[:]
+					for i, x in enumerate(temp):
+						if x == '' or x == 0: continue
+						else:
+							sT = splitText(x)
+							t1 = textos[:i]
+							t1.extend(sT)
+							t1.extend(textos[i+1:])
+							textos = t1
+							break
+					
 					l_comandos = add_comand(l_comandos, textos)
 					
 					if   Comando == 'exit': game_over = True
@@ -635,7 +725,7 @@ def main():
 					elif Comando.split(' ')[0] == 'cd':
 						Prefijo = console.actualPath() + ' '											# Actualiza el Path
 						pos_limit = ( RESOLUCION_CMD[s_res][0]-30 - (len(Prefijo)*(T_pix))) // T_pix	# Limite de letras en linea de comandos.
-					
+						
 				Comando = ''
 				exe = False
 			
@@ -654,7 +744,7 @@ def main():
 			
 			for i, (com, pos) in enumerate(temp):	# Dibuja la lista de comandos ejecutados.
 				
-				p_texto = [ l_con[0]+5, l_con[1] - ((len(temp)-i)*T_pix_y) -2 ]
+				p_texto = [ l_con[0]+5, l_con[1] - ((len(temp)-i)*T_pix_y) -2 ]		# Posicion del texto.
 				
 				if com: valid = console.validate(com.split(' ')[1])		# Si el comando es valido sera igual a True.
 				else: valid = True										# Si la linea esta vacia '' en automatico sera True.
@@ -674,7 +764,7 @@ def main():
 				
 			#===================================================================================================
 			# Dibuja el texto en la linea de comandos
-			dibujarTexto(Prefijo+Comando, p_letra, FUENTES[Font_def], VERDE_C)	# Dibuja lo que vas escribiendo.
+			dibujarTexto(Prefijo+Comando[:pos_limit_r-len(Prefijo)+1], p_letra, FUENTES[Font_def], VERDE_C)	# Dibuja lo que vas escribiendo.
 			
 			#===================================================================================================
 			
@@ -785,24 +875,25 @@ CARACTERES += '1234567890' + 'º\'¡+ç,.-<' + 'ª!"·$%&/()=?¿*Ç;:_>'
 CARACTERES += '\\|@#~€¬[]{} '
 
 console = Console('Eny', 'HG'+__version__)
-Prefijo = console.actualPath()+' '		# Simbolo de prefijo para comandos.
+Prefijo = console.actualPath()+' '			# Simbolo de prefijo para comandos.
 
-
-s_res     = -2			# Seleccion de Resolucion Por defecto. -2: la penultima Resolucion agregada.
-# ~ s_res     = 0			# Seleccion de Resolucion Por defecto. -2: la penultima Resolucion agregada.
-T_pix     = 7			# Tamaño de Pixeles entre cada letra en linea de comandos.
-T_pix_y   = T_pix*2		# Tamaño de Pixeles entre cada salto de linea en la linea de comandos.
-T_rep     = 3			# Tiempo de repeticion entre caracteres al dejar tecla presionada.
-Font_tam = 14						# Para hacer manipulación del tamaño de algunos textos en pantalla.
-Font_def = 'Inc-R '+str(Font_tam)	# Fuente por defecto y tamaño de Fuente.
+s_res     = -2								# Seleccion de Resolucion Por defecto. -2: la penultima Resolucion agregada.
+T_pix     = 7								# Tamaño de Pixeles entre cada letra en linea de comandos.
+T_pix_y   = T_pix*2							# Tamaño de Pixeles entre cada salto de linea en la linea de comandos.
+T_rep     = 3								# Tiempo de repeticion entre caracteres al dejar tecla presionada.
+Font_tam  = 14								# Para hacer manipulación del tamaño de algunos textos en pantalla.
+Font_def  = 'Inc-R '+str(Font_tam)			# Fuente por defecto y tamaño de Fuente.
 
 l_com_lim = ( RESOLUCION_CMD[s_res][1]-45) // T_pix_y							# Limite de lineas en consola
-pos_limit = ( RESOLUCION_CMD[s_res][0]-30 -  (len(Prefijo)*(T_pix))) // T_pix	# Limite de letras en linea de comandos.
+pos_limit = ( RESOLUCION_CMD[s_res][0]-30 - (len(Prefijo)*(T_pix))) // T_pix	# Limite de letras en linea de comandos.
+pos_limit_r = ((RESOLUCION_CMD[s_res][0]-30)//T_pix)-1							# Limite Real de letras en linea de comandos. 
+console.setConSize(pos_limit_r)													# Se indica el limite de caracteres para consola.
 
 # Variables Globales: ==================================================
 
 screen = None				# Objeto Que Crea La Ventana.
 btn_x, btn_y = 40, 40		# Proporciones de los botones.
+l_comandos = []
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
