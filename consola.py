@@ -6,7 +6,7 @@ from datetime import datetime
 #https://sites.google.com/site/programacioniiuno/temario/unidad-5---grafos/rboles?tmpl=%2Fsystem%2Fapp%2Ftemplates%2Fprint%2F&showPrintDialog=1
 
 TITULO  = 'Hack Game'
-__version__ = 'v1.1.1'
+__version__ = 'v1.1.3'
 
 class Arbol:
 	
@@ -99,7 +99,9 @@ class Console:
 		except: pass
 		return path[:-1]+'>'
 	
-	def getChilds(self, raiz, path=[]):
+	def getChilds(self, path=None, raiz=None):
+		if raiz == None: raiz = self.arbol
+		if path == None: path = self.pathPos
 		h = None
 		for x in path:
 			h = raiz.hijos[x]
@@ -227,7 +229,7 @@ class Console:
 			while '' in command: command.remove('')				# Elimina los elementos de cadena vacia '' existente.
 			
 			if init:											# Si init es True entra, si es así significa que la ruta se inicio con el caracter '/'.
-				childs = self.getChilds(self.arbol)				# Obtenemos los Archivos y Carpetas de la Carpeta Raiz.
+				childs = self.getChilds([])				# Obtenemos los Archivos y Carpetas de la Carpeta Raiz.
 				for i, ch in enumerate(childs):					# Recorremos la lista
 					if command[0] == str(ch):					# Si la primera ruta es igual a una Carpeta en la Carpeta Raiz.
 						valid = True							# Se toma como valido
@@ -239,7 +241,7 @@ class Console:
 				
 				valid = False
 				folders = []
-				ch = self.getChilds(self.arbol, temp_path)		# Obtiene la lista de Hijos en la Ruta (Path) actual.
+				ch = self.getChilds(temp_path)		# Obtiene la lista de Hijos en la Ruta (Path) actual.
 				
 				if elem == '..':
 					if temp_path: temp_path.pop()				# Si el temp_path no es una lista vacia, elimina el ultimo elemento de la lista.
@@ -273,9 +275,9 @@ class Console:
 			
 			if valid: self.pathPos = temp_path
 		
-		elif cnd == 'dir' or cnd == 'ls':
+		elif cnd == 'ls' or cnd == 'dir':
 			
-			childs = self.getChilds(self.arbol, self.pathPos)
+			childs = self.getChilds()
 			
 			if len(childs) > 0:
 				
@@ -315,7 +317,7 @@ class Console:
 					self.response = None
 					return self.response
 				
-				childs = self.getChilds(self.arbol, self.pathPos)
+				childs = self.getChilds()
 				for ch in childs:
 					if str(ch) == command:
 						if ch.content == 'folder':
@@ -337,7 +339,7 @@ class Console:
 						self.response = None
 						return self.response
 					
-					childs = self.getChilds(self.arbol, self.pathPos)
+					childs = self.getChilds()
 					
 					for ch in childs:
 						if str(ch) == command:

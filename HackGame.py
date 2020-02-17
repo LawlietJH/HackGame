@@ -12,7 +12,7 @@ from win32api import GetKeyState	# python -m pip install pywin32
 from win32con import VK_CAPITAL		# python -m pip install pywin32
 
 TITULO  = 'Hack Game'
-__version__ = 'v1.1.2'
+__version__ = 'v1.1.3'
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
@@ -126,32 +126,6 @@ def clic_boton(screen, pos, rec=0):	# Detecta un Clic en las coordenadas de un b
 	
 	return False
 
-def splitText2(c_t):							# Recive la cadena temporal.		PENDIENTE!!!!
-	des = 0
-	t_c = []
-	l_c = len(c_t)							# Obtiene la longitud de caracteres.
-	t_r = l_c//pos_limit_r					# Rango temporal = cantidad de lineas en las que se dividira la cadena. 
-	
-	if l_c % pos_limit_r > 0:				# Si el residuo de la longitud de caracteres entre la cantidad limite real de caracteres en consola es mayor a 0
-		t_r += 1							# Entonces se agrega una linea mas.
-	
-	if len(c_t.strip().split(' ')) == 1:
-		# ~ print(c_t.strip().split(' '))
-		t_c = [ c_t[x*pos_limit_r:(x+1)*pos_limit_r] for x in range(t_r) ]	# Se extraen los segmentos de texto de la longitud calculada pero cortando las palabras por mitades.
-	
-	else:
-		
-		# Se extraen los segmentos de texto de la longitud calculada y pasando la ultima palabra completa a la siguiente linea.
-		for x in range(t_r):
-			c = c_t[(x*pos_limit_r)-des:((x+1)*pos_limit_r)-des]
-			cs = c.split(' ')[-1]
-			if cs != '':
-				des += len(c.split(' ')[-1])
-				c = c[:-des]
-			t_c.append(c)
-	
-	return t_c
-
 def splitText(text):
 	
 	t = []				# Lista de Fragmentos del Texto original
@@ -198,6 +172,18 @@ def normalizeListComand():		# Si al cambiar resolucion algun texto en pantalla s
 				while len(sT) > 0:
 					t_des += 1
 					l_comandos.insert(i+t_des, (t_chr+sT.pop(0), pos))
+
+def printTFiles(t_files):
+	
+	global l_comandos
+	
+	if len(l_comandos) > 0:
+		cont = l_comandos[-1][1]+1
+		l_comandos.append((Prefijo, cont))
+	else:
+		l_comandos.append((Prefijo, 1))
+	
+	l_comandos = add_comand(l_comandos, [''] + t_files + [''])
 
 #===================================================================================================
 #===================================================================================================
@@ -315,6 +301,9 @@ def main():
 	# Cache de comandos para las teclas de Flecha Arriba y Abajo.
 	cache_com = []
 	cache_pos = 0
+	
+	t_files_ini = ''
+	t_files_pos = 0			# Posicion Temporal de Seleccion de Archivo al pulsar TAB.
 	
 	#===================================================================
 	
@@ -567,12 +556,73 @@ def main():
 					xD = True
 				
 				#=================================================================================
+				# Deteccion de Caracteres En Consola.
+				elif evento.unicode == '\t':
+					
+					if t_files_ini == '' and t_files_pos == 0:
+						
+						t_files_ini = Comando.split(' ')
+						
+						if len(t_files_ini) >= 2:
+							
+							t_files = [ ( (str(x) + ('/' if not '.' in str(x)[-5:] else ''))
+								if str(x).startswith(t_files_ini[1]) else '') for x in console.getChilds() ]
+							
+							while '' in t_files: t_files.remove('')
+					
+					if len(t_files_ini) >= 2:
+						
+						if t_files_ini[0] == 'cd':
+							
+							# Listar Carpetas de Niveles Inferiores.
+							#===========================================================
+							# ~ t_files_path = Comando.split(' ')[1].split('/')
+							# ~ while '' in t_files_path: t_files_path.remove('')
+							# ~ print([t_files_path])
+							# ~ if type(t_files_path) == list and len(t_files_path) > 1:
+								# ~ t_files = []
+							#===========================================================
+							
+							t_files = [ ( x if x.endswith('/') else '' ) for x in t_files ]
+							while '' in t_files: t_files.remove('')
+							
+						elif t_files_ini[0] == 'cat':
+							
+							t_files = [ ( x if not x.endswith('/') else '' ) for x in t_files ]
+							while '' in t_files: t_files.remove('')
+						
+						if t_files:
+							
+							if len(t_files) == 1:
+								t_name = t_files[t_files_pos]
+								if ' ' in t_name:
+									Comando = t_files_ini[0] + ' "' + t_name + '"'
+								else:
+									Comando = t_files_ini[0] + ' '  + t_name
+								p_pos = len(Comando)
+							else:
+								temp = False
+								for x in range(len(t_files[0])):
+									for y in t_files[1:]:
+										if not y.startswith(t_files[0][:x]): temp = True; break
+									if temp: x-=1; break
+								
+								if temp:
+									Comando = t_files_ini[0] + ' '  + t_files[0][:x]
+									p_pos = len(Comando)
+								
+								printTFiles(t_files)
+					
 				if vista_actual == l_vistas['Consola']:
 					if len(Comando) < pos_limit and xD == False:
 						
 						# Se actualizan los valores por si se presiono alguna de las siguientes teclas.
 						p_pos += 1
 						k_char = True
+						
+						if evento.unicode != '\t':
+							t_files_ini = ''
+							t_files_pos = 0
 						
 						#=================================================================================
 						
@@ -746,19 +796,24 @@ def main():
 				
 				p_texto = [ l_con[0]+5, l_con[1] - ((len(temp)-i)*T_pix_y) -2 ]		# Posicion del texto.
 				
-				if com: valid = console.validate(com.split(' ')[1])		# Si el comando es valido sera igual a True.
-				else: valid = True										# Si la linea esta vacia '' en automatico sera True.
+				if not com[-2:] == '> ':
+					
+					if com: valid = console.validate(com.split(' ')[1])		# Si el comando es valido sera igual a True.
+					else: valid = True										# Si la linea esta vacia '' en automatico sera True.
+					
+					# Validamos que sea un comando valido y que sus lineas correspondientes tambien se muestren como validas.
+					temp_col = VERDE_C if (valid or com[0] == ' ') else COLOR['Rojo Claro']
+					# ~ print([com[:17]], com[:17] == 'Faltan Argumentos') #
+					
+					if com[:17] == 'Faltan Argumentos' or com[:3] == 'No ': pass
+					elif valid or com[0] == ' ': pass
+					elif len(com+error) <= pos_limit+len(Prefijo)+1:
+						com = com+error
+					else:
+						com = com[:(pos_limit+len(Prefijo)-len(error)-2)]+'...'+error
 				
-				# Validamos que sea un comando valido y que sus lineas correspondientes tambien se muestren como validas.
-				temp_col = VERDE_C if (valid or com[0] == ' ') else COLOR['Rojo Claro']
-				# ~ print([com[:17]], com[:17] == 'Faltan Argumentos') #
-				
-				if com[:17] == 'Faltan Argumentos' or com[:3] == 'No ': pass
-				elif valid or com[0] == ' ': pass
-				elif len(com+error) <= pos_limit+len(Prefijo)+1:
-					com = com+error
 				else:
-					com = com[:(pos_limit+len(Prefijo)-len(error)-2)]+'...'+error
+					temp_col = VERDE_C
 				
 				dibujarTexto(com, p_texto, FUENTES[Font_def], temp_col)			# Imprime el texto en consola.
 				
