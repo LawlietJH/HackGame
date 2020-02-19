@@ -1,10 +1,15 @@
 
+# By: LawlietJH
+# Odyssey And Dystopia
+# Luvenia y Luvonne, Levanen.
+# Dynatron, Mega Drive, Avandra, Ferus Melek, Varien, Peter Gundry.
 
 from os import path, mkdir, environ
 
 from consola import Console
 
 import keyboard
+import random
 import pygame						# python -m pip install pygame
 import ctypes
 
@@ -239,18 +244,21 @@ def main():
 	pygame.mixer.init()											# Inicializa el Mesclador.
 	
 	playlist = [
-		('musica/Mega Drive - Converter.mp3',    0, {'By':'Mega Drive', 'Song':'Converter',      'Album':'Mega Drive',      'Duration':'00:06:31',
-		                                             'Date':'2013/11/18', 'Sountrack':'2',  'type':'MP3 192kbps'}),
-		('musica/Mega Drive - Source Code.mp3',  1, {'By':'Mega Drive', 'Song':'Source Code',    'Album':'199XAD',          'Duration':'00:04:53',
-		                                             'Date':'2019/10/04', 'Sountrack':'11', 'type':'MP3 192kbps'}),
-		('musica/Dynatron - Pulse Power.mp3',    2, {'By':'Dynatron',   'Song':'Pulse Power',    'Album':'Escape Velocity', 'Duration':'00:06:00',
-		                                             'Date':'2012/11/22', 'Sountrack':'8',  'type':'MP3 192kbps'}),
-		('musica/Dynatron - Vox Magnetismi.mp3', 3, {'By':'Dynatron',   'Song':'Vox Magnetismi', 'Album':'Escape Velocity', 'Duration':'00:03:46',
-		                                             'Date':'2012/11/22', 'Sountrack':'5',  'type':'MP3 192kbps'}),
+		('musica/Mega Drive - Converter.mp3',                    0, {'By':'Mega Drive', 'Song':'Converter',                     'Album':'Mega Drive',      'Duration':'00:06:31', 'Released':'2013/11/18', 'Sountrack':'2',  'Type':'MP3 192kbps'}),
+		('musica/Mega Drive - Source Code.mp3',                  1, {'By':'Mega Drive', 'Song':'Source Code',                   'Album':'199XAD',          'Duration':'00:04:53', 'Released':'2019/10/04', 'Sountrack':'11', 'Type':'MP3 192kbps'}),
+		('musica/Dynatron - Pulse Power.mp3',                    2, {'By':'Dynatron',   'Song':'Pulse Power',                   'Album':'Escape Velocity', 'Duration':'00:06:00', 'Released':'2012/11/22', 'Sountrack':'8',  'Type':'MP3 192kbps'}),
+		('musica/Dynatron - Vox Magnetismi.mp3',                 3, {'By':'Dynatron',   'Song':'Vox Magnetismi',                'Album':'Escape Velocity', 'Duration':'00:03:46', 'Released':'2012/11/22', 'Sountrack':'5',  'Type':'MP3 192kbps'}),
+		('musica/Varien - Born of Blood, Risen From Ash.mp3',    4, {'By':'Varien',     'Song':'Born of Blood, Risen From Ash', 'Album':'',                'Duration':'00:04:07', 'Released':'2019/04/05', 'Sountrack':'',   'Type':'MP3 192kbps'}),
+		('musica/Varien - Blood Hunter.mp3',                     5, {'By':'Varien',     'Song':'Blood Hunter',                  'Album':'',                'Duration':'00:03:47', 'Released':'2018/02/10', 'Sountrack':'',   'Type':'MP3 192kbps'}),
+		('musica/Varien - Of Foxes and Hounds.mp3',              6, {'By':'Varien',     'Song':'Of Foxes and Hounds',           'Album':'',                'Duration':'00:03:47', 'Released':'2018/04/02', 'Sountrack':'',   'Type':'MP3 192kbps'}),
+		('musica/Kroww - Hysteria.mp3',                          7, {'By':'Kroww',      'Song':'Hysteria',                      'Album':'',                'Duration':'00:05:14', 'Released':'2019/09/24', 'Sountrack':'',   'Type':'MP3 192kbps'}),
+		('musica/Scandroid - Thriller (Fury Weekend Remix).mp3', 8, {'By':'Scandroid',  'Song':'Thriller',                      'Album':'',                'Duration':'00:04:52', 'Released':'2018/10/15', 'Sountrack':'',   'Type':'MP3 128kbps'}),
+		('musica/Neovaii - Easily.mp3',                          9, {'By':'Neovaii',    'Song':'Easily',                        'Album':'',                'Duration':'00:04:18', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
+		('musica/Stephen - Crossfire.mp3',                      10, {'By':'Stephen',    'Song':'Crossfire',                     'Album':'',                'Duration':'00:04:31', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
 	]
 	
 	music = pygame.mixer.music									# Indicamos quien será la variable para Manipular el Soundtrack.
-	song_pos = 0
+	song_pos = random.randint(0, len(playlist)-1)
 	song_actual = playlist[song_pos][0]
 	music.load(song_actual)								# Carga el Soundtrack
 	
@@ -349,13 +357,15 @@ def main():
 		
 		if ticks % 60 == 0:
 			song_time = normalizeTime(music.get_pos())
-			print(song_time, playlist[song_pos][2]['Duration'], music.get_busy())
+			# ~ print(song_time, playlist[song_pos][2]['Duration'], music.get_busy())
 			if not music.get_busy():
-				song_pos += 1
-				song_pos = song_pos % len(playlist)
+				temp = random.randint(0, len(playlist)-1)
+				while temp == song_pos:
+					temp = random.randint(0, len(playlist)-1)
+				song_pos = temp
 				music.load(playlist[song_pos][0])
 				music.play()
-				
+		
 		ticks += 1
 		
 		# Chequeo Constante de Eventos del Teclado:
@@ -902,6 +912,15 @@ def main():
 			dibujarTexto(Prefijo+Comando[:pos_limit_r-len(Prefijo)+1], p_letra, FUENTES[Font_def], VERDE_C)	# Dibuja lo que vas escribiendo.
 			
 			#===================================================================================================
+			
+			# Imprimir los Datos de Soundtrack.
+			temp = [RESOLUCION[s_res][0]-440, RESOLUCION[s_res][1]-23, 435, 19]
+			rect_opaco(screen, temp, COLOR['Negro'], 125)
+			
+			song_data = playlist[song_pos][2]['By']+' - '+playlist[song_pos][2]['Song']
+			song_data = song_data.rjust(40)
+			dibujarTexto(song_data+'    Transcurrido: '+song_time[3:] + ' - ' + playlist[song_pos][2]['Duration'][3:],
+				[RESOLUCION[s_res][0]-440, RESOLUCION[s_res][1]-20], FUENTES['Inc-R 12'], COLOR['Verde Claro'])
 			
 		#===================================================================================================
 		elif vista_actual == l_vistas['Ajustes']:
