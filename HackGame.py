@@ -12,7 +12,7 @@ from win32api import GetKeyState	# python -m pip install pywin32
 from win32con import VK_CAPITAL		# python -m pip install pywin32
 
 TITULO  = 'Hack Game'
-__version__ = 'v1.1.3'
+__version__ = 'v1.1.4'
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
@@ -173,7 +173,18 @@ def normalizeListComand():		# Si al cambiar resolucion algun texto en pantalla s
 					t_des += 1
 					l_comandos.insert(i+t_des, (t_chr+sT.pop(0), pos))
 
-def printTFiles(t_files):
+def normalizeTime(mili):
+	
+	secs = (mili // 1000)
+	mins = (secs // 60)
+	hrs  = (mins // 60)
+	
+	time = str(hrs%24).zfill(2)+':'+str(mins%60).zfill(2)+':'+str(secs%60).zfill(2)
+	
+	return time
+
+# ~ def printTFiles(Prefijo, t_files=[]):
+def printTFiles(t_files=[]):
 	
 	global l_comandos
 	
@@ -183,7 +194,11 @@ def printTFiles(t_files):
 	else:
 		l_comandos.append((Prefijo, 1))
 	
-	l_comandos = add_comand(l_comandos, [''] + t_files + [''])
+	for x in range(len(t_files)):
+		if not '.' in t_files[x][-5:]:
+			t_files[x] += '/'
+	
+	l_comandos = add_comand(l_comandos, [''] + ['../'] + t_files + [''])
 
 #===================================================================================================
 #===================================================================================================
@@ -222,6 +237,31 @@ def main():
 	
 	pygame.init()												# Inicia El Juego.
 	pygame.mixer.init()											# Inicializa el Mesclador.
+	
+	playlist = [
+		('musica/Mega Drive - Converter.mp3',    0, {'By':'Mega Drive', 'Song':'Converter',      'Album':'Mega Drive',      'Duration':'00:06:31',
+		                                             'Date':'2013/11/18', 'Sountrack':'2',  'type':'MP3 192kbps'}),
+		('musica/Mega Drive - Source Code.mp3',  1, {'By':'Mega Drive', 'Song':'Source Code',    'Album':'199XAD',          'Duration':'00:04:53',
+		                                             'Date':'2019/10/04', 'Sountrack':'11', 'type':'MP3 192kbps'}),
+		('musica/Dynatron - Pulse Power.mp3',    2, {'By':'Dynatron',   'Song':'Pulse Power',    'Album':'Escape Velocity', 'Duration':'00:06:00',
+		                                             'Date':'2012/11/22', 'Sountrack':'8',  'type':'MP3 192kbps'}),
+		('musica/Dynatron - Vox Magnetismi.mp3', 3, {'By':'Dynatron',   'Song':'Vox Magnetismi', 'Album':'Escape Velocity', 'Duration':'00:03:46',
+		                                             'Date':'2012/11/22', 'Sountrack':'5',  'type':'MP3 192kbps'}),
+	]
+	
+	music = pygame.mixer.music									# Indicamos quien será la variable para Manipular el Soundtrack.
+	song_pos = 0
+	song_actual = playlist[song_pos][0]
+	music.load(song_actual)								# Carga el Soundtrack
+	
+	# ~ music.set_pos(60.0) # Segundos
+	
+	# ~ print(music.get_volume())
+	# ~ music.set_volume(.50)
+	# ~ print(music.get_volume())
+	music.fadeout(5000)											# Fade de Salida de 5 Segundos, disminuye el volumen en los ultimos 5 segundos.
+	# ~ music.set_endevent(pygame.USEREVENT)
+	music.play()												# -1 Repetira infinitamente la canción.
 	
 	FUENTES = {
 		   'Inc-R 18':pygame.font.Font("fuentes/Inconsolata-Regular.ttf", 18),
@@ -302,14 +342,20 @@ def main():
 	cache_com = []
 	cache_pos = 0
 	
-	t_files_ini = ''
-	t_files_pos = 0			# Posicion Temporal de Seleccion de Archivo al pulsar TAB.
-	
 	#===================================================================
 	
 	# Inicio Del Juego:
 	while game_over is False:
 		
+		if ticks % 60 == 0:
+			song_time = normalizeTime(music.get_pos())
+			print(song_time, playlist[song_pos][2]['Duration'], music.get_busy())
+			if not music.get_busy():
+				song_pos += 1
+				song_pos = song_pos % len(playlist)
+				music.load(playlist[song_pos][0])
+				music.play()
+				
 		ticks += 1
 		
 		# Chequeo Constante de Eventos del Teclado:
@@ -559,59 +605,93 @@ def main():
 				# Deteccion de Caracteres En Consola.
 				elif evento.unicode == '\t':
 					
-					if t_files_ini == '' and t_files_pos == 0:
-						
-						t_files_ini = Comando.split(' ')
-						
-						if len(t_files_ini) >= 2:
-							
-							t_files = [ ( (str(x) + ('/' if not '.' in str(x)[-5:] else ''))
-								if str(x).startswith(t_files_ini[1]) else '') for x in console.getChilds() ]
-							
-							while '' in t_files: t_files.remove('')
+					t_root = ''
+					t_files = Comando.split(' ')
 					
-					if len(t_files_ini) >= 2:
+					if len(t_files) == 2:
 						
-						if t_files_ini[0] == 'cd':
-							
-							# Listar Carpetas de Niveles Inferiores.
-							#===========================================================
-							# ~ t_files_path = Comando.split(' ')[1].split('/')
-							# ~ while '' in t_files_path: t_files_path.remove('')
-							# ~ print([t_files_path])
-							# ~ if type(t_files_path) == list and len(t_files_path) > 1:
-								# ~ t_files = []
-							#===========================================================
-							
-							t_files = [ ( x if x.endswith('/') else '' ) for x in t_files ]
-							while '' in t_files: t_files.remove('')
-							
-						elif t_files_ini[0] == 'cat':
-							
-							t_files = [ ( x if not x.endswith('/') else '' ) for x in t_files ]
-							while '' in t_files: t_files.remove('')
+						t_folders_l = t_files[1].split('/')
 						
-						if t_files:
+						if len(t_files[1]) > 0 and t_files[1][0] == '/':
+							t_path = []
+							t_root = '/'
+							t_folders_l.pop(0)
+						else:
+							t_path = console.pathPos[:]
+						
+						if len(t_folders_l) > 1:
+							for t in t_folders_l[:-1]:
+								if t == '..':
+									try: t_path.pop()
+									except: pass
+									continue
+								t_childs = console.getChilds(t_path)
+								t_ch = [ str(c) for c in t_childs]
+								try: t_path = t_path + [t_ch.index(t)]
+								except: break
+						
+						t_folder = t_folders_l[-1]
+						t_childs = console.getChilds(t_path)
+						t_childs = [ str(t) for t in t_childs]
+						if t_files[0] == 'cd':
+							t_childs = [ (c if not '.' in c[-5:] else '') for c in t_childs]
+						t_childs = [ (c if c.startswith(t_folder) else '') for c in t_childs]
+						while '' in t_childs: t_childs.remove('')
+						
+						if len(t_childs) > 1:
+							temp = False
+							temp2 = ''
+							for x in t_childs:
+								temp2 = x if len(x) > len(temp2) else temp2
 							
-							if len(t_files) == 1:
-								t_name = t_files[t_files_pos]
-								if ' ' in t_name:
-									Comando = t_files_ini[0] + ' "' + t_name + '"'
-								else:
-									Comando = t_files_ini[0] + ' '  + t_name
-								p_pos = len(Comando)
+							for x in range(len(temp2)):
+								for y in t_childs:
+									if not y.startswith(t_childs[0][:x]): temp = True; break
+								if temp: x-=1; break
+							
+							t_folders = '/'.join(t_folders_l[:-1])
+							t_folders += '/' if t_folders != '' else t_folders
+							
+							if len(t_folders) > 0:
+								if not t_folders[0] == '/':
+									t_folders = t_root + t_folders
 							else:
-								temp = False
-								for x in range(len(t_files[0])):
-									for y in t_files[1:]:
-										if not y.startswith(t_files[0][:x]): temp = True; break
-									if temp: x-=1; break
-								
-								if temp:
-									Comando = t_files_ini[0] + ' '  + t_files[0][:x]
-									p_pos = len(Comando)
-								
-								printTFiles(t_files)
+								t_folders = t_root + t_folders
+							
+							# ~ print([t_folders], 1)
+							
+							Comando = t_files[0] + ' ' + t_folders + t_childs[0][:x]
+							p_pos = len(Comando)
+							
+							# ~ printTFiles(console.getPath2(t_path), t_childs)
+							printTFiles(t_childs)
+						
+						elif len(t_childs) == 1:
+							
+							t_child = t_childs[0]
+							
+							t_folders = '/'.join(t_folders_l[:-1])
+							t_folders += '/' if t_folders != '' else t_folders
+							
+							if len(t_folders) > 0:
+								if not t_folders[0] == '/':
+									t_folders = t_root + t_folders
+							else:
+								t_folders = t_root + t_folders
+							
+							# ~ print([t_folders], 2)
+							
+							if not '.' in t_child[-5:]:
+								t_ext = '/'
+							else:
+								t_ext = ''
+								if len(t_child.split(' ')) > 1:
+									t_child = '"' + t_child + '"'
+							
+							Comando = t_files[0] + ' ' + t_folders + t_child + t_ext
+							p_pos = len(Comando)
+						
+						else: printTFiles()
 					
 				if vista_actual == l_vistas['Consola']:
 					if len(Comando) < pos_limit and xD == False:
@@ -620,9 +700,9 @@ def main():
 						p_pos += 1
 						k_char = True
 						
-						if evento.unicode != '\t':
-							t_files_ini = ''
-							t_files_pos = 0
+						# ~ if evento.unicode != '\t':
+							# ~ t_files_ini = ''
+							# ~ t_files_pos = 0
 						
 						#=================================================================================
 						

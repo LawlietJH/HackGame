@@ -6,35 +6,53 @@ from datetime import datetime
 #https://sites.google.com/site/programacioniiuno/temario/unidad-5---grafos/rboles?tmpl=%2Fsystem%2Fapp%2Ftemplates%2Fprint%2F&showPrintDialog=1
 
 TITULO  = 'Hack Game'
-__version__ = 'v1.1.3'
+__version__ = 'v1.1.4'
 
 class Arbol:
 	
-	def __init__(self, elemento, content=''):
-		self.hijos    = []
-		self.elemento = elemento
-		self.content  = content
+	def __init__(self, element, content=''):
+		self.hijos   = []
+		self.element = element
+		self.content = content
 	
 	def __str__(self):
-		return self.elemento
+		return self.element
 	
-	def agregarElemento(self, arbol, elementoPadre, elemento, content='folder'):
+	def agregarElemento(self, arbol, elementoPadre, element, content='folder'):
 		subarbol = self.buscarSubarbol(arbol, elementoPadre);
-		subarbol.hijos.append(Arbol(elemento, content))
+		subarbol.hijos.append(Arbol(element, content))
 		subarbol.hijos = self.sortChilds(subarbol)
 	
 	def sortChilds(self, arbol):
-		hijos1, hijos2 = [], []
-		hijos1 = [ (i, str(h)) for i, h in enumerate(arbol.hijos) ]
-		hijos1.sort(key=lambda x: x[1])
-		hijos2 = [ arbol.hijos[i] for i, _ in hijos1 ]
-		return hijos2
+		hijos = []
+		hijos = [ (i, str(h), 'f' if h.content == 'folder' else '')
+					for i, h in enumerate(arbol.hijos) ]
+		hijos.sort(key=lambda x: x[1])
+		
+		# Almacena solo los que son carpetas
+		hijos2 = [ (i, h if f == 'f' else '') for i, h, f in hijos ]
+		hijos2.sort(key=lambda x: x[1])
+		try:
+			while hijos2[0][1] == '': hijos2.pop(0)
+		except: pass
+		
+		# Almacena solo los que son archivos.
+		hijos3 = [ (i, h if f != 'f' else '') for i, h, f in hijos ]
+		hijos3.sort(key=lambda x: x[1])
+		try:
+			while hijos3[0][1] == '': hijos3.pop(0)
+		except: pass
+		
+		hijos = hijos2 + hijos3
+		hijos = [ arbol.hijos[i] for i, _ in hijos ]
+		
+		return hijos
 	
-	def buscarSubarbol(self, arbol, elemento):
-		if arbol.elemento == elemento:
+	def buscarSubarbol(self, arbol, element):
+		if arbol.element == element:
 			return arbol
 		for subarbol in arbol.hijos:
-			arbolBuscado = self.buscarSubarbol(subarbol, elemento)
+			arbolBuscado = self.buscarSubarbol(subarbol, element)
 			if (arbolBuscado != None):
 				return arbolBuscado
 		return None
@@ -45,7 +63,7 @@ class Arbol:
 		return 1 + max(map(self.profundidad, arbol.hijos))
 	
 	def ejecutarProfundidadPrimero(self, arbol, funcion, nvl=0):
-		funcion(arbol.elemento, nvl)
+		funcion(arbol.element+('/' if arbol.content == 'folder' else ''), nvl)
 		for hijo in arbol.hijos:
 			self.ejecutarProfundidadPrimero(hijo, funcion, nvl+1)
 	
@@ -94,10 +112,28 @@ class Console:
 		return self.list_commands
 	
 	def getPath(self, raiz, path='', x=0):
-		path += raiz.elemento + '/'
+		path += raiz.element + '/'
 		try: path = self.getPath(raiz.hijos[self.pathPos[x]], path, x+1)
 		except: pass
 		return path[:-1]+'>'
+	
+	def getPath2(self, path=None, raiz=None,):
+		if raiz == None: raiz = self.arbol
+		if path == None: path = self.pathPos
+		h = None
+		s = ''
+		print(raiz)
+		for x in path:
+			h = raiz.hijos[x]
+			raiz = h
+			s += raiz.element + ('/' if raiz.content == 'folder' else '')
+		return s
+	
+	def actualPath(self):
+		
+		self.path = self.getPath(self.arbol)
+		
+		return self.path
 	
 	def getChilds(self, path=None, raiz=None):
 		if raiz == None: raiz = self.arbol
@@ -117,19 +153,13 @@ class Console:
 	
 	def searchDir(self, raiz, _dir, x=0, l=[]):
 		t = None
-		if raiz.elemento == _dir: return l
+		if raiz.element == _dir: return l
 		l.append(0)
 		for i, h in enumerate(raiz.hijos):
 			l[x] = i
 			t = self.searchDir(h, _dir, x+1, l[:])
 			if t: break
 		return t
-	
-	def actualPath(self):
-		
-		self.path = self.getPath(self.arbol)
-		
-		return self.path
 	
 	def createLogFile(self, typeFile):
 		now = str(datetime.now())
@@ -145,18 +175,24 @@ class Console:
 		self.arbol.agregarElemento(self.arbol, 'System', 'Logs')
 		self.arbol.agregarElemento(self.arbol, 'User', self.username)
 		self.arbol.agregarElemento(self.arbol, 'Logs', self.createLogFile('Connection'), self.createLogFile('Connection')[:-4])
-		# ~ self.arbol.agregarElemento(self.arbol, 'Logs', 'Connection 29-01-2020 03-54-12.log')
+		self.arbol.agregarElemento(self.arbol, 'Logs', 'Connection 2020-01-25_01-48-26.241195.log', 'Connection 2020-01-25_01-48-26.241195')
 		
 		self.arbol.agregarElemento(self.arbol, self.username, 'Documents')
 		self.arbol.agregarElemento(self.arbol, self.username, 'Desktop')
 		
-		self.arbol.agregarElemento(self.arbol, 'Documents', 'New')
+		self.arbol.agregarElemento(self.arbol, 'Documents', 'Aewsa')
+		self.arbol.agregarElemento(self.arbol, 'Documents', 'Newsa')
+		self.arbol.agregarElemento(self.arbol, 'Documents', 'Newsb')
+		self.arbol.agregarElemento(self.arbol, 'Documents', 'Newsbb')
 		
 		binary = self.rand([0,1], random.randrange(128,256,8))
 		# ~ binary  = 'HolaSoyUnTextoDemasiadoLargoComoParaPoderProcesarloEnUna'
 		# ~ binary += 'SolaLineaDeComandosParaQueSsiSeMePuedaAsignarMasDeUna'
 		# ~ binary += 'LineaParaPoderMostrarmeCorrectamente.'
 		self.arbol.agregarElemento(self.arbol, 'Documents', 'Scan.exe', binary )
+		self.arbol.agregarElemento(self.arbol, 'Documents', 'Newsa.exe', binary )
+		self.arbol.agregarElemento(self.arbol, 'Documents', 'Newsb.exe', binary )
+		self.arbol.agregarElemento(self.arbol, 'Documents', 'Esto es de Pruebas.exe', binary )
 		
 		# ~ binary  = 'hola soy un texto demasiado largo como para poder procesarlo en una '
 		# ~ binary += 'sola linea de comandos para que asi se me pueda asignar mas de una '
@@ -210,6 +246,7 @@ class Console:
 			
 			init  = False
 			valid = False
+			vacia = True
 			temp_path = self.pathPos[:]							# Generamos una copia exacta de la lista de la Ruta Actual.
 			
 			if   len(command) == 1: command = command[0]
@@ -224,6 +261,13 @@ class Console:
 			
 			if command == ['',''] or command == ['cd']:			# Si la lista solo contiene dos cadenas vacias, significa que el comando solo indicaba '/'
 				self.pathPos = []
+				return self.response
+			
+			for c in command:
+				if c != '':
+					vacia = False
+			if vacia:
+				self.response = ['','No es una ruta valida: '+'/'.join(command),'',0]
 				return self.response
 			
 			while '' in command: command.remove('')				# Elimina los elementos de cadena vacia '' existente.
@@ -285,7 +329,7 @@ class Console:
 					
 					ch = str(child)
 					
-					if '.' in ch[-5:]:
+					if child.content != 'folder':
 						res = 'Archivo'
 						res  = res.ljust(11)
 						res += ' '+ch
@@ -293,7 +337,7 @@ class Console:
 						res = 'Carpeta'
 						res  = res.ljust(8)
 						res += str(len(child.hijos)).rjust(3)
-						res += ' '+ch
+						res += ' '+ch+'/'
 					
 					self.response.append(res)
 				
@@ -308,16 +352,34 @@ class Console:
 		
 		elif cnd == 'cat' or cnd == 'type':
 			
+			c_path = self.pathPos[:]
+			
 			if   len(command) == 1: self.response = ['','Faltan Argumentos','', 0]
 			elif len(command) == 2:
 				command = command[1]
+				
+				if len(command.split('/')) > 1:
+					command = command.split('/')
+					
+					for c in command[:-1]:
+						if c == '..':
+							try: c_path.pop()
+							except: pass
+							continue
+						try:
+							ch = [ str(c) for c in self.getChilds(c_path)]
+							c_path = c_path + [ch.index(c)]
+						except:
+							self.response = ['','Comando Invalido','', 0]
+							return self.response
+					command = command[-1]
 				
 				if   command[0] == '"' and command[-1] == '"': command = command[1:-1]
 				elif command[0] == '"' or  command[-1] == '"':
 					self.response = None
 					return self.response
 				
-				childs = self.getChilds()
+				childs = self.getChilds(c_path)
 				for ch in childs:
 					if str(ch) == command:
 						if ch.content == 'folder':
@@ -330,16 +392,33 @@ class Console:
 			elif len(command) > 2:
 				# ~ temp = ''
 				command = command[1:]
-				if command[0][0] == '"' and command[-1][-1] == '"':
+				command = ' '.join(command)
+				
+				if len(command.split('/')) > 1:
+					command = command.split('/')
 					
-					command = ' '.join(command)
+					for c in command[:-1]:
+						if c == '..':
+							try: c_path.pop()
+							except: pass
+							continue
+						try:
+							ch = [ str(c) for c in self.getChilds(c_path)]
+							c_path = c_path + [ch.index(c)]
+						except:
+							self.response = ['','Comando Invalido','', 0]
+							return self.response
+					command = command[-1]
+				
+				if command[0] == '"' and command[-1] == '"':
+					
 					command = command[1:-1]
 					
 					if '"' in command:
 						self.response = None
 						return self.response
 					
-					childs = self.getChilds()
+					childs = self.getChilds(c_path)
 					
 					for ch in childs:
 						if str(ch) == command:
@@ -383,8 +462,5 @@ if __name__ == "__main__":
 	res = '\n'.join(res)
 	print(com, '\n', res, console.actualPath(), end=' ')
 	
-	com = 'cat EnyScan.exe'
-	res = console.execute(com)
-	res = '\n'.join(res)
-	print(com, '\n', res, console.actualPath(), end=' ')
+	console.getPath2([1,0])
 	
