@@ -1,12 +1,13 @@
 
+# By: LawlietJH
+# Odyssey in Dystopia
+
 import random
 import operator
 from datetime import datetime
 
-#https://sites.google.com/site/programacioniiuno/temario/unidad-5---grafos/rboles?tmpl=%2Fsystem%2Fapp%2Ftemplates%2Fprint%2F&showPrintDialog=1
-
-TITULO  = 'Hack Game'
-__version__ = 'v1.1.4'
+TITULO  = 'Odyssey in Dystopia'
+__version__ = 'v1.1.5'
 
 class Arbol:
 	
@@ -18,8 +19,8 @@ class Arbol:
 	def __str__(self):
 		return self.element
 	
-	def agregarElemento(self, arbol, elementoPadre, element, content='folder'):
-		subarbol = self.buscarSubarbol(arbol, elementoPadre);
+	def agregarElemento(self, elementoPadre, element, content='folder'):
+		subarbol = self.buscarSubarbol(elementoPadre);
 		subarbol.hijos.append(Arbol(element, content))
 		subarbol.hijos = self.sortChilds(subarbol)
 	
@@ -48,11 +49,12 @@ class Arbol:
 		
 		return hijos
 	
-	def buscarSubarbol(self, arbol, element):
+	def buscarSubarbol(self, element, arbol=None):
+		if arbol == None: arbol = self
 		if arbol.element == element:
 			return arbol
 		for subarbol in arbol.hijos:
-			arbolBuscado = self.buscarSubarbol(subarbol, element)
+			arbolBuscado = self.buscarSubarbol(element, subarbol)
 			if (arbolBuscado != None):
 				return arbolBuscado
 		return None
@@ -83,7 +85,8 @@ class Console:
 		self.consize  = 0
 		self.response = ''
 		self.valid_ext = ('.txt', '.log', '.exe')
-		self.rand = lambda li, le: ''.join([str(random.choice(li)) for _ in range(le)])
+		self.rand   = lambda li, le: ''.join([str(random.choice(li)) for _ in range(le)])
+		self.binary = lambda ini=512, fin=1024: self.rand([0,1], random.randrange(ini, fin, 8))
 		self.fileSystem()
 		self.pathPos = self.searchDir(self.arbol, self.username)
 		self.path = self.getPath(self.arbol)
@@ -117,17 +120,18 @@ class Console:
 		except: pass
 		return path[:-1]+'>'
 	
-	def getPath2(self, path=None, raiz=None,):
+	def getPath2(self, path=None, extra='', raiz=None,):
 		if raiz == None: raiz = self.arbol
 		if path == None: path = self.pathPos
 		h = None
 		s = ''
-		print(raiz)
+		# ~ print(raiz)
 		for x in path:
+			# ~ if x < 0: x += len(raiz.hijos)	# Si hay negativo se obtiene la posicion de la lista invertida.
 			h = raiz.hijos[x]
 			raiz = h
 			s += raiz.element + ('/' if raiz.content == 'folder' else '')
-		return s
+		return 'Root/' + s + extra
 	
 	def actualPath(self):
 		
@@ -170,34 +174,34 @@ class Console:
 	
 	def fileSystem(self):
 		
-		self.arbol.agregarElemento(self.arbol, 'Root', 'System')
-		self.arbol.agregarElemento(self.arbol, 'Root', 'User')
-		self.arbol.agregarElemento(self.arbol, 'System', 'Logs')
-		self.arbol.agregarElemento(self.arbol, 'User', self.username)
-		self.arbol.agregarElemento(self.arbol, 'Logs', self.createLogFile('Connection'), self.createLogFile('Connection')[:-4])
-		self.arbol.agregarElemento(self.arbol, 'Logs', 'Connection 2020-01-25_01-48-26.241195.log', 'Connection 2020-01-25_01-48-26.241195')
+		self.arbol.agregarElemento('Root', 'System')
+		self.arbol.agregarElemento('Root', 'User')
+		self.arbol.agregarElemento('Root', 'boot.ini', self.binary())
+		self.arbol.agregarElemento('System', 'Logs')
+		self.arbol.agregarElemento('User', self.username)
+		self.arbol.agregarElemento('Logs', self.createLogFile('Connection'), self.createLogFile('Connection')[:-4])
+		self.arbol.agregarElemento('Logs', 'Connection 2020-01-25_01-48-26.241195.log', 'Connection 2020-01-25_01-48-26.241195')
 		
-		self.arbol.agregarElemento(self.arbol, self.username, 'Documents')
-		self.arbol.agregarElemento(self.arbol, self.username, 'Desktop')
+		self.arbol.agregarElemento(self.username, 'Documents')
+		self.arbol.agregarElemento(self.username, 'Desktop')
 		
-		self.arbol.agregarElemento(self.arbol, 'Documents', 'Aewsa')
-		self.arbol.agregarElemento(self.arbol, 'Documents', 'Newsa')
-		self.arbol.agregarElemento(self.arbol, 'Documents', 'Newsb')
-		self.arbol.agregarElemento(self.arbol, 'Documents', 'Newsbb')
+		self.arbol.agregarElemento('Documents', 'Aewsa')
+		self.arbol.agregarElemento('Documents', 'Newsa')
+		self.arbol.agregarElemento('Documents', 'Newsb')
+		self.arbol.agregarElemento('Documents', 'Newsbb')
 		
-		binary = self.rand([0,1], random.randrange(128,256,8))
 		# ~ binary  = 'HolaSoyUnTextoDemasiadoLargoComoParaPoderProcesarloEnUna'
 		# ~ binary += 'SolaLineaDeComandosParaQueSsiSeMePuedaAsignarMasDeUna'
 		# ~ binary += 'LineaParaPoderMostrarmeCorrectamente.'
-		self.arbol.agregarElemento(self.arbol, 'Documents', 'Scan.exe', binary )
-		self.arbol.agregarElemento(self.arbol, 'Documents', 'Newsa.exe', binary )
-		self.arbol.agregarElemento(self.arbol, 'Documents', 'Newsb.exe', binary )
-		self.arbol.agregarElemento(self.arbol, 'Documents', 'Esto es de Pruebas.exe', binary )
+		self.arbol.agregarElemento('Documents', 'Scan.exe', self.binary())
+		self.arbol.agregarElemento('Documents', 'Newsa.exe', self.binary())
+		self.arbol.agregarElemento('Documents', 'Newsb.exe', self.binary())
+		self.arbol.agregarElemento('Documents', 'Esto es de Pruebas.exe', self.binary())
 		
 		# ~ binary  = 'hola soy un texto demasiado largo como para poder procesarlo en una '
 		# ~ binary += 'sola linea de comandos para que asi se me pueda asignar mas de una '
 		# ~ binary += 'linea para poder mostrarme correctamente.'
-		# ~ self.arbol.agregarElemento(self.arbol, 'Documents', 'EnyScan.txt', binary )
+		# ~ self.arbol.agregarElemento('Documents', 'EnyScan.txt', binary )
 		
 		self.arbol.ejecutarProfundidadPrimero(self.arbol, self.arbol.printElement)
 	
@@ -460,7 +464,7 @@ if __name__ == "__main__":
 	com = 'cd Documents/'
 	res = console.execute(com)
 	res = '\n'.join(res)
-	print(com, '\n', res, console.actualPath(), end=' ')
+	print(com, '\n', res, console.actualPath())
 	
-	console.getPath2([1,0])
+	print('Buscado:', console.getPath2([1,0,1,-1], '> '))
 	

@@ -1,6 +1,6 @@
 
 # By: LawlietJH
-# Odyssey And Dystopia
+# Odyssey in Dystopia
 # Luvenia y Luvonne, Levanen.
 # Dynatron, Mega Drive, Avandra, Ferus Melek, Varien, Peter Gundry.
 
@@ -12,12 +12,13 @@ import keyboard
 import random
 import pygame						# python -m pip install pygame
 import ctypes
+# ~ import math
 
 from win32api import GetKeyState	# python -m pip install pywin32
 from win32con import VK_CAPITAL		# python -m pip install pywin32
 
-TITULO  = 'Hack Game'
-__version__ = 'v1.1.4'
+TITULO  = 'Odyssey in Dystopia'		# Nombre
+__version__ = 'v1.1.5'				# Version
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
@@ -188,8 +189,7 @@ def normalizeTime(mili):
 	
 	return time
 
-# ~ def printTFiles(Prefijo, t_files=[]):
-def printTFiles(t_files=[]):
+def printTFiles(Prefijo, t_files=[]):
 	
 	global l_comandos
 	
@@ -244,17 +244,18 @@ def main():
 	pygame.mixer.init()											# Inicializa el Mesclador.
 	
 	playlist = [
-		('musica/Mega Drive - Converter.mp3',                    0, {'By':'Mega Drive', 'Song':'Converter',                     'Album':'Mega Drive',      'Duration':'00:06:31', 'Released':'2013/11/18', 'Sountrack':'2',  'Type':'MP3 192kbps'}),
-		('musica/Mega Drive - Source Code.mp3',                  1, {'By':'Mega Drive', 'Song':'Source Code',                   'Album':'199XAD',          'Duration':'00:04:53', 'Released':'2019/10/04', 'Sountrack':'11', 'Type':'MP3 192kbps'}),
-		('musica/Dynatron - Pulse Power.mp3',                    2, {'By':'Dynatron',   'Song':'Pulse Power',                   'Album':'Escape Velocity', 'Duration':'00:06:00', 'Released':'2012/11/22', 'Sountrack':'8',  'Type':'MP3 192kbps'}),
-		('musica/Dynatron - Vox Magnetismi.mp3',                 3, {'By':'Dynatron',   'Song':'Vox Magnetismi',                'Album':'Escape Velocity', 'Duration':'00:03:46', 'Released':'2012/11/22', 'Sountrack':'5',  'Type':'MP3 192kbps'}),
-		('musica/Varien - Born of Blood, Risen From Ash.mp3',    4, {'By':'Varien',     'Song':'Born of Blood, Risen From Ash', 'Album':'',                'Duration':'00:04:07', 'Released':'2019/04/05', 'Sountrack':'',   'Type':'MP3 192kbps'}),
-		('musica/Varien - Blood Hunter.mp3',                     5, {'By':'Varien',     'Song':'Blood Hunter',                  'Album':'',                'Duration':'00:03:47', 'Released':'2018/02/10', 'Sountrack':'',   'Type':'MP3 192kbps'}),
-		('musica/Varien - Of Foxes and Hounds.mp3',              6, {'By':'Varien',     'Song':'Of Foxes and Hounds',           'Album':'',                'Duration':'00:03:47', 'Released':'2018/04/02', 'Sountrack':'',   'Type':'MP3 192kbps'}),
-		('musica/Kroww - Hysteria.mp3',                          7, {'By':'Kroww',      'Song':'Hysteria',                      'Album':'',                'Duration':'00:05:14', 'Released':'2019/09/24', 'Sountrack':'',   'Type':'MP3 192kbps'}),
-		('musica/Scandroid - Thriller (Fury Weekend Remix).mp3', 8, {'By':'Scandroid',  'Song':'Thriller',                      'Album':'',                'Duration':'00:04:52', 'Released':'2018/10/15', 'Sountrack':'',   'Type':'MP3 128kbps'}),
-		('musica/Neovaii - Easily.mp3',                          9, {'By':'Neovaii',    'Song':'Easily',                        'Album':'',                'Duration':'00:04:18', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
-		('musica/Stephen - Crossfire.mp3',                      10, {'By':'Stephen',    'Song':'Crossfire',                     'Album':'',                'Duration':'00:04:31', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
+		('musica/Mega Drive - Converter.mp3',                    0, {'By':'Mega Drive', 'Song':'Converter',                     'Album':'Mega Drive',       'Duration':'00:06:31', 'Released':'2013/11/18', 'Sountrack':'2',  'Type':'MP3 192kbps'}),
+		('musica/Mega Drive - Source Code.mp3',                  1, {'By':'Mega Drive', 'Song':'Source Code',                   'Album':'199XAD',           'Duration':'00:04:53', 'Released':'2019/10/04', 'Sountrack':'11', 'Type':'MP3 192kbps'}),
+		('musica/Mega Drive - Seas Of Infinity.mp3',             2, {'By':'Mega Drive', 'Song':'Seas Of Infinity',              'Album':'Seas Of Infinity', 'Duration':'00:02:08', 'Released':'2017/05/18', 'Sountrack':'1',  'Type':'MP3 192kbps'}),
+		('musica/Dynatron - Pulse Power.mp3',                    3, {'By':'Dynatron',   'Song':'Pulse Power',                   'Album':'Escape Velocity',  'Duration':'00:06:00', 'Released':'2012/11/22', 'Sountrack':'8',  'Type':'MP3 192kbps'}),
+		('musica/Dynatron - Vox Magnetismi.mp3',                 4, {'By':'Dynatron',   'Song':'Vox Magnetismi',                'Album':'Escape Velocity',  'Duration':'00:03:46', 'Released':'2012/11/22', 'Sountrack':'5',  'Type':'MP3 192kbps'}),
+		('musica/Varien - Born of Blood, Risen From Ash.mp3',    5, {'By':'Varien',     'Song':'Born of Blood, Risen From Ash', 'Album':'',                 'Duration':'00:04:07', 'Released':'2019/04/05', 'Sountrack':'',   'Type':'MP3 192kbps'}),
+		('musica/Varien - Blood Hunter.mp3',                     6, {'By':'Varien',     'Song':'Blood Hunter',                  'Album':'',                 'Duration':'00:03:47', 'Released':'2018/02/10', 'Sountrack':'',   'Type':'MP3 192kbps'}),
+		('musica/Varien - Of Foxes and Hounds.mp3',              7, {'By':'Varien',     'Song':'Of Foxes and Hounds',           'Album':'',                 'Duration':'00:03:47', 'Released':'2018/04/02', 'Sountrack':'',   'Type':'MP3 192kbps'}),
+		('musica/Kroww - Hysteria.mp3',                          8, {'By':'Kroww',      'Song':'Hysteria',                      'Album':'',                 'Duration':'00:05:14', 'Released':'2019/09/24', 'Sountrack':'',   'Type':'MP3 192kbps'}),
+		('musica/Scandroid - Thriller (Fury Weekend Remix).mp3', 9, {'By':'Scandroid',  'Song':'Thriller',                      'Album':'',                 'Duration':'00:04:52', 'Released':'2018/10/15', 'Sountrack':'',   'Type':'MP3 128kbps'}),
+		('musica/Neovaii - Easily.mp3',                         10, {'By':'Neovaii',    'Song':'Easily',                        'Album':'',                 'Duration':'00:04:18', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
+		('musica/Stephen - Crossfire.mp3',                      11, {'By':'Stephen',    'Song':'Crossfire',                     'Album':'',                 'Duration':'00:04:31', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
 	]
 	
 	music = pygame.mixer.music									# Indicamos quien será la variable para Manipular el Soundtrack.
@@ -287,11 +288,13 @@ def main():
 	# Variables ========================================================
 	
 	l_vistas = {
+			'Login':   0,
 			'Consola': 1,
-			'Ajustes': 2
+			'Ajustes': 2,
 		}
 	
 	vista_actual = l_vistas['Consola']	# Vista Actual.
+	# ~ vista_actual = l_vistas['Login']	# Vista Inicial.
 	
 	game_over = False				# Variable Que Permite indicar si se termino el juego o no.
 	clock = pygame.time.Clock()		# Obtiener El Tiempo para pasar la cantidad de FPS más adelante.
@@ -342,13 +345,24 @@ def main():
 	s_full  = False			# Indica si esta la Pantalla Completa activada.
 	s_fullF = False			# Indica si se tomo una captura de pantalla.
 	s_shot  = False			# Indica si se tomo una captura de pantalla.
+	s_song_vol = False		# Indica si se intenta subir o bajar el volumen.
 	
 	s_full_ticks = 0				# Indica el tiempo en ticks que se mostrara un texto.
 	s_shot_ticks = 0				# Indica el tiempo en ticks que se mostrara un texto.
+	s_song_vol_ticks = 0			# Indica el tiempo en ticks que se mostrara un texto.
 	
 	# Cache de comandos para las teclas de Flecha Arriba y Abajo.
 	cache_com = []
 	cache_pos = 0
+	
+	song_stop = False
+	song_break = 0
+	song_vol = 20
+	song_vol_pres_min = False
+	song_vol_pres_plus = False
+	song_vol_mute = False
+	
+	music.set_volume(song_vol/100)
 	
 	#===================================================================
 	
@@ -357,14 +371,18 @@ def main():
 		
 		if ticks % 60 == 0:
 			song_time = normalizeTime(music.get_pos())
-			# ~ print(song_time, playlist[song_pos][2]['Duration'], music.get_busy())
+			# ~ print(song_time)
 			if not music.get_busy():
-				temp = random.randint(0, len(playlist)-1)
-				while temp == song_pos:
+				if song_break > 2:
 					temp = random.randint(0, len(playlist)-1)
-				song_pos = temp
-				music.load(playlist[song_pos][0])
-				music.play()
+					while temp == song_pos:
+						temp = random.randint(0, len(playlist)-1)
+					song_pos = temp
+					music.load(playlist[song_pos][0])
+					music.fadeout(5000)
+					music.play()
+				else:
+					song_break += 1
 		
 		ticks += 1
 		
@@ -466,10 +484,11 @@ def main():
 			#=================================================================================
 			
 			elif evento.type == pygame.KEYDOWN:		# Manipulación del Teclado.
-				if vista_actual == l_vistas['Consola']:
-					# Al presionar cualquier tecla.
-					k_down = True
-					k_wait = 1
+				
+				# ~ if vista_actual == l_vistas['Consola']:
+				# Al presionar cualquier tecla.
+				k_down = True
+				k_wait = 1
 				
 				#=================================================================================
 				
@@ -673,8 +692,8 @@ def main():
 							Comando = t_files[0] + ' ' + t_folders + t_childs[0][:x]
 							p_pos = len(Comando)
 							
-							# ~ printTFiles(console.getPath2(t_path), t_childs)
-							printTFiles(t_childs)
+							printTFiles(console.getPath2(t_path, '> '), t_childs)
+							# ~ printTFiles(t_childs)
 						
 						elif len(t_childs) == 1:
 							
@@ -701,8 +720,81 @@ def main():
 							Comando = t_files[0] + ' ' + t_folders + t_child + t_ext
 							p_pos = len(Comando)
 						
-						else: printTFiles()
+						else: printTFiles(console.getPath2(t_path, '> '))
+				
+				# Ctrl + 'J': Cancion Anterior
+				elif evento.key == pygame.K_j and evento.mod == 64:			# mod = 64 = Ctrl
+					song_pos = (song_pos-1) % len(playlist)
+					music.stop()
+					music.load(playlist[song_pos][0])
+					music.fadeout(5000)
+					music.play()
 					
+				# Ctrl + 'L': Cancion Siguiente
+				elif evento.key == pygame.K_l and evento.mod == 64:			# mod = 64 = Ctrl
+					song_pos = (song_pos+1) % len(playlist)
+					music.stop()
+					music.load(playlist[song_pos][0])
+					music.fadeout(5000)
+					music.play()
+					
+				# Ctrl + 'K': Pausa
+				elif evento.key == pygame.K_k and evento.mod == 64:			# mod = 64 = Ctrl
+					if song_stop:
+						song_stop = False
+						music.unpause()
+					else:
+						song_stop = True
+						music.pause()
+					
+				# Ctrl + '-': Volumen - 1
+				elif evento.key == 47 and evento.mod == 64:			# mod = 64 = Ctrl
+					if song_vol > 0: song_vol -= 1
+					music.set_volume(song_vol/100)
+					s_song_vol = True
+					s_song_vol_ticks = 0
+					song_vol_pres_min = True
+					
+				# Ctrl + '+': Volumen + 1
+				elif evento.key == 93 and evento.mod == 64:			# mod = 64 = Ctrl
+					if song_vol < 100: song_vol += 1
+					music.set_volume(song_vol/100)
+					s_song_vol = True
+					s_song_vol_ticks = 0
+					song_vol_pres_plus = True
+					
+				# Ctrl + Shift + M: Mute
+				elif evento.key == 109 and evento.mod == 65:		# mod = 65 = Ctrl+Shift
+					song_vol = 0
+					music.set_volume(song_vol/100)
+					s_song_vol = True
+					s_song_vol_ticks = 0
+					song_vol_pres_plus = True
+					
+				# Ctrl + Shift + '-': Volumen - 10
+				elif evento.key == 47 and evento.mod == 65:			# mod = 64 = Ctrl
+					if song_vol > 0: song_vol -= 10
+					if song_vol < 0: song_vol = 0
+					music.set_volume(song_vol/100)
+					s_song_vol = True
+					s_song_vol_ticks = 0
+					song_vol_pres_min = True
+					
+				# Ctrl + Shift + '+': Volumen + 10
+				elif evento.key == 93 and evento.mod == 65:			# mod = 64 = Ctrl
+					if song_vol < 100: song_vol += 10
+					if song_vol > 100: song_vol = 100
+					music.set_volume(song_vol/100)
+					s_song_vol = True
+					s_song_vol_ticks = 0
+					song_vol_pres_plus = True
+					
+				# Ctrl + Shift + 'L': Limpiar Pantalla
+				elif evento.key == 108 and evento.mod == 65:			# mod = 64 = Ctrl
+					l_comandos = []
+					
+				# ~ print(evento)
+				
 				if vista_actual == l_vistas['Consola']:
 					if len(Comando) < pos_limit and xD == False:
 						
@@ -728,6 +820,10 @@ def main():
 				#=================================================================================
 				
 			elif evento.type == pygame.KEYUP:
+				
+				song_vol_pres_min = False
+				song_vol_pres_plus = False
+				
 				if vista_actual == l_vistas['Consola']:
 					# Al soltar cualquier tecla.
 					k_down = False
@@ -749,10 +845,11 @@ def main():
 		#=====================================================================================================================================================
 		#=====================================================================================================================================================
 		
+		# Logica de Linea de Comandos
 		if vista_actual == l_vistas['Consola']:
-			# Logica de Linea de Comandos
 			if k_down:
-				if not (k_wait > 0 and k_wait < 30) and len(Comando) > 0 and p_pos < pos_limit:
+				if not (k_wait > 0 and k_wait < 30) \
+				and len(Comando) > 0 and p_pos < pos_limit:
 					# ~ print(Comando)
 					if (k_wait % T_rep) == 0 and Comando[-1] in CARACTERES:
 						if k_back:
@@ -786,6 +883,24 @@ def main():
 									p_pos += 1
 				
 				k_wait += 1
+		
+		# Aumento de volumen, cuando se deja presionado
+		if k_down:
+			# Se espera 3/4 de segundo.
+			if not (k_wait > 0 and k_wait < 45) \
+			and (song_vol_pres_min or song_vol_pres_plus) \
+			and (song_vol > 0 and song_vol < 100):
+				if k_wait % 2 == 0:
+					print(song_vol_pres_min, song_vol_pres_plus)
+					if song_vol_pres_min: song_vol -= 1
+					elif song_vol_pres_plus: song_vol += 1
+					
+					s_song_vol = True
+					s_song_vol_ticks = 0
+					
+					music.set_volume(song_vol/100)
+				
+			k_wait += 1
 		
 		#=====================================================================================================================================================
 		#=====================================================================================================================================================
@@ -832,7 +947,8 @@ def main():
 			if ticks < 30: pygame.draw.line(screen, COLOR['Gris'], p_puntero[0], p_puntero[1], 2)		# Dibuja el puntero en pantalla.
 			
 			temp_y, temp_x = t_con[1], t_con[2]
-			dibujarTexto('Consola HG'+__version__, [temp_x-100, temp_y+1], FUENTES['Inc-R 12'], VERDE_C)
+			temp = 'Consola Odin.Dis_'+__version__
+			dibujarTexto(temp, [temp_x-(len(temp)*6), temp_y+2], FUENTES['Inc-R 12'], VERDE_C)
 			
 			#===================================================================================================
 				
@@ -887,7 +1003,7 @@ def main():
 				p_texto = [ l_con[0]+5, l_con[1] - ((len(temp)-i)*T_pix_y) -2 ]		# Posicion del texto.
 				
 				if not com[-2:] == '> ':
-					
+					print([com])
 					if com: valid = console.validate(com.split(' ')[1])		# Si el comando es valido sera igual a True.
 					else: valid = True										# Si la linea esta vacia '' en automatico sera True.
 					
@@ -910,24 +1026,14 @@ def main():
 			#===================================================================================================
 			# Dibuja el texto en la linea de comandos
 			dibujarTexto(Prefijo+Comando[:pos_limit_r-len(Prefijo)+1], p_letra, FUENTES[Font_def], VERDE_C)	# Dibuja lo que vas escribiendo.
-			
 			#===================================================================================================
-			
-			# Imprimir los Datos de Soundtrack.
-			temp = [RESOLUCION[s_res][0]-440, RESOLUCION[s_res][1]-23, 435, 19]
-			rect_opaco(screen, temp, COLOR['Negro'], 125)
-			
-			song_data = playlist[song_pos][2]['By']+' - '+playlist[song_pos][2]['Song']
-			song_data = song_data.rjust(40)
-			dibujarTexto(song_data+'    Transcurrido: '+song_time[3:] + ' - ' + playlist[song_pos][2]['Duration'][3:],
-				[RESOLUCION[s_res][0]-440, RESOLUCION[s_res][1]-20], FUENTES['Inc-R 12'], COLOR['Verde Claro'])
-			
+		
 		#===================================================================================================
 		elif vista_actual == l_vistas['Ajustes']:
 			
 			# Dibuja los textos en pantalla.
-			pygame.draw.rect(screen, VERDE, [int(RESOLUCION[s_res][0]*.5)-5, 60, 250, 20], 1)
-			dibujarTexto('Tiempo Transcurrido: '+str(segundos), [int(RESOLUCION[s_res][0]*.5), 60], FUENTES['Inc-R 18'], VERDE_C)
+			pygame.draw.rect(screen, VERDE, [int(RESOLUCION[s_res][0]*.5)-5, 60, 275, 20], 1)
+			dibujarTexto('Tiempo Transcurrido: '+normalizeTime(segundos*1000), [int(RESOLUCION[s_res][0]*.5), 60], FUENTES['Inc-R 18'], VERDE_C)
 			
 			v_tamX, v_tamY = 110, 30
 			temp_x, temp_y = 25, 60
@@ -951,12 +1057,26 @@ def main():
 					dibujarTexto(temp_texto, [temp_x+120, temp_y+(v_tamY*i)], FUENTES['Inc-R 18'], VERDE_C)			# Imprime el texto.
 		
 		#===================================================================================================
+		
+		# Imprimir los Datos de Soundtrack.
+		temp = [RESOLUCION[s_res][0]-440, RESOLUCION[s_res][1]-23, 435, 19]
+		rect_opaco(screen, temp, COLOR['Negro'], 125)
+		
+		song_data = playlist[song_pos][2]['By']+' - '+playlist[song_pos][2]['Song']
+		song_data = song_data.rjust(40)
+		temp = song_time[3:] if not song_time[3:] == '59:59' else '00:00'
+		dibujarTexto(song_data+'    Transcurrido: '+ temp + ' - ' + playlist[song_pos][2]['Duration'][3:],
+			[RESOLUCION[s_res][0]-440, RESOLUCION[s_res][1]-20], FUENTES['Inc-R 12'], COLOR['Verde Claro'])
+		
+		#===================================================================================================
+		
 		# Dibuja en Pantalla un mensaje cuando se toma una Captura.
 		if s_shot:
 			s_shot_ticks = dibujarTextoTemporal(s_shot_ticks, 'Captura de Pantalla', 77)
 			if s_shot_ticks == 0:
 				s_shot = False
 		
+		# Dibuja en Pantalla un mensaje cuando se pone en pantalla completa.
 		elif s_full and s_full_ticks < 300:
 			if s_fullF:
 				s_full_ticks = dibujarTextoTemporal(s_full_ticks, 'No Puedes Salir de Pantalla Completa Con la Resolucion Máxima', 300, False)
@@ -964,7 +1084,13 @@ def main():
 					s_fullF = False
 			else:
 				s_full_ticks = dibujarTextoTemporal(s_full_ticks, 'Presione Ctrl+F o F11 Para Salir de Pantalla Completa', 300, False)
-			
+		
+		# Dibuja en Pantalla un mensaje cuando se modifica el volumen.
+		elif s_song_vol:
+			s_song_vol_ticks = dibujarTextoTemporal(s_song_vol_ticks, 'Volumen: '+str(song_vol)+'%'+(' Mute' if song_vol == 0 else ''), 50)
+			if s_song_vol_ticks == 0:
+				s_song_vol = False
+		
 		#===================================================================================================
 		#===================================================================================================
 		#===================================================================================================
