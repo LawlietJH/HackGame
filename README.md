@@ -11,8 +11,9 @@ Atualmente este proyecto se encuentra en fase de Desarrollo, con la implementaci
 ### Combinación de Teclas Disponibles:
 
 * Esc: Para Cerrar el Juego.
+* F11: Poner/Quitar Pantalla Completa.
+* Ctrl + F: Poner/Quitar Pantalla Completa.
 * Ctrl + P: Captura de Pantalla.
-* Ctrl + F: Pantalla Completa.
 * Ctrl + J: Poner Canción Anterior.
 * Ctrl + K: Pausar/Continuar Canción.
 * Ctrl + L: Poner Canción Siguiente.
