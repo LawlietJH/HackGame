@@ -1,4 +1,4 @@
-# HackGame
+# Odyssey in Dystopia.
 
 Juego emulador de consola de comandos.
 
