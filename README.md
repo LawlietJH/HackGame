@@ -1,4 +1,4 @@
-# Odyssey in Dystopia. v1.1.5
+# Odyssey in Dystopia. v1.1.7
 
 ## Juego emulador de consola de comandos.
 
@@ -47,3 +47,5 @@ Atualmente este proyecto se encuentra en fase de Desarrollo, con la implementaci
 | Stephen - Crossfire                       |   4:31   |
 
 ![OdinDis](capturas/Odin_Dis.jpg "Odyssey in Dystopia v1.1.5")
+![Atajos](capturas/Atajos.jpg "Atajos")
+![Ajustes](capturas/Ajustes.jpg "Ajustes")
