@@ -18,7 +18,7 @@ from win32api import GetKeyState	# python -m pip install pywin32
 from win32con import VK_CAPITAL		# python -m pip install pywin32
 
 TITULO  = 'Odyssey in Dystopia'		# Nombre
-__version__ = 'v1.1.6'				# Version
+__version__ = 'v1.1.7'				# Version
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
@@ -136,6 +136,55 @@ def clic_boton(screen, pos, rec=0):	# Detecta un Clic en las coordenadas de un b
 	
 	return False
 
+def clic_music_checkbox(evento, x_pos, y_pos, pos):
+	
+	global music_checkbox_down
+	
+	x_pos -= 20
+	tam_x, tam_y = 15, 20
+	
+	if pos in l_canciones_activas:
+		
+		rect_opaco(screen, [x_pos+3, y_pos+3, tam_x-6, tam_y-6], COLOR['Verde'], 200)
+		
+	if evento.type == pygame.MOUSEMOTION:
+		
+		x, y = evento.pos
+		
+		if  (x >= x_pos and x <= x_pos+tam_x) \
+		and (y >= y_pos and y <= y_pos+tam_y):
+			
+			rect_opaco(screen, [x_pos, y_pos, tam_x, tam_y], COLOR['Verde'])
+	
+	elif evento.type == pygame.MOUSEBUTTONDOWN:
+		
+		if evento.button == 1 and music_checkbox_down == False:
+			
+			x, y = evento.pos
+			
+			if  (x >= x_pos and x <= x_pos+tam_x) \
+			and (y >= y_pos and y <= y_pos+tam_y):
+				
+				music_checkbox_down = True
+			
+	elif evento.type == pygame.MOUSEBUTTONUP and music_checkbox_down:
+		
+		if evento.button == 1:
+			
+			x, y = evento.pos
+			
+			if  (x >= x_pos and x <= x_pos+tam_x) \
+			and (y >= y_pos and y <= y_pos+tam_y):
+				
+				if pos in l_canciones_activas:
+					l_canciones_activas.pop(l_canciones_activas.index(pos))
+				else:
+					l_canciones_activas.append(pos)
+					
+				music_checkbox_down = False
+				
+	pygame.draw.rect(screen, COLOR['Verde'], [x_pos, y_pos, tam_x, tam_y], 1)
+
 def splitText(text):
 	
 	t = []				# Lista de Fragmentos del Texto original
@@ -225,7 +274,8 @@ def printTFiles(Prefijo, t_files=[]):
 
 def main():
 	
-	global screen, s_res, pos_limit, pos_limit_r, l_com_lim, FUENTES, Prefijo, l_comandos
+	global screen, s_res, pos_limit, pos_limit_r, l_com_lim, FUENTES
+	global Prefijo, l_comandos, l_canciones_activas
 	
 	# Inicializaciones =================================================
 	
@@ -297,6 +347,8 @@ def main():
 		('musica/Neovaii - Easily.mp3',                          10, {'By':'Neovaii',    'Song':'Easily',                        'Album':'',                 'Duration':'00:04:18', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
 		('musica/Stephen - Crossfire.mp3',                       11, {'By':'Stephen',    'Song':'Crossfire',                     'Album':'',                 'Duration':'00:04:31', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
 	]
+	
+	l_canciones_activas = [i for i in range(len(playlist))]
 	
 	music = pygame.mixer.music									# Indicamos quien será la variable para Manipular el Soundtrack.
 	song_pos = random.randint(0, len(playlist)-1)				# Genera un numero random entre 0 y la longitud de la lista de canciones menos 1.
@@ -413,7 +465,8 @@ def main():
 	song_vol_pres_min = False
 	song_vol_pres_plus = False
 	song_vol_mute = False
-	song_change = False
+	song_change_down = False
+	song_change_up = False
 	song_fade_secs = 1
 	song_fade_ticks = 0
 	song_desface = 0
@@ -431,17 +484,27 @@ def main():
 		if ticks % 60 == 0:
 			song_time = normalizeTime(music.get_pos(), song_desface)
 			# ~ print(song_time)
-			if not music.get_busy():
-				if song_break > 2:
-					temp = random.randint(0, len(playlist)-1)
-					while temp == song_pos:
-						temp = random.randint(0, len(playlist)-1)
-					song_pos = temp
-					music.load(playlist[song_pos][0])
-					music.play()
-					song_desface = 0
+			if l_canciones_activas: 
+				if not music.get_busy():
+					if song_break > 2:
+						while not song_pos in l_canciones_activas:
+							song_pos = (song_pos+1) % len(playlist)
+						music.load(playlist[song_pos][0])
+						music.play()
+						song_desface = 0
 				else:
 					song_break += 1
+					temp = song_pos
+					while not temp in l_canciones_activas:
+						temp = (temp+1) % len(playlist)
+					if not temp == song_pos:
+						song_pos = temp
+						music.stop()
+						music.load(playlist[song_pos][0])
+						music.play()
+						song_desface = 0
+			else:
+				music.stop()
 		#===============================================================
 		
 		ticks += 1
@@ -821,17 +884,29 @@ def main():
 				
 				# Ctrl + 'J': Cancion Anterior
 				elif evento.key == pygame.K_j and evento.mod == 64:			# mod = 64 = Ctrl
-					song_pos = (song_pos-1) % len(playlist)
-					music.fadeout(song_fade_secs*1000)
-					song_change = True
-					song_desface = 0
+					if l_canciones_activas:
+						
+						song_pos = (song_pos-1) % len(playlist)
+						while not song_pos in l_canciones_activas:
+							song_pos = (song_pos-1) % len(playlist)
+						
+						music.fadeout(song_fade_secs*1000)
+						song_change_down = True
+						song_desface = 0
+					else:
+						music.stop()
 					
 				# Ctrl + 'L': Cancion Siguiente
 				elif evento.key == pygame.K_l and evento.mod == 64:			# mod = 64 = Ctrl
-					song_pos = (song_pos+1) % len(playlist)
-					music.fadeout(song_fade_secs*1000)
-					song_change = True
-					song_desface = 0
+					if l_canciones_activas:
+						song_pos = (song_pos+1) % len(playlist)
+						while not song_pos in l_canciones_activas:
+							song_pos = (song_pos+1) % len(playlist)
+						music.fadeout(song_fade_secs*1000)
+						song_change_up = True
+						song_desface = 0
+					else:
+						music.stop()
 					
 				# Ctrl + 'K': Pausa
 				elif evento.key == pygame.K_k and evento.mod == 64:			# mod = 64 = Ctrl
@@ -1204,7 +1279,65 @@ def main():
 					temp_texto += str(RESOLUCION[(s_res+i)%len(RESOLUCION)][1])
 					temp_texto = temp_texto.rjust(9)
 					dibujarTexto(temp_texto, [ajust_init_x+120, ajust_init_y*ajust_pos_y+(ajust_v_tamY*i)], FUENTES['Inc-R 18'], VERDE_C)		# Imprime el texto.
-		
+			
+			#======================================================================================================================
+			# Recuadro General: Mitad Izquierda. Musica.
+			ajust_pos_y = 3
+			recuadro  = [ajust_init_x, ajust_init_y*ajust_pos_y, RESOLUCION_CMD[s_res][0]-150, RESOLUCION_CMD[s_res][1]-180]
+			rect_opaco(screen, recuadro, COLOR['Verde S'])
+			pygame.draw.rect(screen, VERDE, recuadro, 1)
+			
+			# Recuadro sobre texto principal
+			ajust_pos_y += 1
+			recuadro2 = [recuadro[0]+15, recuadro[1]+10, 290, 20]
+			rect_opaco(screen, recuadro2, COLOR['Verde S'])
+			pygame.draw.rect(screen, COLOR['Verde N'], recuadro2, 1)
+			dibujarTexto('Lista de Canciones Disponibles:', [recuadro[0]+20, 40*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
+			# Todas las combinaciones posibles de Teclas:
+			combinaciones = [
+						'Creador - Nombre de Canción'.ljust(42)+'Duración',
+						'Mega Drive - Converter'.ljust(44)+'6:30',
+						'Mega Drive - Source Code'.ljust(44)+'4:53',
+						'Mega Drive - Seas Of Infinity'.ljust(44)+'2:08',
+						'Dynatron - Pulse Power'.ljust(44)+'6:00',
+						'Dynatron - Vox Magnetismi'.ljust(44)+'3:46',
+						'Varien - Born of Blood, Risen From Ash'.ljust(44)+'4:06',
+						'Varien - Blood Hunter'.ljust(44)+'3:47',
+						'Varien - Of Foxes and Hounds'.ljust(44)+'5:04',
+						'Kroww - Hysteria'.ljust(44)+'5:14',
+						'Scandroid - Thriller (Fury Weekend Remix)'.ljust(44)+'4:52',
+						'Neovaii - Easily'.ljust(44)+'4:18',
+						'Stephen - Crossfire'.ljust(44)+'4:31',
+					]
+			ajust_pos_y += 1
+			# Dibuja en pantalla cada uno de los textos, con un recuadro ajustado a la linea de texto.
+			for i, comb in enumerate(combinaciones):
+				if i == 1: ajust_pos_y += 1
+					
+				ajust_pos_y += 1
+				if len(comb) > 64:
+					recuadro2 = [recuadro[0]+30, 50+25*ajust_pos_y, RESOLUCION_CMD[s_res][0]-200, 45]
+					rect_opaco(screen, recuadro2, COLOR['Verde S'])
+					pygame.draw.rect(screen, COLOR['Verde N'], recuadro2, 1)
+					comb_p1 = '_'
+					comb_pos = 64
+					while comb_p1[:comb_pos][-1] != ' ':
+						comb_pos -= 1
+						comb_p1 = comb[:comb_pos]
+					comb_p2 = ' '*(len(comb_p1.split(':')[0])+2)+comb[comb_pos:]
+					dibujarTexto(comb_p1, [recuadro[0]+40, 50+25*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
+					ajust_pos_y += 1
+					dibujarTexto(comb_p2, [recuadro[0]+40, 50+25*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
+				else:
+					recuadro2 = [recuadro[0]+30, 50+25*ajust_pos_y, RESOLUCION_CMD[s_res][0]-200, 20]
+					rect_opaco(screen, recuadro2, COLOR['Verde S'])
+					pygame.draw.rect(screen, COLOR['Verde N'], recuadro2, 1)
+					dibujarTexto(comb, [recuadro[0]+40, 50+25*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
+				
+				if i >= 1:
+					# Imprime recuadro de checkbox:
+					clic_music_checkbox(evento, recuadro[0]+30, 50+25*ajust_pos_y, i-1)
+			
 		elif vista_actual == l_vistas['Atajos']:
 			
 			# Dibuja los textos en pantalla.
@@ -1271,26 +1404,33 @@ def main():
 		#===================================================================================================
 		
 		# Imprimir los Datos de Soundtrack.
-		temp = [RESOLUCION[s_res][0]-440, RESOLUCION[s_res][1]-23, 435, 19]
-		rect_opaco(screen, temp, COLOR['Negro'], 125)
-		
-		song_data = playlist[song_pos][2]['By']+' - '+playlist[song_pos][2]['Song']
-		song_data = song_data.rjust(40)
-		temp = song_time[3:] if not song_time[3:] == '59:59' else '00:00'
-		dibujarTexto(song_data+'    Transcurrido: '+ temp + ' - ' + playlist[song_pos][2]['Duration'][3:],
-			[RESOLUCION[s_res][0]-440, RESOLUCION[s_res][1]-20], FUENTES['Inc-R 12'], COLOR['Verde Claro'])
-		
+		if l_canciones_activas:
+			temp = [RESOLUCION[s_res][0]-440, RESOLUCION[s_res][1]-23, 435, 19]
+			rect_opaco(screen, temp, COLOR['Negro'], 125)
+			song_data = playlist[song_pos][2]['By']+' - '+playlist[song_pos][2]['Song']
+			song_data = song_data.rjust(40)
+			temp = song_time[3:] if not song_time[3:] == '59:59' else '00:00'
+			dibujarTexto(song_data+'    Transcurrido: '+ temp + ' - ' + playlist[song_pos][2]['Duration'][3:],
+				[RESOLUCION[s_res][0]-440, RESOLUCION[s_res][1]-20], FUENTES['Inc-R 12'], COLOR['Verde Claro'])
+		else:
+			temp = [RESOLUCION[s_res][0]-440, RESOLUCION[s_res][1]-23, 435, 19]
+			rect_opaco(screen, temp, COLOR['Negro'], 125)
+			song_data = ' - '
+			song_data = song_data.rjust(40)
+			dibujarTexto(song_data+'    Transcurrido: 00:00 - 00:00',
+				[RESOLUCION[s_res][0]-440, RESOLUCION[s_res][1]-20], FUENTES['Inc-R 12'], COLOR['Verde Claro'])
 		#===================================================================================================
 		
 		# Si se cambia de cancion: Esto es para hacer efecto de Fadeout, el sonido disminuye lentamente.
-		if song_change:
+		if song_change_down or song_change_up:
 			
 			if song_fade_ticks == 60*song_fade_secs:
 				music.stop()
 				music.load(playlist[song_pos][0])
 				music.play()
 				song_fade_ticks = 0
-				song_change = False
+				song_change_down = False
+				song_change_up = False
 			
 			song_fade_ticks += 1
 		
@@ -1398,6 +1538,8 @@ console.setConSize(pos_limit_r)													# Se indica el limite de caracteres 
 screen = None				# Objeto Que Crea La Ventana.
 btn_x, btn_y = 40, 40		# Proporciones de los botones.
 l_comandos = []
+l_canciones_activas = []
+music_checkbox_down = False
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
