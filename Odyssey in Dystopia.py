@@ -18,7 +18,7 @@ from win32api import GetKeyState	# python -m pip install pywin32
 from win32con import VK_CAPITAL		# python -m pip install pywin32
 
 TITULO  = 'Odyssey in Dystopia'		# Nombre
-__version__ = 'v1.1.5'				# Version
+__version__ = 'v1.1.6'				# Version
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
@@ -32,6 +32,7 @@ class Boton(pygame.sprite.Sprite, pygame.font.Font):	# Clase Para Botones.
 		self.image = load_image(Nombre, True)			# Carga La Imagen Con la función load_image.
 		self.x = self.image.get_width()
 		self.y = self.image.get_height()
+		self.name = Nombre.split('/')[-1].split('.')[0]
 		
 	def getSize(self):
 		return self.x, self.y
@@ -40,6 +41,9 @@ class Boton(pygame.sprite.Sprite, pygame.font.Font):	# Clase Para Botones.
 		self.x = TX
 		self.y = TY
 		self.image = pygame.transform.scale(self.image, (TX, TY))
+	
+	def getName(self):
+		return self.name
 
 def get_screen_size():
     user32 = ctypes.windll.user32
@@ -179,13 +183,23 @@ def normalizeListComand():		# Si al cambiar resolucion algun texto en pantalla s
 					t_des += 1
 					l_comandos.insert(i+t_des, (t_chr+sT.pop(0), pos))
 
-def normalizeTime(mili):
+def normalizeTime(mili, desface=0):
 	
-	secs = (mili // 1000)
+	secs = (mili // 1000) + desface
 	mins = (secs // 60)
 	hrs  = (mins // 60)
 	
 	time = str(hrs%24).zfill(2)+':'+str(mins%60).zfill(2)+':'+str(secs%60).zfill(2)
+	
+	return time
+
+def anormalizeTime(time):
+	
+	time = time.split(':')
+	
+	time[1] = int(time[2])*60 + int(time[1])	# Convertimos las horas en minutos y se lo sumamos a los minutos.
+	time[0] = time[1]*60 + int(time[0])	# Convertimos los minutos en segundos y se lo sumamos a los segundos.
+	time = time[0] * 1000	# Convertimos los segundos en milisegundos.
 	
 	return time
 
@@ -231,11 +245,37 @@ def main():
 	
 	Icono  = pygame.image.load('images/Icon.png')				# Carga el icono del Juego.
 	
-	btn_ajustes = Boton('images/Ajustes.bmp')					# Boton de Ajustes.
-	btn_consola = Boton('images/Consola.bmp')					# Boton de Consola.
-	btn_atajos  = Boton('images/Atajos.bmp')					# Boton de Consola.
+	btn_ajustes   = Boton('images/iconos/Ajustes.bmp')		# Boton de Ajustes.
+	btn_apagar    = Boton('images/iconos/Apagar.bmp')		# Boton de Apagar.
+	btn_atajos    = Boton('images/iconos/Atajos.bmp')		# Boton de Atajos.
+	btn_avances   = Boton('images/iconos/Avances.bmp')		# Boton de Avances.
+	btn_bateria   = Boton('images/iconos/Bateria.bmp')		# Boton de Bateria.
+	btn_cerebro   = Boton('images/iconos/Cerebro.bmp')		# Boton de Cerebro.
+	btn_chip      = Boton('images/iconos/Chip.bmp')			# Boton de Chip.
+	btn_conexion  = Boton('images/iconos/Conexion.bmp')		# Boton de Conexion.
+	btn_consola   = Boton('images/iconos/Consola.bmp')		# Boton de Consola.
+	btn_dystopia  = Boton('images/iconos/Dystopia.bmp')		# Boton de Dystopia.
+	btn_laberinto = Boton('images/iconos/Laberinto.bmp')	# Boton de Laberinto.
+	btn_mail      = Boton('images/iconos/Mail.bmp')			# Boton de Mail.
+	btn_usb       = Boton('images/iconos/USB.bmp')			# Boton de USB.
+	btn_virus     = Boton('images/iconos/Virus.bmp')		# Boton de Virus.
 	
-	l_icons = [btn_ajustes, btn_atajos]							# Lista actual de iconos a imprimir.
+	l_icons = [													# Lista actual de iconos a imprimir.
+			btn_ajustes,
+			# ~ btn_apagar,
+			# ~ btn_avances,
+			btn_atajos,
+			# ~ btn_bateria,
+			# ~ btn_cerebro,
+			# ~ btn_chip,
+			# ~ btn_conexion,
+			# ~ btn_consola,
+			# ~ btn_dystopia,
+			# ~ btn_laberinto,
+			# ~ btn_mail,
+			# ~ btn_usb,
+			# ~ btn_virus
+		]
 	
 	pygame.display.set_icon(Icono)								# Agrega el icono a la ventana.
 	pygame.display.set_caption(TITULO+' '+__version__)			# Titulo de la Ventana del Juego.
@@ -244,33 +284,34 @@ def main():
 	pygame.mixer.init()											# Inicializa el Mesclador.
 	
 	playlist = [
-		('musica/Mega Drive - Converter.mp3',                    0, {'By':'Mega Drive', 'Song':'Converter',                     'Album':'Mega Drive',       'Duration':'00:06:31', 'Released':'2013/11/18', 'Sountrack':'2',  'Type':'MP3 192kbps'}),
-		('musica/Mega Drive - Source Code.mp3',                  1, {'By':'Mega Drive', 'Song':'Source Code',                   'Album':'199XAD',           'Duration':'00:04:53', 'Released':'2019/10/04', 'Sountrack':'11', 'Type':'MP3 192kbps'}),
-		('musica/Mega Drive - Seas Of Infinity.mp3',             2, {'By':'Mega Drive', 'Song':'Seas Of Infinity',              'Album':'Seas Of Infinity', 'Duration':'00:02:08', 'Released':'2017/05/18', 'Sountrack':'1',  'Type':'MP3 192kbps'}),
-		('musica/Dynatron - Pulse Power.mp3',                    3, {'By':'Dynatron',   'Song':'Pulse Power',                   'Album':'Escape Velocity',  'Duration':'00:06:00', 'Released':'2012/11/22', 'Sountrack':'8',  'Type':'MP3 192kbps'}),
-		('musica/Dynatron - Vox Magnetismi.mp3',                 4, {'By':'Dynatron',   'Song':'Vox Magnetismi',                'Album':'Escape Velocity',  'Duration':'00:03:46', 'Released':'2012/11/22', 'Sountrack':'5',  'Type':'MP3 192kbps'}),
-		('musica/Varien - Born of Blood, Risen From Ash.mp3',    5, {'By':'Varien',     'Song':'Born of Blood, Risen From Ash', 'Album':'',                 'Duration':'00:04:07', 'Released':'2019/04/05', 'Sountrack':'',   'Type':'MP3 192kbps'}),
-		('musica/Varien - Blood Hunter.mp3',                     6, {'By':'Varien',     'Song':'Blood Hunter',                  'Album':'',                 'Duration':'00:03:47', 'Released':'2018/02/10', 'Sountrack':'',   'Type':'MP3 192kbps'}),
-		('musica/Varien - Of Foxes and Hounds.mp3',              7, {'By':'Varien',     'Song':'Of Foxes and Hounds',           'Album':'',                 'Duration':'00:03:47', 'Released':'2018/04/02', 'Sountrack':'',   'Type':'MP3 192kbps'}),
-		('musica/Kroww - Hysteria.mp3',                          8, {'By':'Kroww',      'Song':'Hysteria',                      'Album':'',                 'Duration':'00:05:14', 'Released':'2019/09/24', 'Sountrack':'',   'Type':'MP3 192kbps'}),
-		('musica/Scandroid - Thriller (Fury Weekend Remix).mp3', 9, {'By':'Scandroid',  'Song':'Thriller',                      'Album':'',                 'Duration':'00:04:52', 'Released':'2018/10/15', 'Sountrack':'',   'Type':'MP3 128kbps'}),
-		('musica/Neovaii - Easily.mp3',                         10, {'By':'Neovaii',    'Song':'Easily',                        'Album':'',                 'Duration':'00:04:18', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
-		('musica/Stephen - Crossfire.mp3',                      11, {'By':'Stephen',    'Song':'Crossfire',                     'Album':'',                 'Duration':'00:04:31', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
+		('musica/Mega Drive - Converter.mp3',                     0, {'By':'Mega Drive', 'Song':'Converter',                     'Album':'Mega Drive',       'Duration':'00:06:30', 'Released':'2013/11/18', 'Sountrack':'2',  'Type':'MP3 192kbps'}),
+		('musica/Mega Drive - Source Code.mp3',                   1, {'By':'Mega Drive', 'Song':'Source Code',                   'Album':'199XAD',           'Duration':'00:04:53', 'Released':'2019/10/04', 'Sountrack':'11', 'Type':'MP3 192kbps'}),
+		('musica/Mega Drive - Seas Of Infinity.mp3',              2, {'By':'Mega Drive', 'Song':'Seas Of Infinity',              'Album':'Seas Of Infinity', 'Duration':'00:02:08', 'Released':'2017/05/18', 'Sountrack':'1',  'Type':'MP3 192kbps'}),
+		('musica/Dynatron - Pulse Power.mp3',                     3, {'By':'Dynatron',   'Song':'Pulse Power',                   'Album':'Escape Velocity',  'Duration':'00:06:00', 'Released':'2012/11/22', 'Sountrack':'8',  'Type':'MP3 192kbps'}),
+		('musica/Dynatron - Vox Magnetismi.mp3',                  4, {'By':'Dynatron',   'Song':'Vox Magnetismi',                'Album':'Escape Velocity',  'Duration':'00:03:46', 'Released':'2012/11/22', 'Sountrack':'5',  'Type':'MP3 192kbps'}),
+		('musica/Varien - Born of Blood, Risen From Ash.mp3',     5, {'By':'Varien',     'Song':'Born of Blood, Risen From Ash', 'Album':'',                 'Duration':'00:04:06', 'Released':'2019/04/05', 'Sountrack':'',   'Type':'MP3 192kbps'}),
+		('musica/Varien - Blood Hunter.mp3',                      6, {'By':'Varien',     'Song':'Blood Hunter',                  'Album':'',                 'Duration':'00:03:47', 'Released':'2018/02/10', 'Sountrack':'',   'Type':'MP3 192kbps'}),
+		('musica/Varien - Of Foxes and Hounds.mp3',               7, {'By':'Varien',     'Song':'Of Foxes and Hounds',           'Album':'',                 'Duration':'00:05:04', 'Released':'2018/04/02', 'Sountrack':'',   'Type':'MP3 192kbps'}),
+		('musica/Kroww - Hysteria.mp3',                           8, {'By':'Kroww',      'Song':'Hysteria',                      'Album':'',                 'Duration':'00:05:14', 'Released':'2019/09/24', 'Sountrack':'',   'Type':'MP3 192kbps'}),
+		('musica/Scandroid - Thriller (Fury Weekend Remix).mp3',  9, {'By':'Scandroid',  'Song':'Thriller',                      'Album':'',                 'Duration':'00:04:52', 'Released':'2018/10/15', 'Sountrack':'',   'Type':'MP3 128kbps'}),
+		('musica/Neovaii - Easily.mp3',                          10, {'By':'Neovaii',    'Song':'Easily',                        'Album':'',                 'Duration':'00:04:18', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
+		('musica/Stephen - Crossfire.mp3',                       11, {'By':'Stephen',    'Song':'Crossfire',                     'Album':'',                 'Duration':'00:04:31', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
 	]
 	
 	music = pygame.mixer.music									# Indicamos quien será la variable para Manipular el Soundtrack.
-	song_pos = random.randint(0, len(playlist)-1)
-	song_actual = playlist[song_pos][0]
-	music.load(song_actual)								# Carga el Soundtrack
+	song_pos = random.randint(0, len(playlist)-1)				# Genera un numero random entre 0 y la longitud de la lista de canciones menos 1.
+	song_actual = playlist[song_pos][0]							# Selecciona la cancion en la posicion song_pos.
+	music.load(song_actual)										# Carga el Soundtrack
 	
 	# ~ music.set_pos(60.0) # Segundos
 	
 	# ~ print(music.get_volume())
-	# ~ music.set_volume(.50)
+	# ~ music.set_volume(.50)	
 	# ~ print(music.get_volume())
-	music.fadeout(5000)											# Fade de Salida de 5 Segundos, disminuye el volumen en los ultimos 5 segundos.
 	# ~ music.set_endevent(pygame.USEREVENT)
-	music.play()												# -1 Repetira infinitamente la canción.
+	# ~ music.stop()			# Detiene la cancion.
+	# ~ music.rewind()			# Reinicia la cancion desde el segundo 0.
+	# ~ music.set_pos(60.0)			# Inicia en el segundo 60 de la cancion.
 	
 	FUENTES = {
 		   'Inc-R 18':pygame.font.Font("fuentes/Inconsolata-Regular.ttf", 18),
@@ -291,6 +332,7 @@ def main():
 			'Login':   0,
 			'Consola': 1,
 			'Ajustes': 2,
+			'Atajos':  3,
 		}
 	
 	vista_actual = l_vistas['Consola']	# Vista Actual.
@@ -355,22 +397,39 @@ def main():
 	cache_com = []
 	cache_pos = 0
 	
+	#===================================================================
+	
+	ajust_pos_y = 1
+	ajust_init_x, ajust_init_y =  25, 50							# Ajustar a la posicion
+	ajust_v_tamX, ajust_v_tamY = 110, 30
+	
+	#===================================================================
+	# Variables de la Musica:
+	
 	song_stop = False
 	song_break = 0
-	song_vol = 20
+	song_vol = 20						# Volumen al 20%
+	
 	song_vol_pres_min = False
 	song_vol_pres_plus = False
 	song_vol_mute = False
+	song_change = False
+	song_fade_secs = 1
+	song_fade_ticks = 0
+	song_desface = 0
 	
-	music.set_volume(song_vol/100)
+	music.set_volume(song_vol / 100)	# Selecciona en Nivel de Volumen entre 0.0 y 1.0.
+	music.play()						# -1 Repetira infinitamente la canción.
 	
 	#===================================================================
 	
 	# Inicio Del Juego:
 	while game_over is False:
 		
+		# Validaciones de la Musica:
+		#===============================================================
 		if ticks % 60 == 0:
-			song_time = normalizeTime(music.get_pos())
+			song_time = normalizeTime(music.get_pos(), song_desface)
 			# ~ print(song_time)
 			if not music.get_busy():
 				if song_break > 2:
@@ -379,10 +438,11 @@ def main():
 						temp = random.randint(0, len(playlist)-1)
 					song_pos = temp
 					music.load(playlist[song_pos][0])
-					music.fadeout(5000)
 					music.play()
+					song_desface = 0
 				else:
 					song_break += 1
+		#===============================================================
 		
 		ticks += 1
 		
@@ -410,27 +470,48 @@ def main():
 						
 						if clic_boton(screen, evento.pos, 0):
 							vista_actual = l_vistas['Ajustes']	# Detecta si se presiono el primer boton.
-							l_icons.pop(0)
-							l_icons.insert(0, btn_consola)
+							l_icons = [
+								btn_consola,
+								# ~ btn_ajustes,
+								btn_atajos,
+							]
+						
+						elif clic_boton(screen, evento.pos, 1):
+							vista_actual = l_vistas['Atajos']	# Detecta si se presiono el primer boton.
+							l_icons = [
+								btn_consola,
+								btn_ajustes,
+								# ~ btn_atajos,
+							]
 						
 					elif vista_actual == l_vistas['Ajustes']:
 						
 						if clic_boton(screen, evento.pos, 0):
 							vista_actual = l_vistas['Consola']	# Detecta si se presiono el primer boton.
-							l_icons.pop(0)
-							l_icons.insert(0, btn_ajustes)
+							l_icons = [
+								# ~ btn_consola,
+								btn_ajustes,
+								btn_atajos,
+							]
 						
-						v_tamX, v_tamY = 110, 30
-						temp_x, temp_y = 25, 60
+						elif clic_boton(screen, evento.pos, 1):
+							vista_actual = l_vistas['Atajos']	# Detecta si se presiono el primer boton.
+							l_icons = [
+								btn_consola,
+								btn_ajustes,
+								# ~ btn_atajos,
+							]
 						
-						if x > temp_x and x < temp_x+215:
+						if x > ajust_init_x and x < ajust_init_x+215:
 							
-							if y > temp_y and y < temp_y+v_tamY-10: c_res = False if c_res else True
+							ajust_pos_y = 2
+							
+							if y > ajust_init_y*ajust_pos_y and y < ajust_init_y*ajust_pos_y+ajust_v_tamY-10: c_res = False if c_res else True
 							
 							if c_res:
 								for i in range(1, len(RESOLUCION)):
-									if x > temp_x+115 and x < temp_x+v_tamX+100 \
-									and y > temp_y+(v_tamY*i) and y < 20+temp_y+(v_tamY*i):
+									if x > ajust_init_x+115 and x < ajust_init_x+ajust_v_tamX+100 \
+									and y > ajust_init_y*ajust_pos_y+(ajust_v_tamY*i) and y < 20+ajust_init_y*ajust_pos_y+(ajust_v_tamY*i):
 										s_res = ((s_res+i)%len(RESOLUCION))
 										
 										if s_full: screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.FULLSCREEN | pygame.HWSURFACE | pygame.DOUBLEBUF)
@@ -464,6 +545,24 @@ def main():
 										normalizeListComand()
 							
 						else: c_res = False
+						
+					elif vista_actual == l_vistas['Atajos']:
+						
+						if clic_boton(screen, evento.pos, 0):
+							vista_actual = l_vistas['Consola']	# Detecta si se presiono el primer boton.
+							l_icons = [
+								# ~ btn_consola,
+								btn_ajustes,
+								btn_atajos,
+							]
+						
+						elif clic_boton(screen, evento.pos, 1):
+							vista_actual = l_vistas['Ajustes']	# Detecta si se presiono el primer boton.
+							l_icons = [
+								btn_consola,
+								# ~ btn_ajustes,
+								btn_atajos,
+							]
 						
 				if evento.button == 4:
 					if vista_actual == l_vistas['Consola']:
@@ -532,8 +631,6 @@ def main():
 							
 							Comando = cache_com[cache_pos][:pos_limit_r-len(Prefijo)+1]
 							p_pos = len(Comando)
-							
-							# ~ print(cache_com)
 					
 				elif evento.key == pygame.K_DOWN:
 					if vista_actual == l_vistas['Consola']:
@@ -725,18 +822,16 @@ def main():
 				# Ctrl + 'J': Cancion Anterior
 				elif evento.key == pygame.K_j and evento.mod == 64:			# mod = 64 = Ctrl
 					song_pos = (song_pos-1) % len(playlist)
-					music.stop()
-					music.load(playlist[song_pos][0])
-					music.fadeout(5000)
-					music.play()
+					music.fadeout(song_fade_secs*1000)
+					song_change = True
+					song_desface = 0
 					
 				# Ctrl + 'L': Cancion Siguiente
 				elif evento.key == pygame.K_l and evento.mod == 64:			# mod = 64 = Ctrl
 					song_pos = (song_pos+1) % len(playlist)
-					music.stop()
-					music.load(playlist[song_pos][0])
-					music.fadeout(5000)
-					music.play()
+					music.fadeout(song_fade_secs*1000)
+					song_change = True
+					song_desface = 0
 					
 				# Ctrl + 'K': Pausa
 				elif evento.key == pygame.K_k and evento.mod == 64:			# mod = 64 = Ctrl
@@ -747,7 +842,7 @@ def main():
 						song_stop = True
 						music.pause()
 					
-				# Ctrl + '-': Volumen - 1
+				# Ctrl + '-': Volumen - 1%
 				elif evento.key == 47 and evento.mod == 64:			# mod = 64 = Ctrl
 					if song_vol > 0: song_vol -= 1
 					music.set_volume(song_vol/100)
@@ -755,7 +850,7 @@ def main():
 					s_song_vol_ticks = 0
 					song_vol_pres_min = True
 					
-				# Ctrl + '+': Volumen + 1
+				# Ctrl + '+': Volumen + 1%
 				elif evento.key == 93 and evento.mod == 64:			# mod = 64 = Ctrl
 					if song_vol < 100: song_vol += 1
 					music.set_volume(song_vol/100)
@@ -763,7 +858,46 @@ def main():
 					s_song_vol_ticks = 0
 					song_vol_pres_plus = True
 					
-				# Ctrl + Shift + M: Mute
+				# Ctrl + Flecha Derecha: Avanzar 10 segundos de la Cancion.
+				elif evento.key == 275 and evento.mod == 64:
+					song_desface += 10
+					temp = music.get_pos()
+					# ~ print([temp, int(temp/1000), song_desface])
+					temp += (song_desface*1000)
+					
+					temp2 = playlist[song_pos][2]['Duration']
+					temp2 = anormalizeTime(temp2)		# Convierte el texto de Duracion a Milisegundos.
+					
+					if temp > temp2: temp = temp2
+					
+					music.stop()
+					music.load(playlist[song_pos][0])
+					song_desface = int(temp/1000)
+					# ~ print(song_desface)
+					music.play(start=song_desface)
+					
+				# Ctrl + Flecha Izquierda: Retroceder 10 segundos de la Cancion.
+				elif evento.key == 276 and evento.mod == 64:
+					
+					song_desface -= 10
+					if song_desface < 0: song_desface = 0
+					
+					temp = music.get_pos()
+					temp += song_desface*1000
+					
+					if temp < 0: temp = 0
+					
+					music.stop()
+					music.load(playlist[song_pos][0])
+					song_desface = int(temp/1000)
+					# ~ print(song_desface)
+					music.play(start=song_desface)
+					
+				# Ctrl + Shift + L: Limpiar Pantalla.
+				elif evento.key == 108 and evento.mod == 65:		# mod = 64 = Ctrl
+					l_comandos = []
+					
+				# Ctrl + Shift + M: Mute.
 				elif evento.key == 109 and evento.mod == 65:		# mod = 65 = Ctrl+Shift
 					song_vol = 0
 					music.set_volume(song_vol/100)
@@ -771,7 +905,7 @@ def main():
 					s_song_vol_ticks = 0
 					song_vol_pres_plus = True
 					
-				# Ctrl + Shift + '-': Volumen - 10
+				# Ctrl + Shift + '-': Volumen - 10%
 				elif evento.key == 47 and evento.mod == 65:			# mod = 64 = Ctrl
 					if song_vol > 0: song_vol -= 10
 					if song_vol < 0: song_vol = 0
@@ -780,7 +914,7 @@ def main():
 					s_song_vol_ticks = 0
 					song_vol_pres_min = True
 					
-				# Ctrl + Shift + '+': Volumen + 10
+				# Ctrl + Shift + '+': Volumen + 10%
 				elif evento.key == 93 and evento.mod == 65:			# mod = 64 = Ctrl
 					if song_vol < 100: song_vol += 10
 					if song_vol > 100: song_vol = 100
@@ -788,10 +922,6 @@ def main():
 					s_song_vol = True
 					s_song_vol_ticks = 0
 					song_vol_pres_plus = True
-					
-				# Ctrl + Shift + 'L': Limpiar Pantalla
-				elif evento.key == 108 and evento.mod == 65:			# mod = 64 = Ctrl
-					l_comandos = []
 					
 				# ~ print(evento)
 				
@@ -890,8 +1020,9 @@ def main():
 			if not (k_wait > 0 and k_wait < 45) \
 			and (song_vol_pres_min or song_vol_pres_plus) \
 			and (song_vol > 0 and song_vol < 100):
+				
 				if k_wait % 2 == 0:
-					print(song_vol_pres_min, song_vol_pres_plus)
+					
 					if song_vol_pres_min: song_vol -= 1
 					elif song_vol_pres_plus: song_vol += 1
 					
@@ -920,14 +1051,23 @@ def main():
 		
 		for i, btn in enumerate(l_icons):
 			
-			i += 1
-			i_x = RESOLUCION[s_res][0]-btn_x*i-10*i
+			i  += 1
+			i_y = 10
+			d   = 4
+			dd  = d*2
 			
-			rect_opaco(screen, [i_x, 10, btn_x, btn_y], AZUL_C, 220)
-			pygame.draw.rect(screen, AZUL, [i_x, 10, btn_x, btn_y], 3)								# Recuadro de Icono.
-			pygame.draw.rect(screen, AZUL_C, [i_x, 10, btn_x, btn_y], 1)							# Recuadro de Icono.
-			pygame.draw.rect(screen, COLOR['Negro'], [i_x-1, 10-1, btn_x+2, btn_y+2], 1)			# Recuadro de Icono.
-			btn_pos = ( i_x, 10 )
+			if i > 10:
+				i_y += btn_y + dd + 4
+				i=i%10
+			
+			i_x = RESOLUCION[s_res][0]-btn_x*i-12*i
+			
+			rect_opaco(screen, [i_x-d, i_y-d, btn_x+dd, btn_y+dd], AZUL_C, 220)
+			pygame.draw.rect(screen, AZUL,           [i_x-d,   i_y-d,   btn_x+dd,   btn_y+dd],   3)			# Recuadro de Icono.
+			pygame.draw.rect(screen, AZUL_C,         [i_x-d,   i_y-d,   btn_x+dd,   btn_y+dd],   1)			# Recuadro de Icono.
+			pygame.draw.rect(screen, COLOR['Negro'], [i_x-1-d, i_y-1-d, btn_x+2+dd, btn_y+2+dd], 1)			# Recuadro de Icono.
+			btn_pos = ( i_x, i_y )
+			# ~ btn.resize(btn_x, btn_y)
 			screen.blit(btn.image, btn_pos)
 		
 		#===================================================================================================
@@ -1003,7 +1143,7 @@ def main():
 				p_texto = [ l_con[0]+5, l_con[1] - ((len(temp)-i)*T_pix_y) -2 ]		# Posicion del texto.
 				
 				if not com[-2:] == '> ':
-					print([com])
+					
 					if com: valid = console.validate(com.split(' ')[1])		# Si el comando es valido sera igual a True.
 					else: valid = True										# Si la linea esta vacia '' en automatico sera True.
 					
@@ -1029,32 +1169,104 @@ def main():
 			#===================================================================================================
 		
 		#===================================================================================================
+		
 		elif vista_actual == l_vistas['Ajustes']:
 			
 			# Dibuja los textos en pantalla.
-			pygame.draw.rect(screen, VERDE, [int(RESOLUCION[s_res][0]*.5)-5, 60, 275, 20], 1)
-			dibujarTexto('Tiempo Transcurrido: '+normalizeTime(segundos*1000), [int(RESOLUCION[s_res][0]*.5), 60], FUENTES['Inc-R 18'], VERDE_C)
+			ajust_pos_y = 1
 			
-			v_tamX, v_tamY = 110, 30
-			temp_x, temp_y = 25, 60
+			#======================================================================================================================
+			# Tiempo Transcurrido:
+			recuadro = [ajust_init_x, ajust_init_y*ajust_pos_y, 275, 20]
+			contenido   = [recuadro[0]+5, recuadro[1]]
+			rect_opaco(screen, recuadro, COLOR['Verde N'])
+			pygame.draw.rect(screen, VERDE, recuadro, 1)
+			dibujarTexto('Tiempo Transcurrido: '+normalizeTime(segundos*1000), contenido, FUENTES['Inc-R 18'], VERDE_C)
+			#======================================================================================================================
+			
+			ajust_pos_y = 2
+			texto = 'Resolución: '
 			
 			# Resolucion Actual
-			rect_opaco(screen, [temp_x, temp_y, 210, v_tamY-10], COLOR['Verde S'])								# Color de Fondo a Resolucion de Consola actual.
-			pygame.draw.rect(screen, VERDE, [temp_x, temp_y, 210, v_tamY-10], 1)								# Contorno a Resolucion de Consola actual.
-			dibujarTexto('Resolución: '+(str(RESOLUCION[s_res][0])+'x'+str(RESOLUCION[s_res][1])).rjust(9),
-							[temp_x+10, temp_y], FUENTES['Inc-R 18'], VERDE_C)									# Resolucion de Consola actual.
+			rect_opaco(screen, [ajust_init_x, ajust_init_y*ajust_pos_y, 210, ajust_v_tamY-10], COLOR['Verde S'])						# Color de Fondo a Resolucion de Consola actual.
+			pygame.draw.rect(screen, VERDE, [ajust_init_x, ajust_init_y*ajust_pos_y, 210, ajust_v_tamY-10], 1)							# Contorno a Resolucion de Consola actual.
+			dibujarTexto(texto+(str(RESOLUCION[s_res][0])+'x'+str(RESOLUCION[s_res][1])).rjust(9),
+							[ajust_init_x+10, ajust_init_y*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)									# Resolucion de Consola actual.
 			
 			if c_res:
 				
-				rect_opaco(screen, [temp_x+110, temp_y-5, v_tamX-5, 30*len(RESOLUCION)], COLOR['Verde N'])		# Color de Fondo de Ventana de Resolucion.
-				pygame.draw.rect(screen, VERDE, [temp_x+110, temp_y-5, v_tamX-5, 30*len(RESOLUCION)], 1)			# Contorno de Ventana de Resolucion.
+				rect_opaco(screen, [ajust_init_x+110, ajust_init_y*ajust_pos_y-5, ajust_v_tamX-5, 30*len(RESOLUCION)], COLOR['Verde N'])		# Color de Fondo de Ventana de Resolucion.
+				pygame.draw.rect(screen, VERDE, [ajust_init_x+110, ajust_init_y*ajust_pos_y-5, ajust_v_tamX-5, 30*len(RESOLUCION)], 1)			# Contorno de Ventana de Resolucion.
 				
 				for i in range(1, len(RESOLUCION)):
-					pygame.draw.rect(screen, VERDE, [temp_x+115, temp_y+(v_tamY*i), v_tamX-15, 20], 1)				# Recuedro individual de cada Resolucion de Consola.
+					pygame.draw.rect(screen, VERDE, [ajust_init_x+115, ajust_init_y*ajust_pos_y+(ajust_v_tamY*i), ajust_v_tamX-15, 20], 1)		# Recuedro individual de cada Resolucion de Consola.
 					temp_texto = str(RESOLUCION[(s_res+i)%len(RESOLUCION)][0])+'x'
 					temp_texto += str(RESOLUCION[(s_res+i)%len(RESOLUCION)][1])
 					temp_texto = temp_texto.rjust(9)
-					dibujarTexto(temp_texto, [temp_x+120, temp_y+(v_tamY*i)], FUENTES['Inc-R 18'], VERDE_C)			# Imprime el texto.
+					dibujarTexto(temp_texto, [ajust_init_x+120, ajust_init_y*ajust_pos_y+(ajust_v_tamY*i)], FUENTES['Inc-R 18'], VERDE_C)		# Imprime el texto.
+		
+		elif vista_actual == l_vistas['Atajos']:
+			
+			# Dibuja los textos en pantalla.
+			#======================================================================================================================
+			# Combinaciones de Teclas:
+			
+			# Recuadro General: Mitad Izquierda.
+			ajust_pos_y = 1
+			recuadro  = [ajust_init_x, ajust_init_y*ajust_pos_y, RESOLUCION_CMD[s_res][0]-30, RESOLUCION_CMD[s_res][1]-80]
+			rect_opaco(screen, recuadro, COLOR['Verde S'])
+			pygame.draw.rect(screen, VERDE, recuadro, 1)
+			
+			# Recuadro sobre texto principal
+			ajust_pos_y += 1
+			recuadro2 = [recuadro[0]+15, 80, 225, 20]
+			rect_opaco(screen, recuadro2, COLOR['Verde S'])
+			pygame.draw.rect(screen, COLOR['Verde N'], recuadro2, 1)
+			dibujarTexto('Combinaciones de Teclas:', [recuadro[0]+20, 40*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
+			
+			# Todas las combinaciones posibles de Teclas:
+			combinaciones = [
+						'Esc: Para Cerrar el Juego.',
+						'F11: Poner/Quitar Pantalla Completa.',
+						'Ctrl + F: Poner/Quitar Pantalla Completa.',
+						'Ctrl + P: Captura de Pantalla.',
+						'Ctrl + J: Poner Canción Anterior.',
+						'Ctrl + K: Pausar/Continuar Canción.',
+						'Ctrl + L: Poner Canción Siguiente.',
+						'Ctrl + Felcha Derecha: Adelantar la Canción en 10 Segundos.',
+						'Ctrl + Felcha Izquierda: Retroceder la Canción en 10 Segundos.',
+						'Ctrl + \'+\': Subir Volumen de la Música en 1%. Mantener pulsado para subir el volumen rapidamente.',
+						'Ctrl + \'-\': Bajar Volumen de la Música en 1%. Mantener pulsado para bajar el volumen rapidamente.',
+						'Ctrl + Shift + L: Limpiar Terminal.',
+						'Ctrl + Shift + M: Poner/Quitar Mute para la Música.',
+						'Ctrl + Shift + \'+\': Subir Volumen de la Música en 10%.',
+						'Ctrl + Shift + \'-\': Bajar Volumen de la Música en 10%.',
+					]
+			
+			# Dibuja en pantalla cada uno de los textos, con un recuadro ajustado a la linea de texto.
+			for comb in combinaciones:
+				ajust_pos_y += 1
+				if len(comb) > 64:
+					recuadro2 = [recuadro[0]+30, 50+25*ajust_pos_y, RESOLUCION_CMD[s_res][0]-70, 45]
+					rect_opaco(screen, recuadro2, COLOR['Verde S'])
+					pygame.draw.rect(screen, COLOR['Verde N'], recuadro2, 1)
+					comb_p1 = '_'
+					comb_pos = 64
+					while comb_p1[:comb_pos][-1] != ' ':
+						comb_pos -= 1
+						comb_p1 = comb[:comb_pos]
+					comb_p2 = ' '*(len(comb_p1.split(':')[0])+2)+comb[comb_pos:]
+					dibujarTexto(comb_p1, [recuadro[0]+40, 50+25*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
+					ajust_pos_y += 1
+					dibujarTexto(comb_p2, [recuadro[0]+40, 50+25*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
+				else:
+					recuadro2 = [recuadro[0]+30, 50+25*ajust_pos_y, RESOLUCION_CMD[s_res][0]-70, 20]
+					rect_opaco(screen, recuadro2, COLOR['Verde S'])
+					pygame.draw.rect(screen, COLOR['Verde N'], recuadro2, 1)
+					dibujarTexto(comb, [recuadro[0]+40, 50+25*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
+			
+			#======================================================================================================================
+			
 		
 		#===================================================================================================
 		
@@ -1069,6 +1281,18 @@ def main():
 			[RESOLUCION[s_res][0]-440, RESOLUCION[s_res][1]-20], FUENTES['Inc-R 12'], COLOR['Verde Claro'])
 		
 		#===================================================================================================
+		
+		# Si se cambia de cancion: Esto es para hacer efecto de Fadeout, el sonido disminuye lentamente.
+		if song_change:
+			
+			if song_fade_ticks == 60*song_fade_secs:
+				music.stop()
+				music.load(playlist[song_pos][0])
+				music.play()
+				song_fade_ticks = 0
+				song_change = False
+			
+			song_fade_ticks += 1
 		
 		# Dibuja en Pantalla un mensaje cuando se toma una Captura.
 		if s_shot:
