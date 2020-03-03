@@ -24,6 +24,7 @@ Atualmente este proyecto se encuentra en fase de Desarrollo, con la implementaci
     Puede mantenerse pulsado para subir el volumen rapidamente.
 * __Ctrl + '-'__: Bajar Volumen de la Música en 1%.
     Puede mantenerse pulsado para bajar el volumen rapidamente.
+* __Ctrl + Shift + L__: Limpiar Terminal.
 * __Ctrl + Shift + M__: Poner/Quitar Mute para la Música.
 * __Ctrl + Shift + '+'__: Subir Volumen de la Música en 10%.
 * __Ctrl + Shift + '-'__: Bajar Volumen de la Música en 10%.
