@@ -18,7 +18,7 @@ from win32api import GetKeyState	# python -m pip install pywin32
 from win32con import VK_CAPITAL		# python -m pip install pywin32
 
 TITULO  = 'Odyssey in Dystopia'		# Nombre
-__version__ = 'v1.1.7'				# Version
+__version__ = 'v1.1.8'				# Version
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
@@ -795,7 +795,8 @@ def main():
 				elif evento.unicode == '\t':
 					
 					t_root = ''
-					t_files = Comando.split(' ')
+					t_files = Comando.split(' ')							# Divide el comando por los espacios.
+					t_files = [t_files[0], ' '.join(t_files[1:])]			# Si el nombre tiene un espacio, vuelve a unirlo con sus espacios.
 					
 					if len(t_files) == 2:
 						
@@ -1162,7 +1163,7 @@ def main():
 			if ticks < 30: pygame.draw.line(screen, COLOR['Gris'], p_puntero[0], p_puntero[1], 2)		# Dibuja el puntero en pantalla.
 			
 			temp_y, temp_x = t_con[1], t_con[2]
-			temp = 'Consola Odin.Dis_'+__version__
+			temp = console.sysname
 			dibujarTexto(temp, [temp_x-(len(temp)*6), temp_y+2], FUENTES['Inc-R 12'], VERDE_C)
 			
 			#===================================================================================================
@@ -1259,31 +1260,11 @@ def main():
 			dibujarTexto('Tiempo Transcurrido: '+normalizeTime(segundos*1000), contenido, FUENTES['Inc-R 18'], VERDE_C)
 			#======================================================================================================================
 			
-			ajust_pos_y = 2
-			texto = 'Resolución: '
-			
-			# Resolucion Actual
-			rect_opaco(screen, [ajust_init_x, ajust_init_y*ajust_pos_y, 210, ajust_v_tamY-10], COLOR['Verde S'])						# Color de Fondo a Resolucion de Consola actual.
-			pygame.draw.rect(screen, VERDE, [ajust_init_x, ajust_init_y*ajust_pos_y, 210, ajust_v_tamY-10], 1)							# Contorno a Resolucion de Consola actual.
-			dibujarTexto(texto+(str(RESOLUCION[s_res][0])+'x'+str(RESOLUCION[s_res][1])).rjust(9),
-							[ajust_init_x+10, ajust_init_y*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)									# Resolucion de Consola actual.
-			
-			if c_res:
-				
-				rect_opaco(screen, [ajust_init_x+110, ajust_init_y*ajust_pos_y-5, ajust_v_tamX-5, 30*len(RESOLUCION)], COLOR['Verde N'])		# Color de Fondo de Ventana de Resolucion.
-				pygame.draw.rect(screen, VERDE, [ajust_init_x+110, ajust_init_y*ajust_pos_y-5, ajust_v_tamX-5, 30*len(RESOLUCION)], 1)			# Contorno de Ventana de Resolucion.
-				
-				for i in range(1, len(RESOLUCION)):
-					pygame.draw.rect(screen, VERDE, [ajust_init_x+115, ajust_init_y*ajust_pos_y+(ajust_v_tamY*i), ajust_v_tamX-15, 20], 1)		# Recuedro individual de cada Resolucion de Consola.
-					temp_texto = str(RESOLUCION[(s_res+i)%len(RESOLUCION)][0])+'x'
-					temp_texto += str(RESOLUCION[(s_res+i)%len(RESOLUCION)][1])
-					temp_texto = temp_texto.rjust(9)
-					dibujarTexto(temp_texto, [ajust_init_x+120, ajust_init_y*ajust_pos_y+(ajust_v_tamY*i)], FUENTES['Inc-R 18'], VERDE_C)		# Imprime el texto.
 			
 			#======================================================================================================================
-			# Recuadro General: Mitad Izquierda. Musica.
+			# Recuadro: Mitad Izquierda. Musica.
 			ajust_pos_y = 3
-			recuadro  = [ajust_init_x, ajust_init_y*ajust_pos_y, RESOLUCION_CMD[s_res][0]-150, RESOLUCION_CMD[s_res][1]-180]
+			recuadro  = [ajust_init_x, ajust_init_y*ajust_pos_y, RESOLUCION_CMD[s_res][0]-160, RESOLUCION_CMD[s_res][1]-180]
 			rect_opaco(screen, recuadro, COLOR['Verde S'])
 			pygame.draw.rect(screen, VERDE, recuadro, 1)
 			
@@ -1293,21 +1274,23 @@ def main():
 			rect_opaco(screen, recuadro2, COLOR['Verde S'])
 			pygame.draw.rect(screen, COLOR['Verde N'], recuadro2, 1)
 			dibujarTexto('Lista de Canciones Disponibles:', [recuadro[0]+20, 40*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
-			# Todas las combinaciones posibles de Teclas:
+			
+			# Todas las canciones disponibles:
+			ljust = 45
 			combinaciones = [
-						'Creador - Nombre de Canción'.ljust(42)+'Duración',
-						'Mega Drive - Converter'.ljust(44)+'6:30',
-						'Mega Drive - Source Code'.ljust(44)+'4:53',
-						'Mega Drive - Seas Of Infinity'.ljust(44)+'2:08',
-						'Dynatron - Pulse Power'.ljust(44)+'6:00',
-						'Dynatron - Vox Magnetismi'.ljust(44)+'3:46',
-						'Varien - Born of Blood, Risen From Ash'.ljust(44)+'4:06',
-						'Varien - Blood Hunter'.ljust(44)+'3:47',
-						'Varien - Of Foxes and Hounds'.ljust(44)+'5:04',
-						'Kroww - Hysteria'.ljust(44)+'5:14',
-						'Scandroid - Thriller (Fury Weekend Remix)'.ljust(44)+'4:52',
-						'Neovaii - Easily'.ljust(44)+'4:18',
-						'Stephen - Crossfire'.ljust(44)+'4:31',
+						'Creador - Nombre de Canción'.ljust(ljust-2)+'Duración',
+						'Mega Drive - Converter'.ljust(ljust)+'6:30',
+						'Mega Drive - Source Code'.ljust(ljust)+'4:53',
+						'Mega Drive - Seas Of Infinity'.ljust(ljust)+'2:08',
+						'Dynatron - Pulse Power'.ljust(ljust)+'6:00',
+						'Dynatron - Vox Magnetismi'.ljust(ljust)+'3:46',
+						'Varien - Born of Blood, Risen From Ash'.ljust(ljust)+'4:06',
+						'Varien - Blood Hunter'.ljust(ljust)+'3:47',
+						'Varien - Of Foxes and Hounds'.ljust(ljust)+'5:04',
+						'Kroww - Hysteria'.ljust(ljust)+'5:14',
+						'Scandroid - Thriller (Fury Weekend Remix)'.ljust(ljust)+'4:52',
+						'Neovaii - Easily'.ljust(ljust)+'4:18',
+						'Stephen - Crossfire'.ljust(ljust)+'4:31',
 					]
 			ajust_pos_y += 1
 			# Dibuja en pantalla cada uno de los textos, con un recuadro ajustado a la linea de texto.
@@ -1337,7 +1320,33 @@ def main():
 				if i >= 1:
 					# Imprime recuadro de checkbox:
 					clic_music_checkbox(evento, recuadro[0]+30, 50+25*ajust_pos_y, i-1)
+		
+			#======================================================================================================================
 			
+			ajust_pos_y = 2
+			texto = 'Resolución: '
+			
+			# Resolucion Actual
+			rect_opaco(screen, [ajust_init_x, ajust_init_y*ajust_pos_y, 210, ajust_v_tamY-10], COLOR['Verde S'])						# Color de Fondo a Resolucion de Consola actual.
+			pygame.draw.rect(screen, VERDE, [ajust_init_x, ajust_init_y*ajust_pos_y, 210, ajust_v_tamY-10], 1)							# Contorno a Resolucion de Consola actual.
+			dibujarTexto(texto+(str(RESOLUCION[s_res][0])+'x'+str(RESOLUCION[s_res][1])).rjust(9),
+							[ajust_init_x+10, ajust_init_y*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)									# Resolucion de Consola actual.
+			
+			if c_res:
+				
+				rect_opaco(screen, [ajust_init_x+110, ajust_init_y*ajust_pos_y-5, ajust_v_tamX-5, 30*len(RESOLUCION)], COLOR['Verde N'])		# Color de Fondo de Ventana de Resolucion.
+				pygame.draw.rect(screen, VERDE, [ajust_init_x+110, ajust_init_y*ajust_pos_y-5, ajust_v_tamX-5, 30*len(RESOLUCION)], 1)			# Contorno de Ventana de Resolucion.
+				
+				for i in range(1, len(RESOLUCION)):
+					rect_opaco(screen, [ajust_init_x+115, ajust_init_y*ajust_pos_y+(ajust_v_tamY*i), ajust_v_tamX-15, 20], COLOR['Verde N'])		# Color de Fondo de Ventana de Resolucion.
+					pygame.draw.rect(screen, VERDE, [ajust_init_x+115, ajust_init_y*ajust_pos_y+(ajust_v_tamY*i), ajust_v_tamX-15, 20], 1)		# Recuedro individual de cada Resolucion de Consola.
+					temp_texto = str(RESOLUCION[(s_res+i)%len(RESOLUCION)][0])+'x'
+					temp_texto += str(RESOLUCION[(s_res+i)%len(RESOLUCION)][1])
+					temp_texto = temp_texto.rjust(9)
+					dibujarTexto(temp_texto, [ajust_init_x+120, ajust_init_y*ajust_pos_y+(ajust_v_tamY*i)], FUENTES['Inc-R 18'], VERDE_C)		# Imprime el texto.
+			
+		#===================================================================================================
+		
 		elif vista_actual == l_vistas['Atajos']:
 			
 			# Dibuja los textos en pantalla.
@@ -1399,7 +1408,6 @@ def main():
 					dibujarTexto(comb, [recuadro[0]+40, 50+25*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
 			
 			#======================================================================================================================
-			
 		
 		#===================================================================================================
 		
@@ -1518,7 +1526,17 @@ CARACTERES  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + 'abcdefghijklmnopqrstuvwxyz'
 CARACTERES += '1234567890' + 'º\'¡+ç,.-<' + 'ª!"·$%&/()=?¿*Ç;:_>'
 CARACTERES += '\\|@#~€¬[]{} '
 
-console = Console('Eny', 'HG'+__version__)
+console = Console('Eny', 'Odin.Dis_'+__version__)
+
+temp = [
+	['logs', console.createLogFile('connection'), 'r--', console.createLogFile('connection')[:-4]],
+	['logs', 'connection 2020-01-25_01-48-26.241195.log', 'r--', 'Connection 2020-01-25_01-48-26.241195'],
+	['bin', 'nueva', 'rwx'],
+	['bin', 'scan.exe', 'r-x', console.binary()]
+]
+
+console.fileSystemUpdate(temp)
+
 Prefijo = console.actualPath()+' '			# Simbolo de prefijo para comandos.
 
 s_res     = -2								# Seleccion de Resolucion Por defecto. -2: la penultima Resolucion agregada.

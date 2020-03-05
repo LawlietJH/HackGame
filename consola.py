@@ -2,26 +2,29 @@
 # By: LawlietJH
 # Odyssey in Dystopia
 
-import random
+import random, os
 import operator
 from datetime import datetime
 
 TITULO  = 'Odyssey in Dystopia'
-__version__ = 'v1.1.5'
+__version__ = 'v1.1.8'
 
 class Arbol:
 	
-	def __init__(self, element, content=''):
+	def __init__(self, element, permiso='rwx', content=''):
 		self.hijos   = []
 		self.element = element
+		self.permiso = permiso
 		self.content = content
 	
 	def __str__(self):
 		return self.element
 	
-	def agregarElemento(self, elementoPadre, element, content='folder'):
-		subarbol = self.buscarSubarbol(elementoPadre);
-		subarbol.hijos.append(Arbol(element, content))
+	def agregarElemento(self, elementoPadre, element, permiso='rwx', content='folder'):
+		if content=='folder': permiso = 'd'+permiso
+		else: permiso = '-'+permiso
+		subarbol = self.buscarSubarbol(elementoPadre)
+		subarbol.hijos.append(Arbol(element, permiso, content))
 		subarbol.hijos = self.sortChilds(subarbol)
 	
 	def sortChilds(self, arbol):
@@ -65,7 +68,7 @@ class Arbol:
 		return 1 + max(map(self.profundidad, arbol.hijos))
 	
 	def ejecutarProfundidadPrimero(self, arbol, funcion, nvl=0):
-		funcion(arbol.element+('/' if arbol.content == 'folder' else ''), nvl)
+		funcion(arbol.element+('/' if arbol.content == 'folder' or arbol.element=='root' else ''), nvl)
 		for hijo in arbol.hijos:
 			self.ejecutarProfundidadPrimero(hijo, funcion, nvl+1)
 	
@@ -79,7 +82,7 @@ class Console:
 	
 	def __init__(self, username, sysname):
 		
-		self.arbol = Arbol('Root')
+		self.arbol = Arbol('root')
 		self.username = username
 		self.sysname  = sysname
 		self.consize  = 0
@@ -87,7 +90,16 @@ class Console:
 		self.valid_ext = ('.txt', '.log', '.exe')
 		self.rand   = lambda li, le: ''.join([str(random.choice(li)) for _ in range(le)])
 		self.binary = lambda ini=512, fin=1024: self.rand([0,1], random.randrange(ini, fin, 8))
-		self.fileSystem()
+		self.system = [
+			['root',    'system',   'r--'],
+			['root',    'user',     'r--'],
+			['root',    'boot.ini', 'r--', self.binary()],
+			['system',  'logs',     'r--'],
+			['system',  'config',   'r--'],
+			['user',     username,  'r--'],
+			[ username, 'bin',      'r--']
+		]
+		self.fileSystemUpdate(self.system)
 		self.pathPos = self.searchDir(self.arbol, self.username)
 		self.path = self.getPath(self.arbol)
 		self.list_commands = [
@@ -126,12 +138,15 @@ class Console:
 		h = None
 		s = ''
 		# ~ print(raiz)
-		for x in path:
+		for i, x in enumerate(path):
 			# ~ if x < 0: x += len(raiz.hijos)	# Si hay negativo se obtiene la posicion de la lista invertida.
-			h = raiz.hijos[x]
+			try:
+				h = raiz.hijos[x]
+			except:
+				return 'No existe esa ruta.'
 			raiz = h
-			s += raiz.element + ('/' if raiz.content == 'folder' else '')
-		return 'Root/' + s + extra
+			s += raiz.element + ('/' if raiz.content == 'folder' and not i == len(path)-1 else '')
+		return 'root/' + s + extra
 	
 	def actualPath(self):
 		
@@ -172,43 +187,26 @@ class Console:
 		log = '{} {}.log'.format(typeFile, now)
 		return log
 	
-	def fileSystem(self):
+	def fileSystemUpdate(self, data=[]):
 		
-		self.arbol.agregarElemento('Root', 'System')
-		self.arbol.agregarElemento('Root', 'User')
-		self.arbol.agregarElemento('Root', 'boot.ini', self.binary())
-		self.arbol.agregarElemento('System', 'Logs')
-		self.arbol.agregarElemento('User', self.username)
-		self.arbol.agregarElemento('Logs', self.createLogFile('Connection'), self.createLogFile('Connection')[:-4])
-		self.arbol.agregarElemento('Logs', 'Connection 2020-01-25_01-48-26.241195.log', 'Connection 2020-01-25_01-48-26.241195')
-		
-		self.arbol.agregarElemento(self.username, 'Documents')
-		self.arbol.agregarElemento(self.username, 'Desktop')
-		
-		self.arbol.agregarElemento('Documents', 'Aewsa')
-		self.arbol.agregarElemento('Documents', 'Newsa')
-		self.arbol.agregarElemento('Documents', 'Newsb')
-		self.arbol.agregarElemento('Documents', 'Newsbb')
-		
-		# ~ binary  = 'HolaSoyUnTextoDemasiadoLargoComoParaPoderProcesarloEnUna'
-		# ~ binary += 'SolaLineaDeComandosParaQueSsiSeMePuedaAsignarMasDeUna'
-		# ~ binary += 'LineaParaPoderMostrarmeCorrectamente.'
-		self.arbol.agregarElemento('Documents', 'Scan.exe', self.binary())
-		self.arbol.agregarElemento('Documents', 'Newsa.exe', self.binary())
-		self.arbol.agregarElemento('Documents', 'Newsb.exe', self.binary())
-		self.arbol.agregarElemento('Documents', 'Esto es de Pruebas.exe', self.binary())
-		
-		# ~ binary  = 'hola soy un texto demasiado largo como para poder procesarlo en una '
-		# ~ binary += 'sola linea de comandos para que asi se me pueda asignar mas de una '
-		# ~ binary += 'linea para poder mostrarme correctamente.'
-		# ~ self.arbol.agregarElemento('Documents', 'EnyScan.txt', binary )
-		
-		self.arbol.ejecutarProfundidadPrimero(self.arbol, self.arbol.printElement)
+		if data:
+			
+			os.system('cls')
+			print('\n\n\t Console: '+self.sysname+'\n\t User: '+self.username+'\n')
+			
+			if data != self.system:
+				for d in data:
+					if not d in self.system:
+						self.system.append(d)
+			
+			self.arbol = Arbol('root')
+			
+			for x in self.system: self.arbol.agregarElemento(*x)
+			
+			self.arbol.ejecutarProfundidadPrimero(self.arbol, self.arbol.printElement)
 	
 	def validate(self, command):
 		command = command.split(' ')[0]
-		
-		# ~ print(command, command in self.list_commands)
 		
 		if command in self.list_commands: return True
 		return False
@@ -333,26 +331,32 @@ class Console:
 					
 					ch = str(child)
 					
-					if child.content != 'folder':
-						res = 'Archivo'
-						res  = res.ljust(11)
+					if child.permiso[0] == '-':
+						kb = str(len(child.content))
+						kb = (kb[:-3]+'.' if len(kb) > 3 else '')+kb[-3:]
+						res  = child.permiso.rjust(8)
+						res += kb.rjust(8)
+						res += ' Archivo'
+						res += ' '*5
 						res += ' '+ch
 					else:
-						res = 'Carpeta'
-						res  = res.ljust(8)
-						res += str(len(child.hijos)).rjust(3)
+						res  = child.permiso.rjust(8)
+						res += ' '*8
+						res += ' Carpeta'
+						res += str(len(child.hijos)).rjust(5)
 						res += ' '+ch+'/'
 					
 					self.response.append(res)
 				
-				data  = 'Tipo'.ljust(8)
-				data += ''.center(3)
+				data  = 'Permisos'
+				data += ' KB'.rjust(8)
+				data += ' Tipo'.ljust(8)
+				data += ' Arch'
 				data += ' Nombre'
 				
 				self.response = [''] + [data] + [''] + self.response + ['']
 				
-			else:
-				self.response = ['', 'La Carpeta Esta Vacia', '']
+			else: self.response = ['', 'La Carpeta Esta Vacia', '']
 		
 		elif cnd == 'cat' or cnd == 'type':
 			
@@ -457,14 +461,24 @@ if __name__ == "__main__":
 	# ~ for x in os.environ:
 		# ~ print(x, os.environ[x])
 	
-	console = Console('Eny', 'HGSys')
+	console = Console('Eny', 'Odin.Dis_'+__version__)
+	
+	logs = [
+		['logs', console.createLogFile('connection'), 'rwx', console.createLogFile('connection')[:-4]],
+		['logs', 'connection 2020-01-25_01-48-26.241195.log', 'rwx', 'Connection 2020-01-25_01-48-26.241195'],
+		['bin', 'scan.exe', 'r-x', console.binary()]
+	]
+	
+	# ~ console.system.extend(logs)
+	console.fileSystemUpdate(logs)
 	
 	print('\n', console.actualPath(), end=' ')
 	
-	com = 'cd Documents/'
+	com = 'cd bin/'
 	res = console.execute(com)
 	res = '\n'.join(res)
 	print(com, '\n', res, console.actualPath())
 	
-	print('Buscado:', console.getPath2([1,0,1,-1], '> '))
+	print('Buscado:', console.getPath2([1,0,0,-1], '> '))
+	
 	
