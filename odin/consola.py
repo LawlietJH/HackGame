@@ -93,7 +93,7 @@ class Console:
 		self.system = [
 			['root',    'system',   'r-x'],
 			['root',    'user',     'r-x'],
-			['root',    'boot.ini', '---', self.binary()],
+			['root',    'boot.ini', '---', self.binary()+self.binary()],
 			['system',  'logs',     'rwx'],
 			['system',  'config',   'r-x'],
 			['user',     username,  'r-x'],
@@ -111,6 +111,7 @@ class Console:
 			'ls',			# Lista los Archivos y Carpetas.
 			'cat',			# Leer Archivo como texto plano.
 			'type',			# Leer Archivo como texto plano.
+			'chmod',		# Cambiar los permisos.
 			# ~ 'mkdir',		# Crear Carpeta.
 			# ~ 'rm',			# Eliminar Archivo o Carpeta.
 			# ~ 'connect',		# Conectar a una IP.
@@ -325,7 +326,7 @@ class Console:
 			
 			command = command[1:]
 			# ~ print(command)
-			c_path = self.pathPos
+			c_path = self.pathPos[:]
 			
 			if command:
 				if len(command) == 1:
@@ -359,10 +360,10 @@ class Console:
 					ch = str(child)
 					
 					if child.permiso[0] == '-':
-						kb = str(len(child.content))
-						kb = (kb[:-3]+'.' if len(kb) > 3 else '')+kb[-3:]
+						fbytes = str(len(child.content))
+						fbytes = (fbytes[:-3]+',' if len(fbytes) > 3 else '')+fbytes[-3:]
 						res  = child.permiso.rjust(8)
-						res += kb.rjust(8)
+						res += fbytes.rjust(8)
 						res += ' Archivo'
 						res += ' '*5
 						res += ' '+ch
@@ -376,7 +377,7 @@ class Console:
 					self.response.append(res)
 				
 				data  = 'Permisos'
-				data += ' KB'.rjust(8)
+				data += ' Bytes'.rjust(8)
 				data += ' Tipo'.ljust(8)
 				data += ' Arch'
 				data += ' Nombre'
@@ -497,6 +498,95 @@ class Console:
 				self.response = None
 				return self.response
 			
+		elif cnd == 'chmod':
+			
+			temp = command[1:]
+			atr1 = ''
+			atr2 = ''
+			
+			if len(temp) >= 2:
+				atr = temp[0]
+				# ~ print([atr])
+				if len(atr) >= 2 and len(atr) <= 4:
+					atr1 = atr[0]
+					atr2 = atr[1:]
+					atrt = ''
+					if atr1 in '+-=':
+						# ~ print(atr2)
+						for a in atr2:
+							if a in 'rwx' and not a in atrt:
+								atrt += a
+							else:
+								self.response = ['','No es un atributo valido: '+atr,'',0]
+								return self.response
+					else:
+						self.response = ['','No es un atributo valido: '+atr,'',0]
+						return self.response
+					command = ' '.join(temp[1:])				# Agrega el Atributo al comando principal. Y deja solo en 2 partes del comando.
+				else:
+					self.response = ['','No es un atributo valido: '+atr,'',0]
+					return self.response
+			else:
+				self.response = ['','No es un comando valido.','',0]
+				return self.response
+			
+			c_path = self.pathPos[:]
+			
+			if command[0] == '/':
+				c_path = []
+				command = command[1:]
+			
+			if len(command.split('/')) > 1:
+				command = command.split('/')
+				
+				for c in command[:-1]:
+					if c == '..':
+						try: c_path.pop()
+						except: pass
+						continue
+					try:
+						ch = [ str(c) for c in self.getChilds(c_path)]
+						c_path = c_path + [ch.index(c)]
+						# ~ print(c_path)
+					except:
+						self.response = ['','No es un comando valido.','', 0]
+						return self.response
+				if command[-1] == '':
+					command = command[-2]
+					c_path.pop()
+				else:
+					command = command[-1]
+			
+			childs = self.getChilds(c_path)
+			for i, ch in enumerate(childs):
+				if str(ch) == command.replace('/',''):
+					fbytes = str(len(ch.content))
+					fbytes = (fbytes[:-3]+',' if len(fbytes) > 3 else '')+fbytes[-3:]
+					resp  = '\nPermisos Cambiados: '+atr1+atr2+'\n'
+					resp += '\nPermisos   Bytes Nombre          ===> Permisos\n\n'
+					resp += ch.permiso.rjust(8)
+					resp += fbytes.rjust(8)+' '
+					resp += (ch.element + ('/' if ch.permiso[0] == 'd' else '')).ljust(16)
+					if atr1 == '=': ch.permiso = ch.permiso[0] + '---'
+					for a in atr2:
+						
+						if atr1 == '-':
+							if   a == 'r': ch.permiso = ch.permiso[0] + '-' + ch.permiso[2:]
+							elif a == 'w': ch.permiso = ch.permiso[:2] + '-' + ch.permiso[3]
+							elif a == 'x': ch.permiso = ch.permiso[:3] + '-'
+						else:
+							if   a == 'r': ch.permiso = ch.permiso[0] + 'r' + ch.permiso[2:]
+							elif a == 'w': ch.permiso = ch.permiso[:2] + 'w' + ch.permiso[3]
+							elif a == 'x': ch.permiso = ch.permiso[:3] + 'x'
+							
+					break
+					
+			resp += ' '*5
+			resp += ch.permiso.rjust(8)
+			resp += '\n'
+			
+			self.response = ['', resp, '']
+			
 		else: pass
 		
 		return self.response
@@ -522,11 +612,11 @@ if __name__ == "__main__":
 	
 	print('\n', console.actualPath(), end=' ')
 	
-	com = 'cd bin/'
+	com = 'chmod +xrr /'
 	res = console.execute(com)
 	res = '\n'.join(res)
 	print(com, '\n', res, console.actualPath())
 	
-	print('Buscado:', console.getPath2([1,0,0,-1], '> '))
+	# ~ print('Buscado:', console.getPath2([1,0,0,-1], '> '))
 	
 	

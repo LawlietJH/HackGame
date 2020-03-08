@@ -6,7 +6,9 @@
 
 from os import path, mkdir, environ
 
-from consola import Console
+from odin.consola import Console
+import odin.helps as helps
+
 
 import keyboard
 import random
@@ -312,19 +314,19 @@ def main():
 	
 	l_icons = [													# Lista actual de iconos a imprimir.
 			btn_ajustes,
-			btn_apagar,
-			btn_avances,
+			# ~ btn_apagar,
+			# ~ btn_avances,
 			btn_atajos,
-			btn_bateria,
-			btn_cerebro,
-			btn_chip,
-			btn_conexion,
-			btn_consola,
-			btn_dystopia,
-			btn_laberinto,
-			btn_mail,
-			btn_usb,
-			btn_virus
+			# ~ btn_bateria,
+			# ~ btn_cerebro,
+			# ~ btn_chip,
+			# ~ btn_conexion,
+			# ~ btn_consola,
+			# ~ btn_dystopia,
+			# ~ btn_laberinto,
+			# ~ btn_mail,
+			# ~ btn_usb,
+			# ~ btn_virus
 		]
 	
 	pygame.display.set_icon(Icono)								# Agrega el icono a la ventana.
@@ -348,8 +350,8 @@ def main():
 		('musica/Stephen - Crossfire.mp3',                       11, {'By':'Stephen',    'Song':'Crossfire',                     'Album':'',                 'Duration':'00:04:31', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
 	]
 	
-	# ~ l_canciones_activas = [i for i in range(len(playlist))]
-	l_canciones_activas = []
+	l_canciones_activas = [i for i in range(len(playlist))]
+	# ~ l_canciones_activas = []
 	
 	music = pygame.mixer.music									# Indicamos quien será la variable para Manipular el Soundtrack.
 	song_pos = random.randint(0, len(playlist)-1)				# Genera un numero random entre 0 y la longitud de la lista de canciones menos 1.
@@ -358,9 +360,6 @@ def main():
 	
 	# ~ music.set_pos(60.0) # Segundos
 	
-	# ~ print(music.get_volume())
-	# ~ music.set_volume(.50)	
-	# ~ print(music.get_volume())
 	# ~ music.set_endevent(pygame.USEREVENT)
 	# ~ music.stop()			# Detiene la cancion.
 	# ~ music.rewind()			# Reinicia la cancion desde el segundo 0.
@@ -421,6 +420,8 @@ def main():
 		con['L_y']
 	]
 	
+	con_tam_buffer = 150							# Tamanio de buffer de consola.
+	
 	p_letra = [ l_con[0]+5, l_con[1]+2 ]			# Posicion Inicial de texto.
 	
 	# Booleanos:
@@ -461,7 +462,7 @@ def main():
 	
 	song_stop = False
 	# ~ song_break = 0
-	song_vol = 5						# Volumen al 20%
+	song_vol = 20						# Volumen al 20%
 	
 	song_vol_pres_min = False
 	song_vol_pres_plus = False
@@ -762,9 +763,16 @@ def main():
 					t_files = Comando.split(' ')							# Divide el comando por los espacios.
 					
 					if t_files[0] in ['cd', 'cat', 'ls']:
-						t_files = [t_files[0], ' '.join(t_files[1:])]			# Si el nombre tiene un espacio, vuelve a unirlo con sus espacios.
-					# ~ elif t_files[0] in ['chmod']:
-						# ~ temp = t_files[1]
+						t_files = [t_files[0], ' '.join(t_files[1:])]		# Si el nombre tiene un espacio, vuelve a unirlo con sus espacios.
+					elif t_files[0] in ['chmod']:
+						
+						temp = t_files[1:]
+						
+						if len(temp) == 2:
+							t_files = [' '.join(t_files[:2]), temp[1]]		# Agrega el Atributo al comando principal. Y deja solo en 2 partes del comando.
+						else:
+							t_files.pop()									# Elimina el ultimo dato, para que no se pueda autocompletar.
+						
 					else:
 						pass
 					
@@ -960,38 +968,39 @@ def main():
 					
 				# Ctrl + Flecha Derecha: Avanzar 10 segundos de la Cancion.
 				elif evento.key == 275 and evento.mod == 64:
-					song_desface += 10
-					temp = music.get_pos()
-					# ~ print([temp, int(temp/1000), song_desface])
-					temp += (song_desface*1000)
-					
-					temp2 = playlist[song_pos][2]['Duration']
-					temp2 = anormalizeTime(temp2)		# Convierte el texto de Duracion a Milisegundos.
-					
-					if temp > temp2: temp = temp2
-					
-					music.stop()
-					music.load(playlist[song_pos][0])
-					song_desface = int(temp/1000)
-					# ~ print(song_desface)
-					music.play(start=song_desface)
+					if l_canciones_activas:
+						song_desface += 10
+						temp = music.get_pos()
+						# ~ print([temp, int(temp/1000), song_desface])
+						temp += (song_desface*1000)
+						
+						temp2 = playlist[song_pos][2]['Duration']
+						temp2 = anormalizeTime(temp2)		# Convierte el texto de Duracion a Milisegundos.
+						
+						if temp > temp2: temp = temp2
+						
+						music.stop()
+						music.load(playlist[song_pos][0])
+						song_desface = int(temp/1000)
+						# ~ print(song_desface)
+						music.play(start=song_desface)
 					
 				# Ctrl + Flecha Izquierda: Retroceder 10 segundos de la Cancion.
 				elif evento.key == 276 and evento.mod == 64:
-					
-					song_desface -= 10
-					if song_desface < 0: song_desface = 0
-					
-					temp = music.get_pos()
-					temp += song_desface*1000
-					
-					if temp < 0: temp = 0
-					
-					music.stop()
-					music.load(playlist[song_pos][0])
-					song_desface = int(temp/1000)
-					# ~ print(song_desface)
-					music.play(start=song_desface)
+					if l_canciones_activas:
+						song_desface -= 10
+						if song_desface < 0: song_desface = 0
+						
+						temp = music.get_pos()
+						temp += song_desface*1000
+						
+						if temp < 0: temp = 0
+						
+						music.stop()
+						music.load(playlist[song_pos][0])
+						song_desface = int(temp/1000)
+						# ~ print(song_desface)
+						music.play(start=song_desface)
 					
 				# Ctrl + Shift + L: Limpiar Pantalla.
 				elif evento.key == 108 and evento.mod == 65:		# mod = 64 = Ctrl
@@ -1217,6 +1226,7 @@ def main():
 						
 				Comando = ''
 				exe = False
+				l_comandos = l_comandos[con_tam_buffer*-1:]
 			
 			#===================================================================================================
 			
@@ -1280,13 +1290,21 @@ def main():
 			
 			#======================================================================================================================
 			# Tiempo Transcurrido:
-			recuadro = [ajust_init_x, ajust_init_y*ajust_pos_y, 275, 20]
-			contenido   = [recuadro[0]+5, recuadro[1]]
+			recuadro  = [ajust_init_x, ajust_init_y*ajust_pos_y, 275, 20]
+			contenido = [recuadro[0]+5, recuadro[1]]
 			rect_opaco(screen, recuadro, COLOR['Verde N'])
 			pygame.draw.rect(screen, VERDE, recuadro, 1)
 			dibujarTexto('Tiempo Transcurrido: '+normalizeTime(segundos*1000), contenido, FUENTES['Inc-R 18'], VERDE_C)
 			#======================================================================================================================
 			
+			#======================================================================================================================
+			# Tamanio de Buffer:
+			recuadro  = [ajust_init_x+600, ajust_init_y*ajust_pos_y, 335, 20]
+			contenido = [recuadro[0]+5, recuadro[1]]
+			rect_opaco(screen, recuadro, COLOR['Verde N'])
+			pygame.draw.rect(screen, VERDE, recuadro, 1)
+			dibujarTexto('Tamaño de Buffer de la Terminal: '+str(con_tam_buffer), contenido, FUENTES['Inc-R 18'], VERDE_C)
+			#======================================================================================================================
 			
 			#======================================================================================================================
 			# Recuadro: Mitad Izquierda. Musica.
@@ -1558,8 +1576,6 @@ CARACTERES += '1234567890' + 'º\'¡+ç,.-<' + 'ª!"·$%&/()=?¿*Ç;:_>'
 CARACTERES += '\\|@#~€¬[]{} '
 
 console = Console('Eny', 'Odin.Dis_'+__version__)
-
-import odin.helps as helps
 
 temp = [
 	['logs', console.createLogFile('connection'), 'r--', console.createLogFile('connection')[:-4]],
