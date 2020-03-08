@@ -18,7 +18,7 @@ from win32api import GetKeyState	# python -m pip install pywin32
 from win32con import VK_CAPITAL		# python -m pip install pywin32
 
 TITULO  = 'Odyssey in Dystopia'		# Nombre
-__version__ = 'v1.1.8'				# Version
+__version__ = 'v1.1.9'				# Version
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
@@ -312,19 +312,19 @@ def main():
 	
 	l_icons = [													# Lista actual de iconos a imprimir.
 			btn_ajustes,
-			# ~ btn_apagar,
-			# ~ btn_avances,
+			btn_apagar,
+			btn_avances,
 			btn_atajos,
-			# ~ btn_bateria,
-			# ~ btn_cerebro,
-			# ~ btn_chip,
-			# ~ btn_conexion,
-			# ~ btn_consola,
-			# ~ btn_dystopia,
-			# ~ btn_laberinto,
-			# ~ btn_mail,
-			# ~ btn_usb,
-			# ~ btn_virus
+			btn_bateria,
+			btn_cerebro,
+			btn_chip,
+			btn_conexion,
+			btn_consola,
+			btn_dystopia,
+			btn_laberinto,
+			btn_mail,
+			btn_usb,
+			btn_virus
 		]
 	
 	pygame.display.set_icon(Icono)								# Agrega el icono a la ventana.
@@ -348,7 +348,8 @@ def main():
 		('musica/Stephen - Crossfire.mp3',                       11, {'By':'Stephen',    'Song':'Crossfire',                     'Album':'',                 'Duration':'00:04:31', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
 	]
 	
-	l_canciones_activas = [i for i in range(len(playlist))]
+	# ~ l_canciones_activas = [i for i in range(len(playlist))]
+	l_canciones_activas = []
 	
 	music = pygame.mixer.music									# Indicamos quien será la variable para Manipular el Soundtrack.
 	song_pos = random.randint(0, len(playlist)-1)				# Genera un numero random entre 0 y la longitud de la lista de canciones menos 1.
@@ -459,8 +460,8 @@ def main():
 	# Variables de la Musica:
 	
 	song_stop = False
-	song_break = 0
-	song_vol = 20						# Volumen al 20%
+	# ~ song_break = 0
+	song_vol = 5						# Volumen al 20%
 	
 	song_vol_pres_min = False
 	song_vol_pres_plus = False
@@ -484,16 +485,21 @@ def main():
 		if ticks % 60 == 0:
 			song_time = normalizeTime(music.get_pos(), song_desface)
 			# ~ print(song_time)
-			if l_canciones_activas: 
-				if not music.get_busy():
-					if song_break > 2:
-						while not song_pos in l_canciones_activas:
-							song_pos = (song_pos+1) % len(playlist)
-						music.load(playlist[song_pos][0])
-						music.play()
-						song_desface = 0
+			if l_canciones_activas:				# Si hay canciones activas, entonces...
+				if not music.get_busy():		# Si no esta activa la cancion, entonces...
+					# ~ if song_break > 2:			# Espera 3 segundos
+						song_pos = (song_pos+1) % len(playlist)				# Cambia la cancion
+						while not song_pos in l_canciones_activas:			# Si el numero de cancion no esta en la lista de canciones activas,
+							song_pos = (song_pos+1) % len(playlist)			# Sigue cambiando a la siguiente.
+						music.load(playlist[song_pos][0])					# Carga la cancion
+						music.play()										# Reproduce la cancion.
+						song_desface = 0									# Reinicia la variable de desface que controla el avance de tiempo con CTRL+Felcha Derecha o Izquierda.
+						song_break = 0										# Reinicia la variable de espera de 3 segundos
+					# ~ else:
+						# ~ print(song_break)
+						# ~ song_break += 1
 				else:
-					song_break += 1
+					# Esta seccion verifica si la canción actual aun sigue en la lista de canciones activas. Sino, tratará de cambiarla inmediatamente.
 					temp = song_pos
 					while not temp in l_canciones_activas:
 						temp = (temp+1) % len(playlist)
@@ -748,55 +754,19 @@ def main():
 							
 				#=================================================================================
 				# Combinacion de Teclas
-				xD = False
-				# Ctrl + P o F10 para tomar una Captura de Pantalla.
-				if evento.key == pygame.K_p and evento.mod == 64 or evento.key == pygame.K_F10:
-					
-					s_n = 1
-					s_folder = 'screenshots/'
-					s_path = s_folder+'screenshot_001.jpg'
-					
-					if not path.isdir(s_folder): mkdir(s_folder)
-					
-					while path.exists(s_path):
-						s_n += 1
-						s_path = s_folder+'screenshot_{}.jpg'.format(str(s_n).zfill(3))
-					
-					pygame.image.save(screen, s_path)
-					
-					s_shot_ticks = 0
-					s_shot = True
-					xD = True
 				
-				# Ctrl + F o F11 para poner Pantalla Completa.
-				elif evento.key == pygame.K_f and evento.mod == 64 or evento.key == pygame.K_F11:
-					
-					if s_full:
-						
-						if (ss_x, ss_y) == RESOLUCION[s_res]:
-							s_fullF = True
-						else:
-							screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.NOFRAME)			# Objeto Que Crea La Ventana.
-							s_x = ss_x//2-RESOLUCION[s_res][0]//2
-							s_y = ss_y//2-RESOLUCION[s_res][1]//2
-							# ~ print(ss_x, ss_y, s_res, RESOLUCION[s_res], s_x, s_y)
-							environ['SDL_VIDEO_WINDOW_POS'] = '{},{}'.format(s_x, s_y)					# <---- <---- <---- <---- <---- <---- <---- Bugs de Resolucion, Cambiar a maxima Resolucion, luego cabiar a cualquier otra y presionar F11, no se ajusta correctamente.
-							screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.NOFRAME)			# Objeto Que Crea La Ventana.
-							s_full = False
-					else:
-						screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.FULLSCREEN | pygame.HWSURFACE | pygame.DOUBLEBUF)
-						s_full = True
-					
-					s_full_ticks = 0
-					xD = True
-				
-				#=================================================================================
-				# Deteccion de Caracteres En Consola.
+				# Detecta cuando se presiona TAB:
 				elif evento.unicode == '\t':
 					
 					t_root = ''
 					t_files = Comando.split(' ')							# Divide el comando por los espacios.
-					t_files = [t_files[0], ' '.join(t_files[1:])]			# Si el nombre tiene un espacio, vuelve a unirlo con sus espacios.
+					
+					if t_files[0] in ['cd', 'cat', 'ls']:
+						t_files = [t_files[0], ' '.join(t_files[1:])]			# Si el nombre tiene un espacio, vuelve a unirlo con sus espacios.
+					# ~ elif t_files[0] in ['chmod']:
+						# ~ temp = t_files[1]
+					else:
+						pass
 					
 					if len(t_files) == 2:
 						
@@ -825,6 +795,8 @@ def main():
 						t_childs = [ str(t) for t in t_childs]
 						if t_files[0] == 'cd':
 							t_childs = [ (c if not '.' in c[-5:] else '') for c in t_childs]
+						# ~ elif t_files[0] == 'cat':
+							# ~ t_childs = [ (c if '.' in c[-5:] else '') for c in t_childs]
 						t_childs = [ (c if c.startswith(t_folder) else '') for c in t_childs]
 						while '' in t_childs: t_childs.remove('')
 						
@@ -883,6 +855,50 @@ def main():
 						
 						else: printTFiles(console.getPath2(t_path, '> '))
 				
+				#=================================================================================
+				press_Fx = False
+				
+				# Ctrl + P o F10 para tomar una Captura de Pantalla.
+				if evento.key == pygame.K_p and evento.mod == 64 or evento.key == pygame.K_F10:
+					
+					s_n = 1
+					s_folder = 'screenshots/'
+					s_path = s_folder+'screenshot_001.jpg'
+					
+					if not path.isdir(s_folder): mkdir(s_folder)
+					
+					while path.exists(s_path):
+						s_n += 1
+						s_path = s_folder+'screenshot_{}.jpg'.format(str(s_n).zfill(3))
+					
+					pygame.image.save(screen, s_path)
+					
+					s_shot_ticks = 0
+					s_shot = True
+					press_Fx = True
+				
+				# Ctrl + F o F11 para poner Pantalla Completa.
+				elif evento.key == pygame.K_f and evento.mod == 64 or evento.key == pygame.K_F11:
+					
+					if s_full:
+						
+						if (ss_x, ss_y) == RESOLUCION[s_res]:
+							s_fullF = True
+						else:
+							screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.NOFRAME)			# Objeto Que Crea La Ventana.
+							s_x = ss_x//2-RESOLUCION[s_res][0]//2
+							s_y = ss_y//2-RESOLUCION[s_res][1]//2
+							# ~ print(ss_x, ss_y, s_res, RESOLUCION[s_res], s_x, s_y)
+							environ['SDL_VIDEO_WINDOW_POS'] = '{},{}'.format(s_x, s_y)					# <---- <---- <---- <---- <---- <---- <---- Bugs de Resolucion, Cambiar a maxima Resolucion, luego cabiar a cualquier otra y presionar F11, no se ajusta correctamente.
+							screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.NOFRAME)			# Objeto Que Crea La Ventana.
+							s_full = False
+					else:
+						screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.FULLSCREEN | pygame.HWSURFACE | pygame.DOUBLEBUF)
+						s_full = True
+					
+					s_full_ticks = 0
+					press_Fx = True
+				
 				# Ctrl + 'J': Cancion Anterior
 				elif evento.key == pygame.K_j and evento.mod == 64:			# mod = 64 = Ctrl
 					if l_canciones_activas:
@@ -933,6 +949,14 @@ def main():
 					s_song_vol = True
 					s_song_vol_ticks = 0
 					song_vol_pres_plus = True
+						
+				# Ctrl + M: Mute.
+				elif evento.key == 109 and evento.mod == 64:		# mod = 64 = Ctrl
+					song_vol = 0
+					music.set_volume(song_vol/100)
+					s_song_vol = True
+					s_song_vol_ticks = 0
+					song_vol_pres_plus = True
 					
 				# Ctrl + Flecha Derecha: Avanzar 10 segundos de la Cancion.
 				elif evento.key == 275 and evento.mod == 64:
@@ -972,15 +996,7 @@ def main():
 				# Ctrl + Shift + L: Limpiar Pantalla.
 				elif evento.key == 108 and evento.mod == 65:		# mod = 64 = Ctrl
 					l_comandos = []
-					
-				# Ctrl + Shift + M: Mute.
-				elif evento.key == 109 and evento.mod == 65:		# mod = 65 = Ctrl+Shift
-					song_vol = 0
-					music.set_volume(song_vol/100)
-					s_song_vol = True
-					s_song_vol_ticks = 0
-					song_vol_pres_plus = True
-					
+				
 				# Ctrl + Shift + '-': Volumen - 10%
 				elif evento.key == 47 and evento.mod == 65:			# mod = 64 = Ctrl
 					if song_vol > 0: song_vol -= 10
@@ -1001,22 +1017,15 @@ def main():
 					
 				# ~ print(evento)
 				
+				# Deteccion de Caracteres En Consola.
 				if vista_actual == l_vistas['Consola']:
-					if len(Comando) < pos_limit and xD == False:
+					if len(Comando) < pos_limit and press_Fx == False:
 						
 						# Se actualizan los valores por si se presiono alguna de las siguientes teclas.
 						p_pos += 1
 						k_char = True
 						
-						# ~ if evento.unicode != '\t':
-							# ~ t_files_ini = ''
-							# ~ t_files_pos = 0
-						
-						#=================================================================================
-						
-						# Inserta un espacio en la posicion p_pos del Comando.
-						
-						# ~ if evento.key == pygame.K_SPACE:   Comando = i_let(Comando, ' ',  p_pos)
+						# Inserta un caracter en la posicion p_pos del Comando.
 						if not evento.unicode == '' and evento.unicode in CARACTERES: Comando = i_let(Comando, evento.unicode,  p_pos)
 						else:
 							# Si no, se restablecen los valores, significa que no se presiono ninguna de las teclas anteriores a partir del ultimo IF.
@@ -1180,7 +1189,15 @@ def main():
 						textos = []
 					
 					temp = textos[:]
-					for i, x in enumerate(temp):
+					for x in temp:							# Aplica los saltos de linea '\n' que esten en el texto.
+						if x == '' or x == 0: continue
+						else:
+							temp = x.split('\n')
+							if len(temp) > 1:
+								textos = temp
+					
+					temp = textos[:]
+					for i, x in enumerate(temp):			# Aplica salto de linea al desbordar la ventana.
 						if x == '' or x == 0: continue
 						else:
 							sT = splitText(x)
@@ -1219,7 +1236,7 @@ def main():
 				p_texto = [ l_con[0]+5, l_con[1] - ((len(temp)-i)*T_pix_y) -2 ]		# Posicion del texto.
 				
 				if not com[-2:] == '> ':
-					
+					# ~ print([com])
 					if com: valid = console.validate(com.split(' ')[1])		# Si el comando es valido sera igual a True.
 					else: valid = True										# Si la linea esta vacia '' en automatico sera True.
 					
@@ -1233,9 +1250,19 @@ def main():
 						com = com+error
 					else:
 						com = com[:(pos_limit+len(Prefijo)-len(error)-2)]+'...'+error
-				
+					
+					try:
+						if com.split(' ')[0][-1] == '>':
+							recuadro = [p_texto[0]-5, p_texto[1]+2, RESOLUCION_CMD[s_res][0]-20, 13 ]
+							rect_opaco(screen, recuadro, COLOR['Verde S'])
+							pygame.draw.rect(screen, COLOR['Verde N'], recuadro, 1)
+					except:
+						pass
 				else:
 					temp_col = VERDE_C
+					recuadro = [p_texto[0]-5, p_texto[1]+2, RESOLUCION_CMD[s_res][0]-20, 13 ]
+					rect_opaco(screen, recuadro, COLOR['Verde S'])
+					pygame.draw.rect(screen, COLOR['Verde N'], recuadro, 1)
 				
 				dibujarTexto(com, p_texto, FUENTES[Font_def], temp_col)			# Imprime el texto en consola.
 				
@@ -1264,7 +1291,8 @@ def main():
 			#======================================================================================================================
 			# Recuadro: Mitad Izquierda. Musica.
 			ajust_pos_y = 3
-			recuadro  = [ajust_init_x, ajust_init_y*ajust_pos_y, RESOLUCION_CMD[s_res][0]-160, RESOLUCION_CMD[s_res][1]-180]
+			# ~ recuadro  = [ajust_init_x, ajust_init_y*ajust_pos_y, RESOLUCION_CMD[s_res][0]-160, RESOLUCION_CMD[s_res][1]-180]
+			recuadro  = [ajust_init_x, ajust_init_y*ajust_pos_y, 540, RESOLUCION_CMD[s_res][1]-180]
 			rect_opaco(screen, recuadro, COLOR['Verde S'])
 			pygame.draw.rect(screen, VERDE, recuadro, 1)
 			
@@ -1299,7 +1327,8 @@ def main():
 					
 				ajust_pos_y += 1
 				if len(comb) > 64:
-					recuadro2 = [recuadro[0]+30, 50+25*ajust_pos_y, RESOLUCION_CMD[s_res][0]-200, 45]
+					# ~ recuadro2 = [recuadro[0]+30, 50+25*ajust_pos_y, RESOLUCION_CMD[s_res][0]-200, 45]
+					recuadro2 = [recuadro[0]+30, 50+25*ajust_pos_y, 500, 45]
 					rect_opaco(screen, recuadro2, COLOR['Verde S'])
 					pygame.draw.rect(screen, COLOR['Verde N'], recuadro2, 1)
 					comb_p1 = '_'
@@ -1312,7 +1341,8 @@ def main():
 					ajust_pos_y += 1
 					dibujarTexto(comb_p2, [recuadro[0]+40, 50+25*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
 				else:
-					recuadro2 = [recuadro[0]+30, 50+25*ajust_pos_y, RESOLUCION_CMD[s_res][0]-200, 20]
+					# ~ recuadro2 = [recuadro[0]+30, 50+25*ajust_pos_y, RESOLUCION_CMD[s_res][0]-200, 20]
+					recuadro2 = [recuadro[0]+30, 50+25*ajust_pos_y, 500, 20]
 					rect_opaco(screen, recuadro2, COLOR['Verde S'])
 					pygame.draw.rect(screen, COLOR['Verde N'], recuadro2, 1)
 					dibujarTexto(comb, [recuadro[0]+40, 50+25*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
@@ -1369,6 +1399,7 @@ def main():
 			# Todas las combinaciones posibles de Teclas:
 			combinaciones = [
 						'Esc: Para Cerrar el Juego.',
+						'F10: Captura de Pantalla.',
 						'F11: Poner/Quitar Pantalla Completa.',
 						'Ctrl + F: Poner/Quitar Pantalla Completa.',
 						'Ctrl + P: Captura de Pantalla.',
@@ -1528,11 +1559,15 @@ CARACTERES += '\\|@#~€¬[]{} '
 
 console = Console('Eny', 'Odin.Dis_'+__version__)
 
+import odin.helps as helps
+
 temp = [
 	['logs', console.createLogFile('connection'), 'r--', console.createLogFile('connection')[:-4]],
 	['logs', 'connection 2020-01-25_01-48-26.241195.log', 'r--', 'Connection 2020-01-25_01-48-26.241195'],
-	['bin', 'nueva', 'rwx'],
-	['bin', 'scan.exe', 'r-x', console.binary()]
+	['bin', 'nueva', 'rwx', 'folder'],
+	['config', 'permisos.txt', 'r--', helps.permisos_content],
+	['config', 'chmod.txt', 'r--', helps.chmod_content],
+	['bin', 'scan.exe', 'rwx', console.binary()]
 ]
 
 console.fileSystemUpdate(temp)

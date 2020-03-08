@@ -7,7 +7,7 @@ import operator
 from datetime import datetime
 
 TITULO  = 'Odyssey in Dystopia'
-__version__ = 'v1.1.8'
+__version__ = 'v1.1.9'
 
 class Arbol:
 	
@@ -91,13 +91,13 @@ class Console:
 		self.rand   = lambda li, le: ''.join([str(random.choice(li)) for _ in range(le)])
 		self.binary = lambda ini=512, fin=1024: self.rand([0,1], random.randrange(ini, fin, 8))
 		self.system = [
-			['root',    'system',   'r--'],
-			['root',    'user',     'r--'],
-			['root',    'boot.ini', 'r--', self.binary()],
-			['system',  'logs',     'r--'],
-			['system',  'config',   'r--'],
-			['user',     username,  'r--'],
-			[ username, 'bin',      'r--']
+			['root',    'system',   'r-x'],
+			['root',    'user',     'r-x'],
+			['root',    'boot.ini', '---', self.binary()],
+			['system',  'logs',     'rwx'],
+			['system',  'config',   'r-x'],
+			['user',     username,  'r-x'],
+			[ username, 'bin',      'rwx']
 		]
 		self.fileSystemUpdate(self.system)
 		self.pathPos = self.searchDir(self.arbol, self.username)
@@ -323,7 +323,34 @@ class Console:
 		
 		elif cnd == 'ls' or cnd == 'dir':
 			
-			childs = self.getChilds()
+			command = command[1:]
+			# ~ print(command)
+			c_path = self.pathPos
+			
+			if command:
+				if len(command) == 1:
+					command = command[0]
+					if command[0] == '/':
+						command = command[1:]
+						c_path = []
+				elif len(command) > 1:
+					self.response = ['', 'No es un comando valido.', '', 0]
+					return self.response
+				
+				if command:
+					print(command)
+					temp = command.split('/')
+					temp_path = ''
+					
+					while temp:
+						temp_path = temp.pop(0)
+						childs = self.getChilds(c_path)
+						for i, ch in enumerate(childs):
+							if ch.element == temp_path:
+								c_path.append(i)
+								break
+			
+			childs = self.getChilds(c_path)
 			
 			if len(childs) > 0:
 				
@@ -356,7 +383,13 @@ class Console:
 				
 				self.response = [''] + [data] + [''] + self.response + ['']
 				
-			else: self.response = ['', 'La Carpeta Esta Vacia', '']
+			else:
+				childs = self.getChilds(c_path[:-1])
+				ch = childs[c_path[-1]]
+				if ch.permiso[0] == '-':
+					self.response = ['', 'No es una carpeta: '+ch.element, '', 0]
+				else:	
+					self.response = ['', 'La Carpeta Esta Vacia', '']
 		
 		elif cnd == 'cat' or cnd == 'type':
 			
@@ -365,6 +398,10 @@ class Console:
 			if   len(command) == 1: self.response = ['','Faltan Argumentos','', 0]
 			elif len(command) == 2:
 				command = command[1]
+				
+				if command[0] == '/':
+					c_path = []
+					command = command[1:]
 				
 				if len(command.split('/')) > 1:
 					command = command.split('/')
@@ -377,10 +414,15 @@ class Console:
 						try:
 							ch = [ str(c) for c in self.getChilds(c_path)]
 							c_path = c_path + [ch.index(c)]
+							print(c_path)
 						except:
-							self.response = ['','Comando Invalido','', 0]
+							self.response = ['','No es un comando valido','', 0]
 							return self.response
 					command = command[-1]
+				
+				if command == '':
+					self.response = ['', 'No es un comando valido.', '', 0]
+					return self.response
 				
 				if   command[0] == '"' and command[-1] == '"': command = command[1:-1]
 				elif command[0] == '"' or  command[-1] == '"':
@@ -393,7 +435,10 @@ class Console:
 						if ch.content == 'folder':
 							self.response = ['', 'No puedes leer una Carpeta.', '', 0]
 							break
-						self.response = ['', ch.content, '']
+						if ch.permiso[1] != '-':
+							self.response = ['', ch.content, '']
+						else:
+							self.response = ['', 'No tienes permisos de Lectura.', '', 0]
 						break
 					else:
 						self.response = ['', 'No existe el archivo: "'+command+'"', '', 0]
@@ -414,7 +459,7 @@ class Console:
 							ch = [ str(c) for c in self.getChilds(c_path)]
 							c_path = c_path + [ch.index(c)]
 						except:
-							self.response = ['','Comando Invalido','', 0]
+							self.response = ['','No es un comando valido','', 0]
 							return self.response
 					command = command[-1]
 				
@@ -433,7 +478,10 @@ class Console:
 							if ch.content == 'folder':
 								self.response = ['', 'No puedes leer una Carpeta.', '', 0]
 								break
-							self.response = ['', ch.content, '']
+							if ch.permiso[1] != '-':
+								self.response = ['', ch.content, '']
+							else:
+								self.response = ['', 'No tienes permisos de Lectura.', '', 0]
 							break
 						else:
 							self.response = ['', 'No existe el archivo: '+command, '', 0]
