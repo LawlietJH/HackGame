@@ -7,7 +7,7 @@
 from os import path, mkdir, environ
 
 from odin.consola import Console
-import odin.helps as helps
+from odin.helps   import Helps
 
 
 import keyboard
@@ -20,7 +20,7 @@ from win32api import GetKeyState	# python -m pip install pywin32
 from win32con import VK_CAPITAL		# python -m pip install pywin32
 
 TITULO  = 'Odyssey in Dystopia'		# Nombre
-__version__ = 'v1.1.9'				# Version
+__version__ = 'v1.2.0'				# Version
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
@@ -129,11 +129,12 @@ def add_comand(l_comandos, textos):	# Inserta Comandos a la Lista
 
 def clic_boton(screen, pos, rec=0):	# Detecta un Clic en las coordenadas de un boton, contando la posicion de botones derecha a izquierda.
 	
-	x_pos = RESOLUCION[s_res][0]-btn_x-10*(rec+1)-btn_x*rec
+	x_pos = RESOLUCION[s_res][0]-btn_x-15*((rec%10)+1)-btn_x*(rec%10)
+	y_pos = 5 + (52 if rec >= 10 else 0)
 	x, y  = pos
 	
-	if x > x_pos and x < x_pos + btn_x:
-		if y > 10 and y < btn_y+10:
+	if x > x_pos and x < x_pos + btn_x + 10:
+		if y > y_pos and y < btn_y + y_pos + 10:
 			return True
 	
 	return False
@@ -282,12 +283,11 @@ def main():
 	# Inicializaciones =================================================
 	
 	ss_x, ss_y = get_screen_size()
-	s_x = ss_x//2-RESOLUCION[s_res][0]//2
-	s_y = ss_y//2-RESOLUCION[s_res][1]//2
-	
+	# ~ s_x = ss_x//2-RESOLUCION[s_res][0]//2
+	# ~ s_y = ss_y//2-RESOLUCION[s_res][1]//2
 	# ~ print(ss_x, ss_y, RESOLUCION[s_res], s_x, s_y)
-	
-	environ['SDL_VIDEO_WINDOW_POS'] = '{},{}'.format(s_x, s_y)
+	# ~ environ['SDL_VIDEO_WINDOW_POS'] = '{},{}'.format(s_x, s_y)
+	environ['SDL_VIDEO_CENTERED'] = '1'
 	
 	screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.NOFRAME)			# Objeto Que Crea La Ventana.
 	screen.fill(COLOR['Negro'])									# Rellena el Fondo de Negro.
@@ -350,8 +350,8 @@ def main():
 		('musica/Stephen - Crossfire.mp3',                       11, {'By':'Stephen',    'Song':'Crossfire',                     'Album':'',                 'Duration':'00:04:31', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
 	]
 	
-	l_canciones_activas = [i for i in range(len(playlist))]
-	# ~ l_canciones_activas = []
+	# ~ l_canciones_activas = [i for i in range(len(playlist))]
+	l_canciones_activas = []
 	
 	music = pygame.mixer.music									# Indicamos quien será la variable para Manipular el Soundtrack.
 	song_pos = random.randint(0, len(playlist)-1)				# Genera un numero random entre 0 y la longitud de la lista de canciones menos 1.
@@ -393,12 +393,13 @@ def main():
 	game_over = False				# Variable Que Permite indicar si se termino el juego o no.
 	clock = pygame.time.Clock()		# Obtiener El Tiempo para pasar la cantidad de FPS más adelante.
 	
-	segundos = 0		# Contador de Tiempo, 1 seg por cada 60 Ticks.
-	ticks    = 0		# Contador de Ticks.
-	Comando  = ''		# Comando en linea actual.
-	l_comandos = []		# Lista de comandos ejecutados.
-	l_com_ps = 0		# Poicion actual de lista de comandos ejecutados mostrados, 0 equivale a los mas recientes.
-	p_pos    = 0	# Posicion del Puntero, para manipular en que posicion estara en la cadena 'Comando'. p_pos = 5 significaria entonces que estara el puntero en el caracter 5.
+	segundos   = 0			# Contador de Tiempo, 1 seg por cada 60 Ticks.
+	ticks      = 0			# Contador de Ticks.
+	Comando    = ''			# Comando en linea actual.
+	l_comandos = []			# Lista de comandos ejecutados.
+	l_com_ps   = 0			# Poicion actual de lista de comandos ejecutados mostrados, 0 equivale a los mas recientes.
+	p_pos      = 0			# Posicion del Puntero, para manipular en que posicion estara en la cadena 'Comando'. p_pos = 5 significaria entonces que estara el puntero en el caracter 5.
+	con_tam_buffer = 150	# Tamanio de buffer de consola.
 	
 	# Dimensiones de Consola:
 	# P = Punto inicial. T = Tamaño. M = Margen. L = linea
@@ -419,8 +420,6 @@ def main():
 		con['L_x'],
 		con['L_y']
 	]
-	
-	con_tam_buffer = 150							# Tamanio de buffer de consola.
 	
 	p_letra = [ l_con[0]+5, l_con[1]+2 ]			# Posicion Inicial de texto.
 	
@@ -456,22 +455,21 @@ def main():
 	ajust_pos_y = 1
 	ajust_init_x, ajust_init_y =  25, 50							# Ajustar a la posicion
 	ajust_v_tamX, ajust_v_tamY = 110, 30
+	cant_scroll = 3
 	
 	#===================================================================
 	# Variables de la Musica:
 	
-	song_stop = False
-	# ~ song_break = 0
-	song_vol = 20						# Volumen al 20%
-	
-	song_vol_pres_min = False
+	song_vol           = 20						# Volumen al 20%
+	song_vol_pres_min  = False
 	song_vol_pres_plus = False
-	song_vol_mute = False
-	song_change_down = False
-	song_change_up = False
-	song_fade_secs = 1
-	song_fade_ticks = 0
-	song_desface = 0
+	song_vol_mute      = False
+	song_change_down   = False
+	song_change_up     = False
+	song_stop          = False
+	song_fade_secs     = 1
+	song_fade_ticks    = 0
+	song_desface       = 0
 	
 	music.set_volume(song_vol / 100)	# Selecciona en Nivel de Volumen entre 0.0 y 1.0.
 	music.play()						# -1 Repetira infinitamente la canción.
@@ -485,10 +483,8 @@ def main():
 		#===============================================================
 		if ticks % 60 == 0:
 			song_time = normalizeTime(music.get_pos(), song_desface)
-			# ~ print(song_time)
 			if l_canciones_activas:				# Si hay canciones activas, entonces...
 				if not music.get_busy():		# Si no esta activa la cancion, entonces...
-					# ~ if song_break > 2:			# Espera 3 segundos
 						song_pos = (song_pos+1) % len(playlist)				# Cambia la cancion
 						while not song_pos in l_canciones_activas:			# Si el numero de cancion no esta en la lista de canciones activas,
 							song_pos = (song_pos+1) % len(playlist)			# Sigue cambiando a la siguiente.
@@ -496,9 +492,6 @@ def main():
 						music.play()										# Reproduce la cancion.
 						song_desface = 0									# Reinicia la variable de desface que controla el avance de tiempo con CTRL+Felcha Derecha o Izquierda.
 						song_break = 0										# Reinicia la variable de espera de 3 segundos
-					# ~ else:
-						# ~ print(song_break)
-						# ~ song_break += 1
 				else:
 					# Esta seccion verifica si la canción actual aun sigue en la lista de canciones activas. Sino, tratará de cambiarla inmediatamente.
 					temp = song_pos
@@ -591,9 +584,7 @@ def main():
 												screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.FULLSCREEN | pygame.HWSURFACE | pygame.DOUBLEBUF)
 												s_full_ticks = 0
 											else:
-												s_x = ss_x//2-RESOLUCION[s_res][0]//2
-												s_y = ss_y//2-RESOLUCION[s_res][1]//2
-												environ['SDL_VIDEO_WINDOW_POS'] = '{},{}'.format(s_x, s_y)
+												environ['SDL_VIDEO_CENTERED'] = '1'
 												screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.NOFRAME)			# Objeto Que Crea La Ventana.
 												
 										BGimg = load_image('images/background.bmp')											# Carga el Fondo de la Ventana.
@@ -643,18 +634,17 @@ def main():
 							# En resumen, Detecta si hay mas texto por encima 
 							if len(l_comandos) > l_com_lim and (l_com_ps + l_com_lim) < len(l_comandos):
 								# Y Permite desplazarse hacia arriba linea por linea, hasta que no haya mas encima.
-								l_com_ps += 1
+								l_com_ps += cant_scroll
 					
 				elif evento.button == 5:
 					if vista_actual == l_vistas['Consola']:
 						if l_com_ps > 0:	# Mientras haya lineas debajo permite dezplazarse.
-							l_com_ps -= 1
+							l_com_ps -= cant_scroll
 			
 			#=================================================================================
 			
 			elif evento.type == pygame.KEYDOWN:		# Manipulación del Teclado.
 				
-				# ~ if vista_actual == l_vistas['Consola']:
 				# Al presionar cualquier tecla.
 				k_down = True
 				k_wait = 1
@@ -695,9 +685,6 @@ def main():
 								cache_com = cache_com[::-1]
 								cache_com.remove('')
 								cache_com = cache_com[::-1]
-							# ~ elif cache_com[cache_pos] == '':
-								# ~ cache_com.pop(cache_pos)		# Elimina los que sean cadenas vacias.
-								# ~ cache_pos -= 1
 							
 							Comando = cache_com[cache_pos][:pos_limit_r-len(Prefijo)+1]
 							p_pos = len(Comando)
@@ -762,16 +749,11 @@ def main():
 					t_root = ''
 					t_files = Comando.split(' ')							# Divide el comando por los espacios.
 					
-					if t_files[0] in ['cd', 'cat', 'ls']:
+					if t_files[0] in ['cd', 'cat', 'type', 'ls', 'dir']:
 						t_files = [t_files[0], ' '.join(t_files[1:])]		# Si el nombre tiene un espacio, vuelve a unirlo con sus espacios.
 					elif t_files[0] in ['chmod']:
-						
-						temp = t_files[1:]
-						
-						if len(temp) == 2:
-							t_files = [' '.join(t_files[:2]), temp[1]]		# Agrega el Atributo al comando principal. Y deja solo en 2 partes del comando.
-						else:
-							t_files.pop()									# Elimina el ultimo dato, para que no se pueda autocompletar.
+						t_files = [' '.join(t_files[:2]), ' '.join(t_files[2:])]		# Agrega el Atributo al comando principal. Y deja solo en 2 partes del comando.
+						# ~ t_files.pop()													# Elimina el ultimo dato, para que no se pueda autocompletar.
 						
 					else:
 						pass
@@ -801,9 +783,9 @@ def main():
 						t_folder = t_folders_l[-1]
 						t_childs = console.getChilds(t_path)
 						t_childs = [ str(t) for t in t_childs]
-						if t_files[0] == 'cd':
+						if t_files[0] in ['cd','ls']:
 							t_childs = [ (c if not '.' in c[-5:] else '') for c in t_childs]
-						# ~ elif t_files[0] == 'cat':
+						# ~ elif t_files[0] == '':
 							# ~ t_childs = [ (c if '.' in c[-5:] else '') for c in t_childs]
 						t_childs = [ (c if c.startswith(t_folder) else '') for c in t_childs]
 						while '' in t_childs: t_childs.remove('')
@@ -893,17 +875,14 @@ def main():
 						if (ss_x, ss_y) == RESOLUCION[s_res]:
 							s_fullF = True
 						else:
-							screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.NOFRAME)			# Objeto Que Crea La Ventana.
-							s_x = ss_x//2-RESOLUCION[s_res][0]//2
-							s_y = ss_y//2-RESOLUCION[s_res][1]//2
-							# ~ print(ss_x, ss_y, s_res, RESOLUCION[s_res], s_x, s_y)
-							environ['SDL_VIDEO_WINDOW_POS'] = '{},{}'.format(s_x, s_y)					# <---- <---- <---- <---- <---- <---- <---- Bugs de Resolucion, Cambiar a maxima Resolucion, luego cabiar a cualquier otra y presionar F11, no se ajusta correctamente.
+							environ['SDL_VIDEO_CENTERED'] = '1'
 							screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.NOFRAME)			# Objeto Que Crea La Ventana.
 							s_full = False
 					else:
 						screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.FULLSCREEN | pygame.HWSURFACE | pygame.DOUBLEBUF)
 						s_full = True
 					
+					# ~ pygame.key.set_mods(0)
 					s_full_ticks = 0
 					press_Fx = True
 				
@@ -1286,24 +1265,9 @@ def main():
 		elif vista_actual == l_vistas['Ajustes']:
 			
 			# Dibuja los textos en pantalla.
-			ajust_pos_y = 1
 			
 			#======================================================================================================================
-			# Tiempo Transcurrido:
-			recuadro  = [ajust_init_x, ajust_init_y*ajust_pos_y, 275, 20]
-			contenido = [recuadro[0]+5, recuadro[1]]
-			rect_opaco(screen, recuadro, COLOR['Verde N'])
-			pygame.draw.rect(screen, VERDE, recuadro, 1)
-			dibujarTexto('Tiempo Transcurrido: '+normalizeTime(segundos*1000), contenido, FUENTES['Inc-R 18'], VERDE_C)
-			#======================================================================================================================
-			
-			#======================================================================================================================
-			# Tamanio de Buffer:
-			recuadro  = [ajust_init_x+600, ajust_init_y*ajust_pos_y, 335, 20]
-			contenido = [recuadro[0]+5, recuadro[1]]
-			rect_opaco(screen, recuadro, COLOR['Verde N'])
-			pygame.draw.rect(screen, VERDE, recuadro, 1)
-			dibujarTexto('Tamaño de Buffer de la Terminal: '+str(con_tam_buffer), contenido, FUENTES['Inc-R 18'], VERDE_C)
+			# Mitad Izquierda.
 			#======================================================================================================================
 			
 			#======================================================================================================================
@@ -1368,13 +1332,12 @@ def main():
 				if i >= 1:
 					# Imprime recuadro de checkbox:
 					clic_music_checkbox(evento, recuadro[0]+30, 50+25*ajust_pos_y, i-1)
-		
 			#======================================================================================================================
 			
+			#======================================================================================================================
+			# Resolucion Actual
 			ajust_pos_y = 2
 			texto = 'Resolución: '
-			
-			# Resolucion Actual
 			rect_opaco(screen, [ajust_init_x, ajust_init_y*ajust_pos_y, 210, ajust_v_tamY-10], COLOR['Verde S'])						# Color de Fondo a Resolucion de Consola actual.
 			pygame.draw.rect(screen, VERDE, [ajust_init_x, ajust_init_y*ajust_pos_y, 210, ajust_v_tamY-10], 1)							# Contorno a Resolucion de Consola actual.
 			dibujarTexto(texto+(str(RESOLUCION[s_res][0])+'x'+str(RESOLUCION[s_res][1])).rjust(9),
@@ -1392,6 +1355,43 @@ def main():
 					temp_texto += str(RESOLUCION[(s_res+i)%len(RESOLUCION)][1])
 					temp_texto = temp_texto.rjust(9)
 					dibujarTexto(temp_texto, [ajust_init_x+120, ajust_init_y*ajust_pos_y+(ajust_v_tamY*i)], FUENTES['Inc-R 18'], VERDE_C)		# Imprime el texto.
+			#===================================================================================================
+			
+			#======================================================================================================================
+			# Tiempo Transcurrido:
+			ajust_pos_y = 1
+			recuadro  = [ajust_init_x, ajust_init_y*ajust_pos_y, 275, 20]
+			contenido = [recuadro[0]+5, recuadro[1]]
+			rect_opaco(screen, recuadro, COLOR['Verde N'])
+			pygame.draw.rect(screen, VERDE, recuadro, 1)
+			dibujarTexto('Tiempo Transcurrido: '+normalizeTime(segundos*1000), contenido, FUENTES['Inc-R 18'], VERDE_C)
+			#======================================================================================================================
+			
+			#======================================================================================================================
+			# Mitad Derecha.
+			#======================================================================================================================
+			
+			plus_der = 600
+			
+			#======================================================================================================================
+			# Desplazamiento de Scroll:
+			ajust_pos_y = 2
+			recuadro  = [ajust_init_x+plus_der, ajust_init_y*ajust_pos_y, 335, 20]
+			contenido = [recuadro[0]+5, recuadro[1]]
+			rect_opaco(screen, recuadro, COLOR['Verde N'])
+			pygame.draw.rect(screen, VERDE, recuadro, 1)
+			dibujarTexto('Cantidad de Desplante de Scroll: '+str(cant_scroll), contenido, FUENTES['Inc-R 18'], VERDE_C)
+			#======================================================================================================================
+			
+			#======================================================================================================================
+			# Tamanio de Buffer:
+			ajust_pos_y = 1
+			recuadro  = [ajust_init_x+plus_der, ajust_init_y*ajust_pos_y, 335, 20]
+			contenido = [recuadro[0]+5, recuadro[1]]
+			rect_opaco(screen, recuadro, COLOR['Verde N'])
+			pygame.draw.rect(screen, VERDE, recuadro, 1)
+			dibujarTexto('Tamaño de Buffer de la Terminal: '+str(con_tam_buffer), contenido, FUENTES['Inc-R 18'], VERDE_C)
+			#======================================================================================================================
 			
 		#===================================================================================================
 		
@@ -1581,8 +1581,8 @@ temp = [
 	['logs', console.createLogFile('connection'), 'r--', console.createLogFile('connection')[:-4]],
 	['logs', 'connection 2020-01-25_01-48-26.241195.log', 'r--', 'Connection 2020-01-25_01-48-26.241195'],
 	['bin', 'nueva', 'rwx', 'folder'],
-	['config', 'permisos.txt', 'r--', helps.permisos_content],
-	['config', 'chmod.txt', 'r--', helps.chmod_content],
+	['config', 'permisos.txt', 'r--', Helps.permisos_content],
+	['config', 'chmod.txt', 'r--', Helps.chmod_content],
 	['bin', 'scan.exe', 'rwx', console.binary()]
 ]
 

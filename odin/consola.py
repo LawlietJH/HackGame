@@ -2,12 +2,13 @@
 # By: LawlietJH
 # Odyssey in Dystopia
 
+from .helps import *
 import random, os
 import operator
 from datetime import datetime
 
 TITULO  = 'Odyssey in Dystopia'
-__version__ = 'v1.1.9'
+__version__ = 'v1.2.0'
 
 class Arbol:
 	
@@ -214,30 +215,109 @@ class Console:
 	
 	def execute(self, command):
 		
+		def validateCommand(command, c_path, tipo=0):	# Tipos: 0=Ambos, 1=Carpeta, 2=Archivo
+			origin = command
+			endS = False
+			fold = False
+			if command[0] == '/':
+				c_path = []
+				command = command[1:]
+			try:
+				if command[-1] == '/':
+					endS = True
+					command = command[:-1]
+			except: return command, c_path
+			if len(command.split('/')) >= 1:
+				command = command.split('/')
+				for c in command:
+					if '"' in c[0] and '"' in c[-1]: c = c[1:-1]
+					elif '"' in c[0] or '"' in c[-1]:
+						self.response = ['','No es un archivo valido: '+c,'', 0]
+						return None, None
+					if c == '..':
+						try: c_path.pop()
+						except: pass
+						continue
+					try:
+						ch_raw = self.getChilds(c_path)
+						ch = [ str(c) for c in ch_raw ]
+						index = ch.index(c)
+						c_path = c_path + [index]
+					except:
+						path = not '.' in c[-5:]
+						ruta = self.getPath2(c_path) + ('/' if c_path else '')
+						ruta += c + ('/' if path else '')
+						if path: self.response = ['','No es una ruta valida: '+ruta,'', 0]
+						else: self.response = ['','No existe el archivo: '+ruta,'', 0]
+						return None, None
+				if ch_raw[index].permiso[0] == 'd': fold = True
+				command = c
+				if tipo == 1:
+					if not fold:
+						self.response = ['','No es una carpeta: '+command,'', 0]
+						return None, None
+				elif tipo == 2:
+					if fold:
+						self.response = ['','No es un archivo: '+command+'/','', 0]
+						return None, None
+					elif endS:
+						self.response = ['','No es una ruta valida: '+command+'/','', 0]
+						return None, None
+			return command, c_path
+		
+		def commandMatch(command, c_path):
+			childs = self.getChilds(c_path)
+			for ch in childs:
+				if str(ch) == command:
+					if ch.content == 'folder':
+						self.response = ['', 'No puedes leer una Carpeta.', '', 0]
+						break
+					if ch.permiso[1] != '-':
+						self.response = ['', ch.content, '']
+					else:
+						self.response = ['', 'No tienes permisos de Lectura.', '', 0]
+					break
+				else:
+					self.response = ['', 'No existe el archivo: '+command, '', 0]
+		
 		self.response = []
 		
 		command = command.split()
 		cnd = command[0]
 		
 		if cnd == 'help':
-			self.response = [
-				'',
-				'Los Posibles Comandos a Utilizar Son:',
-				'',
-				'  help  com?  Muestra un Mensaje de Ayuda.',
-				'              Puedes escribir el nombre de',
-				'              un comando para mas detalles.',
-				'  cd    dir   Cambia de Directorio.',
-				'  ls          Lista los archivos y carpetas. ALT: dir',
-				'  exit        Cierra la Consola de Comandos',
-				'  cls         Limpia la Consola de Comandos',
-				'  cat   file  Leer Archivo como texto plano. ALT: type',
-				# ~ '  mkdir name Crea un Carpeta',
-				# ~ '  rm    file Elimina un Archivo o Carpeta',
-				# ~ '  con   IP   Conectar a una IP',
-				# ~ '  dc    IP   Desconectarse de una IP.',
-				''
-			]
+			
+			if len(command) == 1:
+				
+				self.response = [
+					'',
+					'Los Posibles Comandos a Utilizar Son:',
+					'',
+					'  help  com?        Muestra un Mensaje de Ayuda.',
+					'                    Puedes escribir el nombre de',
+					'                    un comando para mas detalles.',
+					'  cd    dir         Cambia de Directorio.',
+					'  ls                Lista los archivos y carpetas. ALT: dir',
+					'  exit              Cierra la Consola de Comandos',
+					'  cls               Limpia la Consola de Comandos',
+					'  cat   file        Leer Archivo como texto plano. ALT: type',
+					'  chmod Modo nombre Permite cambiar los atributos',
+					'                    de un archivo o carpeta.',
+					'                    help chmod para mas detalles.',
+					# ~ '  mkdir name Crea un Carpeta',
+					# ~ '  rm    file Elimina un Archivo o Carpeta',
+					# ~ '  con   IP   Conectar a una IP',
+					# ~ '  dc    IP   Desconectarse de una IP.',
+					''
+				]
+			
+			elif len(command) == 2:
+				
+				command = command[1]
+				
+				if command == 'chmod':
+					
+					self.response = [Helps.chmod_content+Helps.permisos_content]
 		
 		elif cnd == 'cls': pass
 		
@@ -276,7 +356,7 @@ class Console:
 			while '' in command: command.remove('')				# Elimina los elementos de cadena vacia '' existente.
 			
 			if init:											# Si init es True entra, si es así significa que la ruta se inicio con el caracter '/'.
-				childs = self.getChilds([])				# Obtenemos los Archivos y Carpetas de la Carpeta Raiz.
+				childs = self.getChilds([])						# Obtenemos los Archivos y Carpetas de la Carpeta Raiz.
 				for i, ch in enumerate(childs):					# Recorremos la lista
 					if command[0] == str(ch):					# Si la primera ruta es igual a una Carpeta en la Carpeta Raiz.
 						valid = True							# Se toma como valido
@@ -324,32 +404,18 @@ class Console:
 		
 		elif cnd == 'ls' or cnd == 'dir':
 			
-			command = command[1:]
-			# ~ print(command)
+			command = ' '.join(command[1:])
 			c_path = self.pathPos[:]
 			
 			if command:
-				if len(command) == 1:
-					command = command[0]
-					if command[0] == '/':
-						command = command[1:]
-						c_path = []
-				elif len(command) > 1:
-					self.response = ['', 'No es un comando valido.', '', 0]
-					return self.response
-				
-				if command:
-					print(command)
-					temp = command.split('/')
-					temp_path = ''
-					
-					while temp:
-						temp_path = temp.pop(0)
-						childs = self.getChilds(c_path)
-						for i, ch in enumerate(childs):
-							if ch.element == temp_path:
-								c_path.append(i)
-								break
+				command, c_path = validateCommand(command, c_path, 1)		# Tipos: 0=Ambos, 1=Carpeta, 2=Archivo
+				if command == None: return self.response
+			
+			temp = self.getChilds(c_path[:-1])
+			temp = temp[c_path[-1]]
+			if not temp.permiso[1] == 'r':				# 0 = 'd', 1 = 'r', 2 = 'w' y 3 = 'x'		<------------------------------------------------------------------- Limitar acceso a rutas inferiores si carpetas superiores no tienen permiso de Lectura.
+				self.response = ['','No tienes permiso de acceso a esta ruta.','',0]
+				return self.response
 			
 			childs = self.getChilds(c_path)
 			
@@ -398,28 +464,12 @@ class Console:
 			
 			if   len(command) == 1: self.response = ['','Faltan Argumentos','', 0]
 			elif len(command) == 2:
+				
 				command = command[1]
 				
-				if command[0] == '/':
-					c_path = []
-					command = command[1:]
-				
-				if len(command.split('/')) > 1:
-					command = command.split('/')
-					
-					for c in command[:-1]:
-						if c == '..':
-							try: c_path.pop()
-							except: pass
-							continue
-						try:
-							ch = [ str(c) for c in self.getChilds(c_path)]
-							c_path = c_path + [ch.index(c)]
-							print(c_path)
-						except:
-							self.response = ['','No es un comando valido','', 0]
-							return self.response
-					command = command[-1]
+				command, c_path = validateCommand(command, c_path, 2)		# Tipos: 0=Ambos, 1=Carpeta, 2=Archivo
+				if command == None: return self.response
+				c_path.pop()
 				
 				if command == '':
 					self.response = ['', 'No es un comando valido.', '', 0]
@@ -430,39 +480,16 @@ class Console:
 					self.response = None
 					return self.response
 				
-				childs = self.getChilds(c_path)
-				for ch in childs:
-					if str(ch) == command:
-						if ch.content == 'folder':
-							self.response = ['', 'No puedes leer una Carpeta.', '', 0]
-							break
-						if ch.permiso[1] != '-':
-							self.response = ['', ch.content, '']
-						else:
-							self.response = ['', 'No tienes permisos de Lectura.', '', 0]
-						break
-					else:
-						self.response = ['', 'No existe el archivo: "'+command+'"', '', 0]
+				commandMatch(command, c_path)
+				
 			elif len(command) > 2:
 				# ~ temp = ''
 				command = command[1:]
 				command = ' '.join(command)
 				
-				if len(command.split('/')) > 1:
-					command = command.split('/')
-					
-					for c in command[:-1]:
-						if c == '..':
-							try: c_path.pop()
-							except: pass
-							continue
-						try:
-							ch = [ str(c) for c in self.getChilds(c_path)]
-							c_path = c_path + [ch.index(c)]
-						except:
-							self.response = ['','No es un comando valido','', 0]
-							return self.response
-					command = command[-1]
+				command, c_path = validateCommand(command, c_path, 2)		# Tipos: 0=Ambos, 1=Carpeta, 2=Archivo
+				if command == None: return self.response
+				c_path.pop()
 				
 				if command[0] == '"' and command[-1] == '"':
 					
@@ -472,20 +499,8 @@ class Console:
 						self.response = None
 						return self.response
 					
-					childs = self.getChilds(c_path)
+					commandMatch(command, c_path)
 					
-					for ch in childs:
-						if str(ch) == command:
-							if ch.content == 'folder':
-								self.response = ['', 'No puedes leer una Carpeta.', '', 0]
-								break
-							if ch.permiso[1] != '-':
-								self.response = ['', ch.content, '']
-							else:
-								self.response = ['', 'No tienes permisos de Lectura.', '', 0]
-							break
-						else:
-							self.response = ['', 'No existe el archivo: '+command, '', 0]
 				else:
 					self.response = None
 					return self.response
@@ -497,17 +512,32 @@ class Console:
 			if '/' in command:				# Pendiente <---- Leer archivo en carpetas de otra ubicacion.
 				self.response = None
 				return self.response
-			
+		
 		elif cnd == 'chmod':
 			
 			temp = command[1:]
 			atr1 = ''
 			atr2 = ''
+			resp = ''
+			
+			if len(command) == 1:
+				self.response = ['','Faltan Argumentos','', 0]
+				return self.response
+			
+			if len(command) == 2:
+				atr = temp[0]
+				if atr == '--help' or atr == '-h':
+					self.response = [Helps.chmod_content+Helps.permisos_content]
+					return self.response
 			
 			if len(temp) >= 2:
 				atr = temp[0]
-				# ~ print([atr])
-				if len(atr) >= 2 and len(atr) <= 4:
+				
+				if atr == '=-' or atr == '=+':
+					atr1 = atr[0]
+					atr2 = atr[1]
+					command = ' '.join(temp[1:])
+				elif len(atr) >= 2 and len(atr) <= 4:
 					atr1 = atr[0]
 					atr2 = atr[1:]
 					atrt = ''
@@ -532,34 +562,18 @@ class Console:
 			
 			c_path = self.pathPos[:]
 			
-			if command[0] == '/':
-				c_path = []
-				command = command[1:]
+			command, c_path = validateCommand(command, c_path, 0)			# Tipos: 0=Ambos, 1=Carpeta, 2=Archivo
+			if command == None: return self.response
 			
-			if len(command.split('/')) > 1:
-				command = command.split('/')
-				
-				for c in command[:-1]:
-					if c == '..':
-						try: c_path.pop()
-						except: pass
-						continue
-					try:
-						ch = [ str(c) for c in self.getChilds(c_path)]
-						c_path = c_path + [ch.index(c)]
-						# ~ print(c_path)
-					except:
-						self.response = ['','No es un comando valido.','', 0]
-						return self.response
-				if command[-1] == '':
-					command = command[-2]
-					c_path.pop()
-				else:
-					command = command[-1]
+			if not c_path:
+				self.response = ['','No es un comando valido.','',0]
+				return self.response
 			
+			c_path.pop()
 			childs = self.getChilds(c_path)
+			
 			for i, ch in enumerate(childs):
-				if str(ch) == command.replace('/',''):
+				if str(ch) == command:
 					fbytes = str(len(ch.content))
 					fbytes = (fbytes[:-3]+',' if len(fbytes) > 3 else '')+fbytes[-3:]
 					resp  = '\nPermisos Cambiados: '+atr1+atr2+'\n'
@@ -568,25 +582,31 @@ class Console:
 					resp += fbytes.rjust(8)+' '
 					resp += (ch.element + ('/' if ch.permiso[0] == 'd' else '')).ljust(16)
 					if atr1 == '=': ch.permiso = ch.permiso[0] + '---'
+					if atr2 == '+': ch.permiso = ch.permiso[0] + 'rwx'
 					for a in atr2:
-						
 						if atr1 == '-':
-							if   a == 'r': ch.permiso = ch.permiso[0] + '-' + ch.permiso[2:]
+							if   a == 'r': ch.permiso = ch.permiso[0]  + '-' + ch.permiso[2:]
 							elif a == 'w': ch.permiso = ch.permiso[:2] + '-' + ch.permiso[3]
 							elif a == 'x': ch.permiso = ch.permiso[:3] + '-'
 						else:
-							if   a == 'r': ch.permiso = ch.permiso[0] + 'r' + ch.permiso[2:]
+							if   a == 'r': ch.permiso = ch.permiso[0]  + 'r' + ch.permiso[2:]
 							elif a == 'w': ch.permiso = ch.permiso[:2] + 'w' + ch.permiso[3]
-							elif a == 'x': ch.permiso = ch.permiso[:3] + 'x'
-							
+							elif a == 'x': ch.permiso = ch.permiso[:3] + 'x'	
 					break
+			if resp == '':
+				command = command + ('/' if not '.' in command[-5:] else '')
+				if command[-1] == '/':
+					self.response = ['','No existe la carpeta: '+command,'',0]
+				else:
+					self.response = ['','No existe el archivo: '+command,'',0]
+				return self.response
 					
 			resp += ' '*5
 			resp += ch.permiso.rjust(8)
 			resp += '\n'
 			
 			self.response = ['', resp, '']
-			
+		
 		else: pass
 		
 		return self.response
@@ -612,9 +632,14 @@ if __name__ == "__main__":
 	
 	print('\n', console.actualPath(), end=' ')
 	
-	com = 'chmod +xrr /'
+	com = 'cat /system/logs/"connection 2020-01-25_01-48-26.241195.log"'
 	res = console.execute(com)
-	res = '\n'.join(res)
+	res = '\n'.join(res[:-1] if res[-1] == 0 else res)
+	print(com, '\n', res, console.actualPath())
+	
+	com = 'ls ../Eny'
+	res = console.execute(com)
+	res = '\n'.join(res[:-1] if res[-1] == 0 else res)
 	print(com, '\n', res, console.actualPath())
 	
 	# ~ print('Buscado:', console.getPath2([1,0,0,-1], '> '))
