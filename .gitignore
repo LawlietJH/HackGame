@@ -2,6 +2,8 @@
 __pycache__/
 
 # Carpetas a Ignorar.
+otros/
+odin/*.odin
 images/otras/
 fuentes/otras/
 capturas/otras/
