@@ -2,30 +2,34 @@
 # By: LawlietJH
 # Odyssey in Dystopia
 
-from .helps import *
+# ~ from .helps import *
 import random, os
-import operator
 from datetime import datetime
 
 TITULO  = 'Odyssey in Dystopia'
-__version__ = 'v1.2.0'
+__version__ = 'v1.2.1'
 
 class Arbol:
 	
-	def __init__(self, element, permiso='rwx', content=''):
+	def __init__(self, element, permiso='rwx', content='', path_r=[]):
+		
 		self.hijos   = []
 		self.element = element
 		self.permiso = permiso
 		self.content = content
+		self.path_r  = path_r
+		
+		if element == 'root' and content == '':
+			self.permiso = 'd'+self.permiso
 	
 	def __str__(self):
 		return self.element
 	
-	def agregarElemento(self, elementoPadre, element, permiso='rwx', content='folder'):
-		if content=='folder': permiso = 'd'+permiso
-		else: permiso = '-'+permiso
+	def agregarElemento(self, elementoPadre, element, permiso, content, path_r=[]):
+		# ~ if content=='folder' and not len(permiso) == 4: permiso = 'd'+permiso
+		# ~ else: permiso = '-'+permiso
 		subarbol = self.buscarSubarbol(elementoPadre)
-		subarbol.hijos.append(Arbol(element, permiso, content))
+		subarbol.hijos.append(Arbol(element, permiso, content, path_r))
 		subarbol.hijos = self.sortChilds(subarbol)
 	
 	def sortChilds(self, arbol):
@@ -68,6 +72,26 @@ class Arbol:
 			return 1
 		return 1 + max(map(self.profundidad, arbol.hijos))
 	
+	def recorridoProfundidad(self, arbol=None, li={}, c_path=[], nvl=0):
+		
+		if arbol == None: arbol = self
+		path = ''.join([str(_) for _ in c_path])
+		temp = {
+			path:{
+				'element':arbol.element,
+				'content':arbol.content,
+				'permiso':arbol.permiso
+			}
+		}
+		
+		li.update(temp)
+		
+		for i, hijo in enumerate(arbol.hijos):
+			
+			li = self.recorridoProfundidad(hijo, li, c_path+[i], nvl+1)
+		
+		return li
+	
 	def ejecutarProfundidadPrimero(self, arbol, funcion, nvl=0):
 		funcion(arbol.element+('/' if arbol.content == 'folder' or arbol.element=='root' else ''), nvl)
 		for hijo in arbol.hijos:
@@ -92,13 +116,13 @@ class Console:
 		self.rand   = lambda li, le: ''.join([str(random.choice(li)) for _ in range(le)])
 		self.binary = lambda ini=512, fin=1024: self.rand([0,1], random.randrange(ini, fin, 8))
 		self.system = [
-			['root',    'system',   'r-x'],
-			['root',    'user',     'r-x'],
-			['root',    'boot.ini', '---', self.binary()+self.binary()],
-			['system',  'logs',     'rwx'],
-			['system',  'config',   'r-x'],
-			['user',     username,  'r-x'],
-			[ username, 'bin',      'rwx']
+			['root',    'system',   'dr-x', 'folder', '0'],
+			['root',    'user',     'dr-x', 'folder', '1'],
+			['root',    'boot.ini', '----', self.binary()+self.binary(), '2'],
+			['system',  'config',   'dr-x', 'folder', '01'],
+			['system',  'logs',     'drwx', 'folder', '00'],
+			['user',     username,  'dr-x', 'folder', '10'],
+			[ username, 'bin',      'drwx', 'folder', '100']
 		]
 		self.fileSystemUpdate(self.system)
 		self.pathPos = self.searchDir(self.arbol, self.username)
@@ -165,6 +189,29 @@ class Console:
 			raiz = h
 		return raiz.hijos
 	
+	def getChild(self, path=None, raiz=None):
+		if raiz == None: raiz = self.arbol
+		if path == None: path = self.pathPos
+		h = None
+		for x in path:
+			h = raiz.hijos[x]
+			raiz = h
+		return raiz
+	
+	def getChildData(self, name, path=''):
+		
+		for s in self.system:
+			if s[4] == path:
+				if s[1] == name: return s
+			else:
+				if s[1] == name: return s
+	
+	def getAllChilds(self):
+		
+		childs = self.arbol.recorridoProfundidad()
+		
+		return childs
+	
 	def splitText(self, t_c):
 		l_c = len(t_c)
 		t_r = l_c//self.consize
@@ -213,7 +260,7 @@ class Console:
 		if command in self.list_commands: return True
 		return False
 	
-	def execute(self, command):
+	def execute(self, command, db):
 		
 		def validateCommand(command, c_path, tipo=0):	# Tipos: 0=Ambos, 1=Carpeta, 2=Archivo
 			origin = command
@@ -321,7 +368,10 @@ class Console:
 		
 		elif cnd == 'cls': pass
 		
-		elif cnd == 'exit': self.response = ['','Cerrando...','']
+		elif cnd == 'exit':
+			self.response = ['','Cerrando...','']
+			db.con.commit()
+			print('Session Saved.')
 		
 		elif cnd == 'mkdir': pass
 		
@@ -412,8 +462,8 @@ class Console:
 				if command == None: return self.response
 			
 			temp = self.getChilds(c_path[:-1])
-			temp = temp[c_path[-1]]
-			if not temp.permiso[1] == 'r':				# 0 = 'd', 1 = 'r', 2 = 'w' y 3 = 'x'		<------------------------------------------------------------------- Limitar acceso a rutas inferiores si carpetas superiores no tienen permiso de Lectura.
+			temp = (temp[c_path[-1]] if c_path else self.arbol)
+			if not temp.permiso[1] == 'r':								# 0 = 'd', 1 = 'r', 2 = 'w' y 3 = 'x'		<------------------------------------------------------------------- Limitar acceso a rutas inferiores si carpetas superiores no tienen permiso de Lectura.
 				self.response = ['','No tienes permiso de acceso a esta ruta.','',0]
 				return self.response
 			
@@ -533,7 +583,9 @@ class Console:
 			if len(temp) >= 2:
 				atr = temp[0]
 				
-				if atr == '=-' or atr == '=+':
+				if len(atr) == 1:
+					command = ' '.join(temp[1:])
+				elif atr == '=-' or atr == '=+':
 					atr1 = atr[0]
 					atr2 = atr[1]
 					command = ' '.join(temp[1:])
@@ -569,29 +621,49 @@ class Console:
 				self.response = ['','No es un comando valido.','',0]
 				return self.response
 			
-			c_path.pop()
+			temp = c_path.pop()
 			childs = self.getChilds(c_path)
 			
 			for i, ch in enumerate(childs):
-				if str(ch) == command:
-					fbytes = str(len(ch.content))
-					fbytes = (fbytes[:-3]+',' if len(fbytes) > 3 else '')+fbytes[-3:]
+				if ch.element == command:
+					fbytes = ''
+					if not ch.permiso[0] == 'd':
+						fbytes = str(len(ch.content))
+						fbytes = (fbytes[:-3]+',' if len(fbytes) > 3 else '')+fbytes[-3:]
 					resp  = '\nPermisos Cambiados: '+atr1+atr2+'\n'
 					resp += '\nPermisos   Bytes Nombre          ===> Permisos\n\n'
 					resp += ch.permiso.rjust(8)
 					resp += fbytes.rjust(8)+' '
 					resp += (ch.element + ('/' if ch.permiso[0] == 'd' else '')).ljust(16)
-					if atr1 == '=': ch.permiso = ch.permiso[0] + '---'
-					if atr2 == '+': ch.permiso = ch.permiso[0] + 'rwx'
-					for a in atr2:
-						if atr1 == '-':
-							if   a == 'r': ch.permiso = ch.permiso[0]  + '-' + ch.permiso[2:]
-							elif a == 'w': ch.permiso = ch.permiso[:2] + '-' + ch.permiso[3]
-							elif a == 'x': ch.permiso = ch.permiso[:3] + '-'
+					if atr.isdigit():
+						atr = int(atr)
+						if atr >= 0 and atr <= 7:
+							if atr == 0: ch.permiso = ch.permiso[0]  + '---'
+							if atr == 1: ch.permiso = ch.permiso[0]  + '--x'
+							if atr == 2: ch.permiso = ch.permiso[0]  + '-w-'
+							if atr == 3: ch.permiso = ch.permiso[0]  + '-wx'
+							if atr == 4: ch.permiso = ch.permiso[0]  + 'r--'
+							if atr == 5: ch.permiso = ch.permiso[0]  + 'r-x'
+							if atr == 6: ch.permiso = ch.permiso[0]  + 'rw-'
+							if atr == 7: ch.permiso = ch.permiso[0]  + 'rwx'
 						else:
-							if   a == 'r': ch.permiso = ch.permiso[0]  + 'r' + ch.permiso[2:]
-							elif a == 'w': ch.permiso = ch.permiso[:2] + 'w' + ch.permiso[3]
-							elif a == 'x': ch.permiso = ch.permiso[:3] + 'x'	
+							self.response = ['','No es un atributo valido: '+str(atr),'',0]
+							return self.response
+					else:
+						if atr1 == '=': ch.permiso = ch.permiso[0] + '---'
+						if atr2 == '+': ch.permiso = ch.permiso[0] + 'rwx'
+						if atr2 == '':
+							self.response = ['','No es un atributo valido: '+str(atr),'',0]
+							return self.response
+						for a in atr2:
+							if atr1 == '-':
+								if   a == 'r': ch.permiso = ch.permiso[0]  + '-' + ch.permiso[2:]
+								elif a == 'w': ch.permiso = ch.permiso[:2] + '-' + ch.permiso[3]
+								elif a == 'x': ch.permiso = ch.permiso[:3] + '-'
+							else:
+								if   a == 'r': ch.permiso = ch.permiso[0]  + 'r' + ch.permiso[2:]
+								elif a == 'w': ch.permiso = ch.permiso[:2] + 'w' + ch.permiso[3]
+								elif a == 'x': ch.permiso = ch.permiso[:3] + 'x'	
 					break
 			if resp == '':
 				command = command + ('/' if not '.' in command[-5:] else '')
@@ -606,7 +678,14 @@ class Console:
 			resp += '\n'
 			
 			self.response = ['', resp, '']
-		
+			
+			#=======================================
+			# Actualiza los cambios en la Base de Datos:
+			data = [('permiso',ch.permiso)]
+			elements = [ch.element, ch.path_r]
+			db.updateUserFiles(data, self, elements)
+			#=======================================
+			
 		else: pass
 		
 		return self.response
@@ -615,10 +694,19 @@ class Console:
 
 if __name__ == "__main__":
 	
+	# Datos de Prueba:
+	
 	# ~ import os
 	# ~ for x in os.environ:
 		# ~ print(x, os.environ[x])
-	
+	# ~ print(os.environ['OS'])
+	# ~ print(os.environ['USERNAME'])
+	# ~ print(os.environ['COMPUTERNAME'])
+	# ~ print(os.environ['NUMBER_OF_PROCESSORS'])
+	# ~ print(os.environ['PROCESSOR_ARCHITECTURE'])
+	# ~ print(os.environ['PROGRAMDATA'])
+	# ~ print(os.environ['SESSIONNAME'])
+	# ~ os.system('Pause')
 	console = Console('Eny', 'Odin.Dis_'+__version__)
 	
 	logs = [
@@ -632,10 +720,10 @@ if __name__ == "__main__":
 	
 	print('\n', console.actualPath(), end=' ')
 	
-	com = 'cat /system/logs/"connection 2020-01-25_01-48-26.241195.log"'
-	res = console.execute(com)
-	res = '\n'.join(res[:-1] if res[-1] == 0 else res)
-	print(com, '\n', res, console.actualPath())
+	# ~ com = 'cat /system/logs/"connection 2020-01-25_01-48-26.241195.log"'
+	# ~ res = console.execute(com)
+	# ~ res = '\n'.join(res[:-1] if res[-1] == 0 else res)
+	# ~ print(com, '\n', res, console.actualPath())
 	
 	com = 'ls ../Eny'
 	res = console.execute(com)

@@ -3,7 +3,7 @@
 # Odyssey in Dystopia
 
 TITULO  = 'Odyssey in Dystopia'		# Nombre
-__version__ = 'v1.2.0'				# Version
+__version__ = 'v1.2.1'				# Version
 
 class Helps:
 	
@@ -38,7 +38,15 @@ class Helps:
  Lectura (r), Escritura (w) y/o Ejecución (x).
 
  Los argumentos validos son: chmod (+-=)[rwx] nombre
-
+ 
+ Los permisos tambien pueden ser un número.
+ Los números de permisos son:
+ 
+                              0 = ---    4 = r--
+                              1 = --x    5 = r-x
+                              2 = -w-    6 = rw-
+                              3 = -wx    7 = rwx
+ 
  Ejemplos:
  
    chmod +xr nombre    # Esto le dará el atributo de ejecución y
@@ -48,6 +56,9 @@ class Helps:
                          archivo o carpeta 'nombre'.
    chmod -r nombre     # Esto le quitará el atributo de lectura al
                          archivo o carpeta 'nombre'.
+   chmod 4 nombre      # Esto le quitará todos los atributos y solo
+                         le dará el atributo de lectura archivo o
+                         carpeta 'nombre'.
  Extra:
  
    chmod =- nombre     # Esto le quitará todos los atributos al

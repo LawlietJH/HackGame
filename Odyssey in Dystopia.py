@@ -4,23 +4,23 @@
 # Luvenia y Luvonne, Levanen.
 # Dynatron, Mega Drive, Avandra, Ferus Melek, Varien, Peter Gundry.
 
-from os import path, mkdir, environ
+# ~ from os import 
 
-from odin.consola import Console
-from odin.helps   import Helps
+from odin.database import Database, initDB
+from odin.consola  import Console
+from odin.helps    import Helps
 
-
-import keyboard
+import threading
 import random
 import pygame						# python -m pip install pygame
 import ctypes
-# ~ import math
+import os							# path, mkdir, environ, system
 
 from win32api import GetKeyState	# python -m pip install pywin32
 from win32con import VK_CAPITAL		# python -m pip install pywin32
 
 TITULO  = 'Odyssey in Dystopia'		# Nombre
-__version__ = 'v1.2.0'				# Version
+__version__ = 'v1.2.1'				# Version
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
@@ -286,8 +286,8 @@ def main():
 	# ~ s_x = ss_x//2-RESOLUCION[s_res][0]//2
 	# ~ s_y = ss_y//2-RESOLUCION[s_res][1]//2
 	# ~ print(ss_x, ss_y, RESOLUCION[s_res], s_x, s_y)
-	# ~ environ['SDL_VIDEO_WINDOW_POS'] = '{},{}'.format(s_x, s_y)
-	environ['SDL_VIDEO_CENTERED'] = '1'
+	# ~ os.environ['SDL_VIDEO_WINDOW_POS'] = '{},{}'.format(s_x, s_y)
+	os.environ['SDL_VIDEO_CENTERED'] = '1'
 	
 	screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.NOFRAME)			# Objeto Que Crea La Ventana.
 	screen.fill(COLOR['Negro'])									# Rellena el Fondo de Negro.
@@ -350,8 +350,8 @@ def main():
 		('musica/Stephen - Crossfire.mp3',                       11, {'By':'Stephen',    'Song':'Crossfire',                     'Album':'',                 'Duration':'00:04:31', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
 	]
 	
-	# ~ l_canciones_activas = [i for i in range(len(playlist))]
-	l_canciones_activas = []
+	l_canciones_activas = [i for i in range(len(playlist))]
+	# ~ l_canciones_activas = []
 	
 	music = pygame.mixer.music									# Indicamos quien será la variable para Manipular el Soundtrack.
 	song_pos = random.randint(0, len(playlist)-1)				# Genera un numero random entre 0 y la longitud de la lista de canciones menos 1.
@@ -584,7 +584,7 @@ def main():
 												screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.FULLSCREEN | pygame.HWSURFACE | pygame.DOUBLEBUF)
 												s_full_ticks = 0
 											else:
-												environ['SDL_VIDEO_CENTERED'] = '1'
+												os.environ['SDL_VIDEO_CENTERED'] = '1'
 												screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.NOFRAME)			# Objeto Que Crea La Ventana.
 												
 										BGimg = load_image('images/background.bmp')											# Carga el Fondo de la Ventana.
@@ -651,7 +651,10 @@ def main():
 				
 				#=================================================================================
 				
-				if evento.key == pygame.K_ESCAPE: game_over = True		# Tecla ESC Cierra el Juego.
+				if evento.key == pygame.K_ESCAPE:
+					game_over = True		# Tecla ESC Cierra el Juego.
+					db.con.commit()
+					print('Session Saved.')
 				
 				#=================================================================================
 				# Teclas Bloq Mayus, y las teclas Shift izquerdo y derecho.
@@ -855,9 +858,9 @@ def main():
 					s_folder = 'screenshots/'
 					s_path = s_folder+'screenshot_001.jpg'
 					
-					if not path.isdir(s_folder): mkdir(s_folder)
+					if not os.path.isdir(s_folder): os.mkdir(s_folder)
 					
-					while path.exists(s_path):
+					while os.path.exists(s_path):
 						s_n += 1
 						s_path = s_folder+'screenshot_{}.jpg'.format(str(s_n).zfill(3))
 					
@@ -875,7 +878,7 @@ def main():
 						if (ss_x, ss_y) == RESOLUCION[s_res]:
 							s_fullF = True
 						else:
-							environ['SDL_VIDEO_CENTERED'] = '1'
+							os.environ['SDL_VIDEO_CENTERED'] = '1'
 							screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.NOFRAME)			# Objeto Que Crea La Ventana.
 							s_full = False
 					else:
@@ -1169,7 +1172,7 @@ def main():
 			if exe:
 				if console.validate(Comando):
 					
-					textos = console.execute(Comando)
+					textos = console.execute(Comando, db)
 					
 					if textos == None:
 						temp_pos = l_comandos.pop()[1]
@@ -1202,7 +1205,7 @@ def main():
 					elif Comando.split(' ')[0] == 'cd':
 						Prefijo = console.actualPath() + ' '											# Actualiza el Path
 						pos_limit = ( RESOLUCION_CMD[s_res][0]-30 - (len(Prefijo)*(T_pix))) // T_pix	# Limite de letras en linea de comandos.
-						
+				
 				Comando = ''
 				exe = False
 				l_comandos = l_comandos[con_tam_buffer*-1:]
@@ -1424,12 +1427,12 @@ def main():
 						'Ctrl + J: Poner Canción Anterior.',
 						'Ctrl + K: Pausar/Continuar Canción.',
 						'Ctrl + L: Poner Canción Siguiente.',
+						'Ctrl + M: Poner/Quitar Mute para la Música.',
 						'Ctrl + Felcha Derecha: Adelantar la Canción en 10 Segundos.',
 						'Ctrl + Felcha Izquierda: Retroceder la Canción en 10 Segundos.',
 						'Ctrl + \'+\': Subir Volumen de la Música en 1%. Mantener pulsado para subir el volumen rapidamente.',
 						'Ctrl + \'-\': Bajar Volumen de la Música en 1%. Mantener pulsado para bajar el volumen rapidamente.',
 						'Ctrl + Shift + L: Limpiar Terminal.',
-						'Ctrl + Shift + M: Poner/Quitar Mute para la Música.',
 						'Ctrl + Shift + \'+\': Subir Volumen de la Música en 10%.',
 						'Ctrl + Shift + \'-\': Bajar Volumen de la Música en 10%.',
 					]
@@ -1521,6 +1524,15 @@ def main():
 		if ticks == 60:
 			segundos += 1
 			ticks = 0
+		
+		# Actualiza la Base de Datos
+		if segundos % 30 == 0 and ticks == 0:
+			db.con.commit()
+			print('Session Saved at: '+str(segundos))
+			
+			# Ejemplo de Hilos:
+			# ~ x = threading.Thread(target=thread_function, args=(1,))
+			# ~ x.start()
 			
 		clock.tick(60)
 	
@@ -1577,16 +1589,10 @@ CARACTERES += '\\|@#~€¬[]{} '
 
 console = Console('Eny', 'Odin.Dis_'+__version__)
 
-temp = [
-	['logs', console.createLogFile('connection'), 'r--', console.createLogFile('connection')[:-4]],
-	['logs', 'connection 2020-01-25_01-48-26.241195.log', 'r--', 'Connection 2020-01-25_01-48-26.241195'],
-	['bin', 'nueva', 'rwx', 'folder'],
-	['config', 'permisos.txt', 'r--', Helps.permisos_content],
-	['config', 'chmod.txt', 'r--', Helps.chmod_content],
-	['bin', 'scan.exe', 'rwx', console.binary()]
-]
-
-console.fileSystemUpdate(temp)
+# Base de Datos: =======
+DBName = 'odin/dystopia.odin'
+db, console = initDB(DBName, console)		# Conexion a la Base de Datos.
+#========================
 
 Prefijo = console.actualPath()+' '			# Simbolo de prefijo para comandos.
 
