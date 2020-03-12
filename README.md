@@ -1,6 +1,6 @@
-# Odyssey in Dystopia. v1.1.7
+# Odyssey in Dystopia. v1.2.1
 
-## Juego emulador de consola de comandos.
+## Juego emulador de consola de comandos. En Desarrollo, Aún No Jugable.
 
 ### Sinopsis:
 
@@ -12,12 +12,14 @@ Atualmente este proyecto se encuentra en fase de Desarrollo, con la implementaci
 ### Combinación de Teclas Disponibles:
 
 * __Esc__: Para Cerrar el Juego.
+* __F10__: Captura de Pantalla.
 * __F11__: Poner/Quitar Pantalla Completa.
 * __Ctrl + F__: Poner/Quitar Pantalla Completa.
 * __Ctrl + P__: Captura de Pantalla.
 * __Ctrl + J__: Poner Canción Anterior.
 * __Ctrl + K__: Pausar/Continuar Canción.
 * __Ctrl + L__: Poner Canción Siguiente.
+* __Ctrl + M__: Poner/Quitar Mute para la Música.
 * __Ctrl + Felcha Derecha__: Adelantar la Canción en 10 Segundos.
 * __Ctrl + Felcha Izquierda__: Retroceder la Canción en 10 Segundos.
 * __Ctrl + '+'__: Subir Volumen de la Música en 1%.
@@ -25,7 +27,6 @@ Atualmente este proyecto se encuentra en fase de Desarrollo, con la implementaci
 * __Ctrl + '-'__: Bajar Volumen de la Música en 1%.
     Puede mantenerse pulsado para bajar el volumen rapidamente.
 * __Ctrl + Shift + L__: Limpiar Terminal.
-* __Ctrl + Shift + M__: Poner/Quitar Mute para la Música.
 * __Ctrl + Shift + '+'__: Subir Volumen de la Música en 10%.
 * __Ctrl + Shift + '-'__: Bajar Volumen de la Música en 10%.
 
@@ -45,6 +46,8 @@ Atualmente este proyecto se encuentra en fase de Desarrollo, con la implementaci
 | Scandroid - Thriller (Fury Weekend Remix) |   4:52   |
 | Neovaii - Easily                          |   4:18   |
 | Stephen - Crossfire                       |   4:31   |
+
+### Capturas:
 
 ![OdinDis](capturas/Odin_Dis.jpg "Odyssey in Dystopia v1.1.5")
 ![Atajos](capturas/Atajos.jpg "Atajos")
