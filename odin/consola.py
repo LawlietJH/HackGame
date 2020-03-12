@@ -7,7 +7,7 @@ import random, os
 from datetime import datetime
 
 TITULO  = 'Odyssey in Dystopia'
-__version__ = 'v1.2.1'
+__version__ = 'v1.2.2'
 
 class Arbol:
 	
@@ -72,15 +72,16 @@ class Arbol:
 			return 1
 		return 1 + max(map(self.profundidad, arbol.hijos))
 	
-	def recorridoProfundidad(self, arbol=None, li={}, c_path=[], nvl=0):
+	def recorridoProfundidad(self, padre='', arbol=None, li={}, c_path=''):
 		
 		if arbol == None: arbol = self
-		path = ''.join([str(_) for _ in c_path])
 		temp = {
-			path:{
+			c_path:{
+						
+				'nodeP'  :padre.element if not padre == '' else '',
 				'element':arbol.element,
-				'content':arbol.content,
-				'permiso':arbol.permiso
+				'permiso':arbol.permiso,
+				'content':arbol.content
 			}
 		}
 		
@@ -88,7 +89,7 @@ class Arbol:
 		
 		for i, hijo in enumerate(arbol.hijos):
 			
-			li = self.recorridoProfundidad(hijo, li, c_path+[i], nvl+1)
+			li = self.recorridoProfundidad(arbol, hijo, li, c_path+str(i))
 		
 		return li
 	
@@ -129,6 +130,7 @@ class Console:
 		self.path = self.getPath(self.arbol)
 		self.list_commands = [
 			'help',			# Pedir la ayuda de comandos.
+			'save',			# Guarda la Partida.
 			'cls',			# Limpiar Pantalla.
 			'exit',			# Salir de Consola, cerrar el Juego.
 			'cd',			# Permite cambiar de directorio.
@@ -206,11 +208,22 @@ class Console:
 			else:
 				if s[1] == name: return s
 	
-	def getAllChilds(self):
+	def getAllChilds(self, raw=False):
 		
 		childs = self.arbol.recorridoProfundidad()
 		
+		if not raw:
+			
+			system = []
+			for key, vals in childs.items():
+				v = [ vals['nodeP'], vals['element'], vals['permiso'], vals['content'], key ]
+				system.append(v)
+			
+			childs = system
+		
 		return childs
+	
+	def updateSystem(self): self.system = self.getAllChilds()
 	
 	def splitText(self, t_c):
 		l_c = len(t_c)
@@ -330,11 +343,12 @@ class Console:
 		self.response = []
 		
 		command = command.split()
+		lcommand = len(command)
 		cnd = command[0]
 		
 		if cnd == 'help':
 			
-			if len(command) == 1:
+			if lcommand == 1:
 				
 				self.response = [
 					'',
@@ -358,7 +372,7 @@ class Console:
 					''
 				]
 			
-			elif len(command) == 2:
+			elif lcommand == 2:
 				
 				command = command[1]
 				
@@ -366,14 +380,29 @@ class Console:
 					
 					self.response = [Helps.chmod_content+Helps.permisos_content]
 		
-		elif cnd == 'cls': pass
+		elif cnd == 'save':
+			if lcommand == 1:
+				self.response = ['', 'Guardando  Partida... Espere.', '']
+			else:
+				self.response = ['', 'No es un comando valido','',0]
+		
+		elif cnd == 'cls':
+			if lcommand == 1:
+				self.response = []
+			else:
+				self.response = ['', 'No es un comando valido','',0]
 		
 		elif cnd == 'exit':
-			self.response = ['','Cerrando...','']
-			db.con.commit()
-			print('Session Saved.')
+			if lcommand == 1:
+				self.response = ['','Cerrando...','']
+			else:
+				self.response = ['', 'No es un comando valido','',0]
 		
-		elif cnd == 'mkdir': pass
+		elif cnd == 'mkdir':
+			if lcommand == 1:
+				self.response = []
+			else:
+				self.response = ['', 'No es un comando valido','',0]
 		
 		elif cnd == 'cd':
 			
@@ -382,8 +411,8 @@ class Console:
 			vacia = True
 			temp_path = self.pathPos[:]							# Generamos una copia exacta de la lista de la Ruta Actual.
 			
-			if   len(command) == 1: command = command[0]
-			elif len(command) == 2: command = command[1]
+			if   lcommand == 1: command = command[0]
+			elif lcommand == 2: command = command[1]
 			else:
 				self.response = None
 				return self.response
@@ -512,8 +541,8 @@ class Console:
 			
 			c_path = self.pathPos[:]
 			
-			if   len(command) == 1: self.response = ['','Faltan Argumentos','', 0]
-			elif len(command) == 2:
+			if   lcommand == 1: self.response = ['','Faltan Argumentos','', 0]
+			elif lcommand == 2:
 				
 				command = command[1]
 				
@@ -532,7 +561,7 @@ class Console:
 				
 				commandMatch(command, c_path)
 				
-			elif len(command) > 2:
+			elif lcommand > 2:
 				# ~ temp = ''
 				command = command[1:]
 				command = ' '.join(command)
@@ -570,11 +599,11 @@ class Console:
 			atr2 = ''
 			resp = ''
 			
-			if len(command) == 1:
+			if lcommand == 1:
 				self.response = ['','Faltan Argumentos','', 0]
 				return self.response
 			
-			if len(command) == 2:
+			if lcommand == 2:
 				atr = temp[0]
 				if atr == '--help' or atr == '-h':
 					self.response = [Helps.chmod_content+Helps.permisos_content]
@@ -683,7 +712,8 @@ class Console:
 			# Actualiza los cambios en la Base de Datos:
 			data = [('permiso',ch.permiso)]
 			elements = [ch.element, ch.path_r]
-			db.updateUserFiles(data, self, elements)
+			db.updateUserFile(data, elements, self)
+			# ~ db.updateUserFilesAll(self) # Test
 			#=======================================
 			
 		else: pass
@@ -699,14 +729,7 @@ if __name__ == "__main__":
 	# ~ import os
 	# ~ for x in os.environ:
 		# ~ print(x, os.environ[x])
-	# ~ print(os.environ['OS'])
-	# ~ print(os.environ['USERNAME'])
-	# ~ print(os.environ['COMPUTERNAME'])
-	# ~ print(os.environ['NUMBER_OF_PROCESSORS'])
-	# ~ print(os.environ['PROCESSOR_ARCHITECTURE'])
-	# ~ print(os.environ['PROGRAMDATA'])
-	# ~ print(os.environ['SESSIONNAME'])
-	# ~ os.system('Pause')
+	
 	console = Console('Eny', 'Odin.Dis_'+__version__)
 	
 	logs = [

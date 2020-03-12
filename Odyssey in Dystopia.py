@@ -10,6 +10,7 @@ from odin.database import Database, initDB
 from odin.consola  import Console
 from odin.helps    import Helps
 
+from datetime      import datetime
 import threading
 import random
 import pygame						# python -m pip install pygame
@@ -20,7 +21,7 @@ from win32api import GetKeyState	# python -m pip install pywin32
 from win32con import VK_CAPITAL		# python -m pip install pywin32
 
 TITULO  = 'Odyssey in Dystopia'		# Nombre
-__version__ = 'v1.2.1'				# Version
+__version__ = 'v1.2.2'				# Version
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================
@@ -124,7 +125,7 @@ def add_comand(l_comandos, textos):	# Inserta Comandos a la Lista
 		textos.pop()
 		plus = ''
 	cont = l_comandos[-1][1]
-	for text in textos: l_comandos.append((plus+text, cont))
+	for text in textos: l_comandos.append([plus+text, cont])
 	return l_comandos
 
 def clic_boton(screen, pos, rec=0):	# Detecta un Clic en las coordenadas de un boton, contando la posicion de botones derecha a izquierda.
@@ -350,8 +351,8 @@ def main():
 		('musica/Stephen - Crossfire.mp3',                       11, {'By':'Stephen',    'Song':'Crossfire',                     'Album':'',                 'Duration':'00:04:31', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
 	]
 	
-	l_canciones_activas = [i for i in range(len(playlist))]
-	# ~ l_canciones_activas = []
+	if debug: l_canciones_activas = []
+	else: l_canciones_activas = [i for i in range(len(playlist))]
 	
 	music = pygame.mixer.music									# Indicamos quien será la variable para Manipular el Soundtrack.
 	song_pos = random.randint(0, len(playlist)-1)				# Genera un numero random entre 0 y la longitud de la lista de canciones menos 1.
@@ -453,14 +454,14 @@ def main():
 	#===================================================================
 	
 	ajust_pos_y = 1
-	ajust_init_x, ajust_init_y =  25, 50							# Ajustar a la posicion
+	ajust_init_x, ajust_init_y =  25, 50	# Ajustar a la posicion
 	ajust_v_tamX, ajust_v_tamY = 110, 30
 	cant_scroll = 3
 	
 	#===================================================================
 	# Variables de la Musica:
 	
-	song_vol           = 20						# Volumen al 20%
+	song_vol           = 20					# Volumen al 20%
 	song_vol_pres_min  = False
 	song_vol_pres_plus = False
 	song_vol_mute      = False
@@ -475,6 +476,8 @@ def main():
 	music.play()						# -1 Repetira infinitamente la canción.
 	
 	#===================================================================
+	
+	save_game = False
 	
 	# Inicio Del Juego:
 	while game_over is False:
@@ -651,10 +654,7 @@ def main():
 				
 				#=================================================================================
 				
-				if evento.key == pygame.K_ESCAPE:
-					game_over = True		# Tecla ESC Cierra el Juego.
-					db.con.commit()
-					print('Session Saved.')
+				if evento.key == pygame.K_ESCAPE: game_over = True		# Tecla ESC Cierra el Juego.
 				
 				#=================================================================================
 				# Teclas Bloq Mayus, y las teclas Shift izquerdo y derecho.
@@ -756,8 +756,6 @@ def main():
 						t_files = [t_files[0], ' '.join(t_files[1:])]		# Si el nombre tiene un espacio, vuelve a unirlo con sus espacios.
 					elif t_files[0] in ['chmod']:
 						t_files = [' '.join(t_files[:2]), ' '.join(t_files[2:])]		# Agrega el Atributo al comando principal. Y deja solo en 2 partes del comando.
-						# ~ t_files.pop()													# Elimina el ultimo dato, para que no se pueda autocompletar.
-						
 					else:
 						pass
 					
@@ -813,14 +811,11 @@ def main():
 							else:
 								t_folders = t_root + t_folders
 							
-							# ~ print([t_folders], 1)
-							
 							Comando = t_files[0] + ' ' + t_folders + t_childs[0][:x]
 							p_pos = len(Comando)
 							
 							printTFiles(console.getPath2(t_path, '> '), t_childs)
-							# ~ printTFiles(t_childs)
-						
+							
 						elif len(t_childs) == 1:
 							
 							t_child = t_childs[0]
@@ -833,8 +828,6 @@ def main():
 									t_folders = t_root + t_folders
 							else:
 								t_folders = t_root + t_folders
-							
-							# ~ print([t_folders], 2)
 							
 							if not '.' in t_child[-5:]:
 								t_ext = '/'
@@ -953,7 +946,7 @@ def main():
 					if l_canciones_activas:
 						song_desface += 10
 						temp = music.get_pos()
-						# ~ print([temp, int(temp/1000), song_desface])
+						
 						temp += (song_desface*1000)
 						
 						temp2 = playlist[song_pos][2]['Duration']
@@ -964,7 +957,7 @@ def main():
 						music.stop()
 						music.load(playlist[song_pos][0])
 						song_desface = int(temp/1000)
-						# ~ print(song_desface)
+						
 						music.play(start=song_desface)
 					
 				# Ctrl + Flecha Izquierda: Retroceder 10 segundos de la Cancion.
@@ -981,7 +974,7 @@ def main():
 						music.stop()
 						music.load(playlist[song_pos][0])
 						song_desface = int(temp/1000)
-						# ~ print(song_desface)
+						
 						music.play(start=song_desface)
 					
 				# Ctrl + Shift + L: Limpiar Pantalla.
@@ -1056,7 +1049,7 @@ def main():
 			if k_down:
 				if not (k_wait > 0 and k_wait < 30) \
 				and len(Comando) > 0 and p_pos < pos_limit:
-					# ~ print(Comando)
+					
 					if (k_wait % T_rep) == 0 and Comando[-1] in CARACTERES:
 						if k_back:
 							if p_pos > 0:
@@ -1084,7 +1077,6 @@ def main():
 						else:
 							if k_char:						# Mientras se este presionado una letra, un numero o un espacio, se seguira agregando caracteres.
 								if len(Comando) < pos_limit:
-									# ~ print(p_pos, [Comando])
 									Comando = Comando[:p_pos] + Comando[p_pos-1] + Comando[p_pos:]
 									p_pos += 1
 				
@@ -1202,6 +1194,7 @@ def main():
 					
 					if   Comando == 'exit': game_over = True
 					elif Comando == 'cls':  l_comandos = []
+					elif Comando == 'save': save_game = True
 					elif Comando.split(' ')[0] == 'cd':
 						Prefijo = console.actualPath() + ' '											# Actualiza el Path
 						pos_limit = ( RESOLUCION_CMD[s_res][0]-30 - (len(Prefijo)*(T_pix))) // T_pix	# Limite de letras en linea de comandos.
@@ -1228,13 +1221,12 @@ def main():
 				p_texto = [ l_con[0]+5, l_con[1] - ((len(temp)-i)*T_pix_y) -2 ]		# Posicion del texto.
 				
 				if not com[-2:] == '> ':
-					# ~ print([com])
+					
 					if com: valid = console.validate(com.split(' ')[1])		# Si el comando es valido sera igual a True.
 					else: valid = True										# Si la linea esta vacia '' en automatico sera True.
 					
 					# Validamos que sea un comando valido y que sus lineas correspondientes tambien se muestren como validas.
 					temp_col = VERDE_C if (valid or com[0] == ' ') else COLOR['Rojo Claro']
-					# ~ print([com[:17]], com[:17] == 'Faltan Argumentos') #
 					
 					if com[:17] == 'Faltan Argumentos' or com[:3] == 'No ': pass
 					elif valid or com[0] == ' ': pass
@@ -1526,14 +1518,29 @@ def main():
 			ticks = 0
 		
 		# Actualiza la Base de Datos
-		if segundos % 30 == 0 and ticks == 0:
+		if segundos % 300 == 0 and ticks == 0:
+			
 			db.con.commit()
-			print('Session Saved at: '+str(segundos))
+			
+			if debug: print('Session Saved at: '+str(datetime.now())[:-7])
 			
 			# Ejemplo de Hilos:
 			# ~ x = threading.Thread(target=thread_function, args=(1,))
 			# ~ x.start()
+		
+		if game_over or save_game:
 			
+			db.updateUserFilesAll(console)	# Actualiza Todos Los Campos del Usuario Actual en la Tabla UserFiles de la Base de Datos.
+			db.orderUserFiles()				# Ordena todos los datos en la Tabla UserFiles en la Base de Datos.
+			db.con.commit()					# Guarda los Cambios.
+			
+			if debug: print('Session Saved.')
+			
+			save_game = False
+			
+			# Mostrar Mensaje de Guardado, Remplazando el anterior:
+			l_comandos[-2][0] = ' Partida Guardada: '+str(datetime.now())[:-7]
+		
 		clock.tick(60)
 	
 	pygame.quit()
@@ -1587,7 +1594,9 @@ CARACTERES  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + 'abcdefghijklmnopqrstuvwxyz'
 CARACTERES += '1234567890' + 'º\'¡+ç,.-<' + 'ª!"·$%&/()=?¿*Ç;:_>'
 CARACTERES += '\\|@#~€¬[]{} '
 
-console = Console('Eny', 'Odin.Dis_'+__version__)
+UserName = 'Eny'
+
+console = Console(UserName, 'Odin.Dis_'+__version__)
 
 # Base de Datos: =======
 DBName = 'odin/dystopia.odin'
@@ -1615,6 +1624,7 @@ btn_x, btn_y = 40, 40		# Proporciones de los botones.
 l_comandos = []
 l_canciones_activas = []
 music_checkbox_down = False
+debug = False
 
 #=============================================================================================================================================================
 #=============================================================================================================================================================

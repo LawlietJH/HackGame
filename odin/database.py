@@ -11,7 +11,7 @@ import random
 import os
 
 TITULO  = 'Odyssey in Dystopia'
-__version__ = 'v1.2.1'
+__version__ = 'v1.2.2'
 
 class Database:
 	
@@ -25,6 +25,110 @@ class Database:
 		self.db_name = DBName
 		self.con = sqlite3.connect(DBName)
 		self.cur = self.con.cursor()
+	
+	def createUser(self, con, verb=0):
+		
+		temp = [
+			['logs', 'connection 2020-01-25_01-48-26.241195.log', '-r--', 'Connection 2020-01-25_01-48-26.241195', '010'],
+			['logs', con.createLogFile('connection'), '-r--', con.createLogFile('Connection')[:-4], '011'],
+			['bin', 'nueva', 'drwx', 'folder', '1000'],
+			['config', 'chmod.txt', '-r--', Helps.chmod_content, '000'],
+			['config', 'permisos.txt', '-r--', Helps.permisos_content, '001'],
+			['bin', 'scan.exe', '-rwx', con.binary(), '1001']
+		]
+		con.fileSystemUpdate(temp)
+		
+		self.loadTables(verb)
+		datas = [
+			[
+				'LenTables', # Tabla
+				# Campos de la Tabla:
+				['tableName','tableLen'],
+				[	# Datos a cargar:
+					['LenTables', 5],
+					['System',    7],
+					['User',      3],
+					['Data',      4],
+					['BotNet',    2],
+					['UserFiles', 6]
+				]
+			],[
+				'System', # Tabla
+				# Campos de la Tabla:
+				['OS','USERNAME','COMPUTERNAME','NUMBER_OF_PROCESSORS',
+				 'PROCESSOR_ARCHITECTURE','PROGRAMDATA','SESSIONNAME'],
+				[	# Datos a cargar:
+					[
+						os.environ['OS'],
+						os.environ['USERNAME'],
+						os.environ['COMPUTERNAME'],
+						os.environ['NUMBER_OF_PROCESSORS'],
+						os.environ['PROCESSOR_ARCHITECTURE'],
+						os.environ['PROGRAMDATA'],
+						os.environ['SESSIONNAME']
+					]
+				]
+			]
+		]
+		
+		for data in datas: self.insertData(*data, verb)
+		
+		# ~ self.con.commit()
+		
+		#===============================
+		# Agregar Datos Base en la Tabla User:
+		
+		files = con.getAllChilds(raw=True)
+		# ~ for key, val in con.getAllChilds().items():
+			# ~ print(key, val)
+		
+		data = [
+			# Tabla, Campos de la Tabla:
+			'User', ['user','pass'],
+			[	# Datos a cargar
+				[con.username,'xD']
+			]
+		]
+		self.insertData(*data, verb)
+		
+		idUser = self.getData('User','idUser','user="'+con.username+'"', c=1)
+		# Agregar Datos Base en la Tabla User:
+		datas = [
+			[
+				# Tabla, Campos de la Tabla:
+				'Data', ['idUser','seed','ipPublic','ipPrivate'],
+				[	# Datos a cargar
+					[1, files['2']['element'], self.randomIP(0), self.randomIP(1)]
+				]
+			],[# Tabla, Campos de la Tabla:
+				'UserFiles', ['idUser','nodeP','element','permiso','content','path'],
+				[	# Datos a cargar
+					[
+						idUser,
+						vals['nodeP'],
+						vals['element'],
+						vals['permiso'],
+						vals['content'],
+						key
+						
+					] for key, vals in files.items()
+				]
+			]
+		]
+		
+		for data in datas: self.insertData(*data, verb)
+		
+		self.con.commit()
+		
+		print('\n New User Create: '+con.username)
+		
+		return con
+	
+	def freeQuery(self, query, verb=0):
+		
+		self.cur.executescript(query)
+		
+		if verb > 0: print(query)
 	
 	def randomIP(self, types=0):
 		
@@ -90,7 +194,11 @@ class Database:
 			rows = self.cur.fetchall()
 		elif c == 1:
 			rows = self.cur.fetchone()
-			if len(rows) == 1: rows = rows[0]
+			try:
+				if len(rows) == 1: rows = rows[0]
+			except:
+				pass
+				# ~ if rows == None: print('\n Nothing Here...')
 		else:
 			rows = self.cur.fetchmany(c)
 		
@@ -128,7 +236,11 @@ class Database:
 			print('\n User \'{}\' last connection '.format(user)+\
 			'updated successfully at: {}'.format(t))
 	
-	def updateUserFiles(self, data, con, elements, verb=0):
+	# Actualiza la Fila seleccionada del Usuario con los Datos Nuevos.
+	def updateUserFile(self, data, elements, con, verb=0):
+		# Ejemplos:
+		# data = [('permiso','new data'),('content','new content')]
+		# elements = [ch.element, ch.path_r]
 		
 		user = con.username
 		data_origin = con.getChildData(elements[0], elements[1])
@@ -156,10 +268,68 @@ class Database:
 		where += ' AND content="'+data_origin[3]+'"'
 		where += ' AND path="'+data_origin[4]+'"'
 		
-		self.updateData('UserFiles', setr, where)
+		self.updateData('UserFiles', setr, where, verb=verb)
 		
 		if verb > 0:
 			print('\n UserFiles \'{}\' updated successfully.'.format(data_origin[1]))
+	
+	# Elimina Todas las Filas del Usuario y las Vuelve a Crear Actualizadas.
+	def updateUserFilesAll(self, con, verb=0):
+		
+		user = con.username
+		
+		query  = ['User', 'idUser', 'user = "{}"'.format(user)]
+		idUser = str(self.getData(*query, c=1))
+		
+		elems   = ['nodeP', 'element', 'permiso', 'content', 'path']
+		
+		query = 'DELETE FROM UserFiles WHERE idUser='+idUser
+		self.freeQuery(query, verb)
+		
+		files = con.getAllChilds(raw=True)
+		data = [# Tabla,  Campos de la Tabla:
+			'UserFiles', ['idUser','nodeP','element','permiso','content','path'],
+			[	# Datos a cargar
+				[
+					idUser,
+					vals['nodeP'],
+					vals['element'],
+					vals['permiso'],
+					vals['content'],
+					key
+					
+				] for key, vals in files.items()
+			]
+		]
+		
+		self.insertData(*data, verb=verb)
+		
+		if verb > 0:
+			print('\n UserFiles \'{}\' updated successfully.'.format(user))
+	
+	def orderUserFiles(self, verb=0):
+		
+		query = '''
+			DROP TABLE IF EXISTS Temporal;
+			CREATE TABLE Temporal AS SELECT * FROM UserFiles;
+			DROP TABLE IF EXISTS UserFiles;
+			CREATE TABLE IF NOT EXISTS UserFiles (
+				idUserFiles INTEGER PRIMARY KEY AUTOINCREMENT,
+				idUser INTEGER NOT NULL,
+				nodeP TEXT NOT NULL,
+				element TEXT NOT NULL,
+				permiso TEXT NOT NULL,
+				content TEXT NOT NULL,
+				path TEXT NOT NULL,
+				FOREIGN KEY(idUser) REFERENCES User(idUser)
+			);
+			INSERT INTO UserFiles (idUser, nodeP, element, permiso, content, path)
+				SELECT idUser, nodeP, element, permiso, content, path 
+				FROM Temporal ORDER BY idUser;
+			DROP TABLE Temporal;
+		'''
+		
+		self.freeQuery(query, verb)
 	
 	def loadTables(self, verb=0):
 		
@@ -209,8 +379,8 @@ class Database:
 				'idUser'     :'INTEGER NOT NULL',
 				'nodeP'      :'TEXT NOT NULL',
 				'element'    :'TEXT NOT NULL',
-				'content'    :'TEXT NOT NULL',
 				'permiso'    :'TEXT NOT NULL',
+				'content'    :'TEXT NOT NULL',
 				'path'       :'TEXT NOT NULL'
 				}, ['User']
 			]
@@ -233,121 +403,22 @@ def initDB(DBName, con):
 	
 	if not os.path.exists(DBName):
 		
-		temp = [
-			['logs', 'connection 2020-01-25_01-48-26.241195.log', '-r--', 'Connection 2020-01-25_01-48-26.241195', '010'],
-			['logs', con.createLogFile('connection'), '-r--', con.createLogFile('Connection')[:-4], '011'],
-			['bin', 'nueva', 'drwx', 'folder', '1000'],
-			['config', 'chmod.txt', '-r--', Helps.chmod_content, '000'],
-			['config', 'permisos.txt', '-r--', Helps.permisos_content, '001'],
-			['bin', 'scan.exe', '-rwx', con.binary(), '1001']
-		]
-		con.fileSystemUpdate(temp)
-		
 		db = Database(DBName)
-		db.loadTables(verb)
-		datas = [
-			[
-				'LenTables', # Tabla
-				# Campos de la Tabla:
-				['tableName','tableLen'],
-				[	# Datos a cargar:
-					['LenTables', 5],
-					['System',    7],
-					['User',      3],
-					['Data',      4],
-					['BotNet',    2],
-					['UserFiles', 6]
-				]
-			],[
-				'System', # Tabla
-				# Campos de la Tabla:
-				['OS','USERNAME','COMPUTERNAME','NUMBER_OF_PROCESSORS',
-				 'PROCESSOR_ARCHITECTURE','PROGRAMDATA','SESSIONNAME'],
-				[	# Datos a cargar:
-					[
-						os.environ['OS'],
-						os.environ['USERNAME'],
-						os.environ['COMPUTERNAME'],
-						os.environ['NUMBER_OF_PROCESSORS'],
-						os.environ['PROCESSOR_ARCHITECTURE'],
-						os.environ['PROGRAMDATA'],
-						os.environ['SESSIONNAME']
-					]
-				]
-			]
-		]
-		
-		for data in datas: db.insertData(*data, verb)
-		
-		db.con.commit()
-		
-		#===============================
-		# Agregar Datos Base en la Tabla User:
-		
-		files = con.getAllChilds()
-		# ~ for key, val in files.items():
-			# ~ print(key, val)
-		
-		data = [
-			# Tabla, Campos de la Tabla:
-			'User', ['user','pass'],
-			[	# Datos a cargar
-				[con.username,'xD']
-			]
-		]
-		db.insertData(*data, verb)
-		
-		idUser = db.getData('User','idUser','user="'+con.username+'"', c=1)
-		# Agregar Datos Base en la Tabla User:
-		datas = [
-			[
-				# Tabla, Campos de la Tabla:
-				'Data', ['idUser','seed','ipPublic','ipPrivate'],
-				[	# Datos a cargar
-					[1, files['2']['element'], db.randomIP(0), db.randomIP(1)]
-				]
-			],[# Tabla, Campos de la Tabla:
-				'UserFiles', ['idUser','nodeP','element','content','permiso','path'],
-				[	# Datos a cargar
-					[
-						idUser,
-						'' if key == '' else ( 'root' if len(key)==1 else (
-								con.getChild([int(_) for _ in key[:-1]]).element
-							)
-						),
-						vals['element'],
-						vals['content'],
-						vals['permiso'],
-						key
-						
-					] for key, vals in files.items()
-				]
-			]
-		]
-		
-		for data in datas: db.insertData(*data, verb)
-		db.con.commit()
+		con = db.createUser(con, verb)
 		
 	else:
 		
 		db = Database(DBName)
-		
-		# ~ try:
 		user = db.getData('User')
+		
 		if not user:
 			db.cur.close()
 			db = None
 			try:
 				os.remove(DBName)
 				raise TypeError('\nDatos Corruptos: '+DBName+'. Eliminado.')
-			except: raise TypeError('\nDatos Corruptos: '+DBName)
-		# ~ except:
-			# ~ db.cur.close()
-			# ~ db = None
-			# ~ try:
-				# ~ os.remove(DBName)
-				# ~ raise TypeError('\nDatos Corruptos: '+DBName+'. Eliminado.')
-			# ~ except: raise TypeError('\nDatos Corruptos: '+DBName)
+			except:
+				raise TypeError('\nDatos Corruptos: '+DBName)
 	
 	if db:
 		
@@ -355,20 +426,25 @@ def initDB(DBName, con):
 		
 		# ~ print('\n User:', db.getData('User', verb=verb))
 		
-		# Actualizar Ultima Conexion:
-		db.updateUserConection(con.username)
+		idUser = db.getData('User','idUser','user="'+con.username+'"', c=1)
 		
-		# ~ ['bin', 'scan.exe', 'rwx', con.binary()]
-		idUser = str(db.getData('User','idUser','user="'+con.username+'"', c=1))
-		# Actualizar los Datos de Consola desde la DB.
-		temp = [
-			[ v[2], v[3], v[5], v[4], v[6] ] for v in db.getData('UserFiles', where='idUser='+idUser)
-		]
-		
-		temp.pop(0)
-		con.system = []
-		con.fileSystemUpdate(temp)
-		
+		if idUser:
+			
+			# Actualizar Ultima Conexion:
+			db.updateUserConection(con.username)
+			
+			# Actualizar los Datos de Consola desde la DB.
+			temp = [
+				[ v[2], v[3], v[4], v[5], v[6] ] 
+				for v in db.getData('UserFiles', where='idUser='+str(idUser))
+			]
+			
+			temp.pop(0)
+			con.system = []
+			con.fileSystemUpdate(temp)
+		else:
+			con = db.createUser(con, verb)
+	
 	return db, con
 
 # ~ from helps import Helps
