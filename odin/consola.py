@@ -2,12 +2,12 @@
 # By: LawlietJH
 # Odyssey in Dystopia
 
-# ~ from .helps import *
+from .helps import *
 import random, os
 from datetime import datetime
 
 TITULO  = 'Odyssey in Dystopia'
-__version__ = 'v1.2.2'
+__version__ = 'v1.2.3'
 
 class Arbol:
 	
@@ -106,13 +106,15 @@ class Arbol:
 
 class Console:
 	
-	def __init__(self, username, sysname):
+	def __init__(self, username, password, sysname):
 		
 		self.arbol = Arbol('root')
-		self.username = username
-		self.sysname  = sysname
-		self.consize  = 0
-		self.response = ''
+		self.username  = username
+		self.password  = password
+		self.sysname   = sysname
+		self.consize   = 0
+		self.response  = ''
+		self.temporal  = []
 		self.valid_ext = ('.txt', '.log', '.exe')
 		self.rand   = lambda li, le: ''.join([str(random.choice(li)) for _ in range(le)])
 		self.binary = lambda ini=512, fin=1024: self.rand([0,1], random.randrange(ini, fin, 8))
@@ -126,7 +128,7 @@ class Console:
 			[ username, 'bin',      'drwx', 'folder', '100']
 		]
 		self.fileSystemUpdate(self.system)
-		self.pathPos = self.searchDir(self.arbol, self.username)
+		self.pathPos = [1, 0]
 		self.path = self.getPath(self.arbol)
 		self.list_commands = [
 			'help',			# Pedir la ayuda de comandos.
@@ -253,7 +255,7 @@ class Console:
 		
 		if data:
 			
-			os.system('cls')
+			# ~ os.system('cls')
 			print('\n\n\t Console: '+self.sysname+'\n\t User: '+self.username+'\n')
 			
 			if data != self.system:
@@ -273,7 +275,7 @@ class Console:
 		if command in self.list_commands: return True
 		return False
 	
-	def execute(self, command, db):
+	def execute(self, command):
 		
 		def validateCommand(command, c_path, tipo=0):	# Tipos: 0=Ambos, 1=Carpeta, 2=Archivo
 			origin = command
@@ -292,6 +294,9 @@ class Console:
 				for c in command:
 					if '"' in c[0] and '"' in c[-1]: c = c[1:-1]
 					elif '"' in c[0] or '"' in c[-1]:
+						self.response = ['','No es un archivo valido: '+c,'', 0]
+						return None, None
+					if '"' in c:
 						self.response = ['','No es un archivo valido: '+c,'', 0]
 						return None, None
 					if c == '..':
@@ -350,39 +355,18 @@ class Console:
 			
 			if lcommand == 1:
 				
-				self.response = [
-					'',
-					'Los Posibles Comandos a Utilizar Son:',
-					'',
-					'  help  com?        Muestra un Mensaje de Ayuda.',
-					'                    Puedes escribir el nombre de',
-					'                    un comando para mas detalles.',
-					'  cd    dir         Cambia de Directorio.',
-					'  ls                Lista los archivos y carpetas. ALT: dir',
-					'  exit              Cierra la Consola de Comandos',
-					'  cls               Limpia la Consola de Comandos',
-					'  cat   file        Leer Archivo como texto plano. ALT: type',
-					'  chmod Modo nombre Permite cambiar los atributos',
-					'                    de un archivo o carpeta.',
-					'                    help chmod para mas detalles.',
-					# ~ '  mkdir name Crea un Carpeta',
-					# ~ '  rm    file Elimina un Archivo o Carpeta',
-					# ~ '  con   IP   Conectar a una IP',
-					# ~ '  dc    IP   Desconectarse de una IP.',
-					''
-				]
+				self.response = [Helps.help_content]
 			
 			elif lcommand == 2:
-				
 				command = command[1]
-				
-				if command == 'chmod':
-					
-					self.response = [Helps.chmod_content+Helps.permisos_content]
+				if command == 'chmod':  self.response = [Helps.chmod_content+Helps.permisos_content]
+				elif command == 'save': self.response = [Helps.save_content]
+				elif command == 'cls':  self.response = [Helps.cls_content]
+				elif command == 'exit': self.response = [Helps.exit_content]
 		
 		elif cnd == 'save':
 			if lcommand == 1:
-				self.response = ['', 'Guardando  Partida... Espere.', '']
+				self.response = ['', 'Partida Guardada: '+str(datetime.now())[:-7], '']
 			else:
 				self.response = ['', 'No es un comando valido','',0]
 		
@@ -570,19 +554,7 @@ class Console:
 				if command == None: return self.response
 				c_path.pop()
 				
-				if command[0] == '"' and command[-1] == '"':
-					
-					command = command[1:-1]
-					
-					if '"' in command:
-						self.response = None
-						return self.response
-					
-					commandMatch(command, c_path)
-					
-				else:
-					self.response = None
-					return self.response
+				commandMatch(command, c_path)
 				
 			else:
 				self.response = None
@@ -710,10 +682,9 @@ class Console:
 			
 			#=======================================
 			# Actualiza los cambios en la Base de Datos:
-			data = [('permiso',ch.permiso)]
-			elements = [ch.element, ch.path_r]
-			db.updateUserFile(data, elements, self)
-			# ~ db.updateUserFilesAll(self) # Test
+			# ~ data = [('permiso',ch.permiso)]
+			# ~ elements = [ch.element, ch.path_r]
+			# ~ db.updateUserFile(data, elements, self)
 			#=======================================
 			
 		else: pass

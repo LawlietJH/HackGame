@@ -3,9 +3,35 @@
 # Odyssey in Dystopia
 
 TITULO  = 'Odyssey in Dystopia'		# Nombre
-__version__ = 'v1.2.1'				# Version
+__version__ = 'v1.2.3'				# Version
 
 class Helps:
+	
+	'''
+	Las computadoras tienen el poder y el poder lo tienes tú.
+	La conexión entre el bien y el mal existe más allá de unos y ceros.
+	Unos y ceros, prediciendo el futuro.
+	'''
+	
+	help_content = '''
+
+ Los Posibles Comandos a Utilizar Son:
+
+   help  command     Muestra un Mensaje de Ayuda. Puedes escribir el nombre
+                     de un comando para mas detalles.
+   cd    dir         Cambia de Directorio.
+   ls                Lista los archivos y carpetas. ALT: dir
+   exit              Cierra la Consola de Comandos. Cierra sesión.
+   cls               Limpia la Consola de Comandos. Vacia el buffer.
+   cat   file        Leer Archivo como texto plano. ALT: type
+   chmod Modo nombre Permite cambiar los atributos de un archivo o carpeta.
+                     help chmod para más detalles.
+	'''
+	# Pendientes:
+	# mkdir name Crea un Carpeta
+	# rm    file Elimina un Archivo o Carpeta
+	# con   IP   Conectar a una IP
+	# dc    IP   Desconectarse de una IP.
 	
 	permisos_content = '''
  Tipos de Permisos.
@@ -17,7 +43,7 @@ class Helps:
 
  [W] Escritura:
   * Archivos:    Permite modificar el contenido del archivo.
-  * Directorios: Permite crear archivos en el directorios, bien sean archivos
+  * Directorios: Permite crear archivos en el directorio, bien sean archivos
                  ordinarios o nuevos directorios. Se pueden borrar directorios,
                  copiar archivos en el directorio, mover, cambiar el nombre, etc.
 
@@ -66,3 +92,21 @@ class Helps:
    chmod =+ nombre     # Esto le dará todos los atributos al
                          archivo o carpeta 'nombre'.
 	'''
+	
+	save_content = '''
+ Este comando permite Guardar la partida actual.
+	'''
+	
+	cls_content = '''
+ Este comando permite vaciar el Buffer de consola,
+ eliminando los datos cargados y restaurando la
+ pantalla a su estado original.
+	'''
+	
+	exit_content = '''
+ Este comando permite cerrar la sesión actual.
+	'''
+	
+	
+
+
