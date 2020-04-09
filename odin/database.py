@@ -10,8 +10,15 @@ import sqlite3
 import random
 import os
 
-TITULO  = 'Odyssey in Dystopia'
-__version__ = 'v1.2.3'
+#=======================================================================
+
+TITULO  = 'Odyssey in Dystopia'		# Nombre
+__version__ = 'v1.2.4'				# Version
+__author__ = 'LawlietJH'			# Desarrollador
+
+#=======================================================================
+#=======================================================================
+#=======================================================================
 
 class Database:
 	
@@ -90,8 +97,10 @@ class Database:
 		base  = 'SELECT {} FROM {}'.format(types, table)
 		where = (' WHERE '+where if where else '')
 		query = '{}{};'.format(base, where)
-		
-		self.cur.execute(query)
+		try:
+			self.cur.execute(query)
+		except:
+			return None
 		if c == 0:
 			rows = self.cur.fetchall()
 		elif c == 1:
@@ -216,14 +225,28 @@ class Database:
 		query  = ['User', 'idUser', 'user = "{}"'.format(user)]
 		idUser = str(self.getData(*query, c=1))
 		
-		elems = ['l_canciones_activas','l_comandos', 
-				'l_com_ps', 'con_tam_buffer']
+		elems = [
+			'song_vol',
+			'song_pos',
+			'l_canciones_activas',
+			'l_comandos', 
+			'l_com_ps',
+			'con_tam_buffer',
+			'cant_scroll'
+		]
+		
+		lc_pos = elems.index('l_comandos')
+		
+		lis[lc_pos] = lis[lc_pos].replace('"',"___").replace("'","__")
 		
 		setr = [
-			(elems[0], '"'+lis[0]+'"'),
-			(elems[1], '"'+lis[1]+'"'),
-			(elems[2], lis[2]),
-			(elems[3], lis[3])
+			(elems[0], lis[0]),
+			(elems[1], lis[1]),
+			(elems[2], '"'+lis[2]+'"'),
+			(elems[3], '"'+lis[3]+'"'),
+			(elems[4], lis[4]),
+			(elems[5], lis[5]),
+			(elems[6], lis[6])
 		]
 		
 		where  = 'idUser = '+idUser
@@ -265,8 +288,8 @@ class Database:
 			['logs', 'connection 2020-01-25_01-48-26.241195.log', '-r--', 'Connection 2020-01-25_01-48-26.241195', '010'],
 			['logs', con.createLogFile('connection'), '-r--', con.createLogFile('Connection')[:-4], '011'],
 			['bin', 'nueva', 'drwx', 'folder', '1000'],
-			['config', 'chmod.txt', '-r--', Helps.chmod_content, '000'],
-			['config', 'permisos.txt', '-r--', Helps.permisos_content, '001'],
+			['config', 'chmod.txt', '-r--', Helps.Content.chmod, '000'],
+			['config', 'permisos.txt', '-r--', Helps.Content.permisos, '001'],
 			['bin', 'scan.exe', '-rwx', con.binary(), '1001']
 		]
 		con.fileSystemUpdate(temp)
@@ -292,18 +315,7 @@ class Database:
 		idUser = self.getData('User','idUser','user="'+con.username+'"', c=1)
 		# Agregar Datos Base en la Tabla User:
 		datas = [
-			[ # Tabla,      Campos de la Tabla:
-				'LenTables', ['tableName','tableLen'],
-				[	# Datos a cargar:
-					['User',          3],
-					['LenTables',     5],
-					['System',        7],
-					['Data',          4],
-					['BotNet',        2],
-					['UserFiles',     6],
-					['HistoricalLog', 6]
-				]
-			],[
+			[
 				'System', # Tabla
 				# Campos de la Tabla:
 				['idUser','OS','USERNAME','COMPUTERNAME','NUMBER_OF_PROCESSORS',
@@ -324,7 +336,7 @@ class Database:
 				# Tabla, Campos de la Tabla:
 				'Data', ['idUser','seed','ipPublic','ipPrivate'],
 				[	# Datos a cargar
-					[1, files['2']['content'], self.randomIP(0), self.randomIP(1)]
+					[idUser, files['2']['content'], self.randomIP(0), self.randomIP(1)]
 				]
 			],[# Tabla, Campos de la Tabla:
 				'UserFiles', ['idUser','nodeP','element','permiso','content','path'],
@@ -340,9 +352,11 @@ class Database:
 					] for key, vals in files.items()
 				]
 			],[# Tabla, Campos de la Tabla:
-				'UserConfig', ['idUser','l_canciones_activas','l_comandos','l_com_ps','con_tam_buffer'],
+				'UserConfig', ['idUser', 'song_vol', 'song_pos',
+					'l_canciones_activas', 'l_comandos',
+					'l_com_ps', 'con_tam_buffer', 'cant_scroll'],
 				[	# Datos a cargar
-					[ idUser, '[]', '[]', 0, 150 ]
+					[ idUser, 20, 0, '[]', '[]', 0, 150, 3 ]
 				]
 			]
 		]
@@ -354,6 +368,21 @@ class Database:
 		print('\n New User Create: '+con.username)
 		
 		return con
+	
+	def deleteUserAccount(self, username, verb=0):
+		
+		idUser = self.getData('User','idUser','user="'+username+'"', c=1)
+		idUser = str(idUser)
+		
+		query  = 'DELETE FROM User          WHERE idUser='+idUser+';\n'
+		query += 'DELETE FROM System        WHERE idUser='+idUser+';\n'
+		query += 'DELETE FROM Data          WHERE idUser='+idUser+';\n'
+		query += 'DELETE FROM BotNet        WHERE idUser='+idUser+';\n'
+		query += 'DELETE FROM UserFiles     WHERE idUser='+idUser+';\n'
+		query += 'DELETE FROM HistoricalLog WHERE idUser='+idUser+';\n'
+		query += 'DELETE FROM UserConfig    WHERE idUser='+idUser+';\n'
+		
+		self.freeQuery(query, verb)
 	
 	def loadTables(self, verb=0):
 		
@@ -421,10 +450,13 @@ class Database:
 				'UserConfig', {
 				'idUserConfig'       :'INTEGER PRIMARY KEY AUTOINCREMENT',
 				'idUser'             :'INTEGER NOT NULL',
+				'song_vol'           :'INTEGER NOT NULL',
+				'song_pos'           :'INTEGER NOT NULL',
 				'l_canciones_activas':'TEXT NOT NULL',
 				'l_comandos'         :'TEXT NOT NULL',
 				'l_com_ps'           :'INTEGER NOT NULL',
 				'con_tam_buffer'     :'INTEGER NOT NULL',
+				'cant_scroll'        :'INTEGER NOT NULL',
 				}, ['User']
 			]
 		]
@@ -449,19 +481,35 @@ def initDB(DBName, con):
 		db = Database(DBName)
 		con = db.createUser(con, verb)
 		
+		data = [ # Tabla,      Campos de la Tabla:
+			'LenTables', ['tableName','tableLen'],
+			[	# Datos a cargar:
+				['User',          3],
+				['LenTables',     5],
+				['System',        7],
+				['Data',          4],
+				['BotNet',        2],
+				['UserFiles',     6],
+				['HistoricalLog', 6]
+			]
+		]
+		
+		db.insertData(*data, verb)
+		
 	else:
 		
 		db = Database(DBName)
 		user = db.getData('User')
 		
 		if not user:
-			db.cur.close()
-			db = None
-			try:
-				os.remove(DBName)
-				raise TypeError('\nDatos Corruptos: '+DBName+'. Eliminado.')
-			except:
-				raise TypeError('\nDatos Corruptos: '+DBName)
+			con = db.createUser(con, verb)
+			# ~ db.cur.close()
+			# ~ db = None
+			# ~ try:
+				# ~ os.remove(DBName)
+				# ~ raise TypeError('\nDatos Corruptos: '+DBName+'. Eliminado.')
+			# ~ except:
+				# ~ raise TypeError('\nDatos Corruptos: '+DBName)
 	
 	if db:
 		
@@ -487,10 +535,10 @@ def initDB(DBName, con):
 			con.fileSystemUpdate(temp)
 			
 			# Actualizar los Datos de Consola desde la DB.
-			temp = db.getData('UserConfig', where='idUser='+str(idUser), c=1)[2:]
-			temp = [temp[0], temp[1], temp[2], temp[3]]
-			exec('temp[0] = '+temp[0])
-			exec('temp[1] = '+temp[1])
+			temp = [*db.getData('UserConfig', where='idUser='+str(idUser), c=1)[2:]]
+			print(temp)
+			exec('temp[2] = '+temp[2])
+			exec('temp[3] = '+temp[3].replace('___','"').replace('__',"'"))
 			con.temporal = temp
 			# ~ print(con.temporal)
 		else:

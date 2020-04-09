@@ -6,8 +6,15 @@ from .helps import *
 import random, os
 from datetime import datetime
 
-TITULO  = 'Odyssey in Dystopia'
-__version__ = 'v1.2.3'
+#=======================================================================
+
+TITULO  = 'Odyssey in Dystopia'		# Nombre
+__version__ = 'v1.2.4'				# Version
+__author__ = 'LawlietJH'			# Desarrollador
+
+#=======================================================================
+#=======================================================================
+#=======================================================================
 
 class Arbol:
 	
@@ -355,14 +362,14 @@ class Console:
 			
 			if lcommand == 1:
 				
-				self.response = [Helps.help_content]
+				self.response = [Helps.Content.help_]
 			
 			elif lcommand == 2:
 				command = command[1]
-				if command == 'chmod':  self.response = [Helps.chmod_content+Helps.permisos_content]
-				elif command == 'save': self.response = [Helps.save_content]
-				elif command == 'cls':  self.response = [Helps.cls_content]
-				elif command == 'exit': self.response = [Helps.exit_content]
+				if command == 'chmod':  self.response = [Helps.Content.chmod+Helps.Content.permisos]
+				elif command == 'save': self.response = [Helps.Content.save]
+				elif command == 'cls':  self.response = [Helps.Content.cls]
+				elif command == 'exit': self.response = [Helps.Content.exit_]
 		
 		elif cnd == 'save':
 			if lcommand == 1:
@@ -578,7 +585,7 @@ class Console:
 			if lcommand == 2:
 				atr = temp[0]
 				if atr == '--help' or atr == '-h':
-					self.response = [Helps.chmod_content+Helps.permisos_content]
+					self.response = [Helps.Content.chmod+Helps.Content.permisos]
 					return self.response
 			
 			if len(temp) >= 2:
