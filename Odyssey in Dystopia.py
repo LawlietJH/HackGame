@@ -31,53 +31,12 @@ __author__ = 'LawlietJH'			# Desarrollador
 #=======================================================================
 #=======================================================================
 
-class Boton(pygame.sprite.Sprite, pygame.font.Font):	# Clase Para Botones.
-	
-	def __init__(self, Nombre):		# Pasamos La Ruta de la Imagen a Cargar Como Bloque.
-		
-		pygame.sprite.Sprite.__init__(self)				# Hereda de la Clase Sprite de pygame.
-		self.image = load_image(Nombre, True)			# Carga La Imagen Con la función load_image.
-		self.x = self.image.get_width()
-		self.y = self.image.get_height()
-		self.name = Nombre.split('/')[-1].split('.')[0]
-		
-	def getSize(self):
-		return self.x, self.y
-	
-	def resize(self, TX, TY):		# Cambia el tamaño de la imagen para cargarla al programa con las medidas necesarias.
-		self.x = TX
-		self.y = TY
-		self.image = pygame.transform.scale(self.image, (TX, TY))
-	
-	def getName(self):
-		return self.name
-
-def get_screen_size():
-    user32 = ctypes.windll.user32
-    screenSize =  user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
-    return screenSize
-
 def setFontSize(tam):
 	global Font_tam, Font_def, T_pix, T_pix_y
 	Font_tam = tam						# Constante, para hacer manipulación del tamaño de algunas letras y en la matriz para tener un margen correcto y otras cosas más.
 	Font_def = 'Inc-R '+str(Font_tam)	# Fuente por defecto.
 	T_pix     = tam//2					# Tamaño de Pixeles entre cada letra en linea de comandos.
 	T_pix_y   = T_pix*2					# Tamaño de Pixeles entre cada salto de linea en la linea de comandos.
-
-
-def load_image(filename, transparent=False):
-	
-	try: image = pygame.image.load(filename)
-	except pygame.error as message: raise SystemError
-	
-	# ~ image = image.convert()
-	
-	if transparent:
-		
-		color = image.get_at((0,0))
-		image.set_colorkey(color, pygame.RLEACCEL)
-		
-	return image
 
 #===================================================================================================
 
@@ -175,7 +134,7 @@ def getGlobalTime(raw=0):
 	time = datetime.now()-global_time_init
 	
 	if   raw == 0: time = str(time)[:-7]
-	elif raw == 1: time = anormalizeTime(str(time)[:-7], True)//1000
+	elif raw == 1: time = Helps.Fun.anormalizeTime(str(time)[:-7], True)//1000
 	else: pass
 	
 	return time
@@ -189,19 +148,6 @@ def u_puntero(con, l_con, cant, p_pos):	# Actualizar puntero. U = Update.
 		]
 	
 	return puntero
-
-def i_let(t, c, p):		# Insertar letra. T = Texto, C = Caracter, P = Posicion
-	t = t[:p-1] + c + t[p-1:]		# Se agrega el texto desde el inicio hasta la posicion p -1, agrega el nuevo caracter en dicha posicion y se agrega el resto desde p -1.
-	return t
-
-def add_comand(l_comandos, textos):	# Inserta Comandos a la Lista
-	plus = ' '
-	if textos and textos[-1] == 0:
-		textos.pop()
-		plus = ''
-	cont = l_comandos[-1][1]
-	for text in textos: l_comandos.append([plus+text, cont])
-	return l_comandos
 
 def clic_boton(screen, pos, rec=0):	# Detecta un Clic en las coordenadas de un boton, contando la posicion de botones derecha a izquierda.
 	
@@ -264,12 +210,6 @@ def clic_music_checkbox(evento, x_pos, y_pos, pos):
 				
 	pygame.draw.rect(screen, COLOR['Verde'], [x_pos, y_pos, tam_x, tam_y], 1)
 
-def match_x_y(x, y, box):
-	if  x > box[0] and x < box[0]+box[2] \
-	and y > box[1] and y < box[1]+box[3]:
-		return True
-	return False
-
 def splitText(text):
 	
 	t = []				# Lista de Fragmentos del Texto original
@@ -317,30 +257,6 @@ def normalizeListComand():		# Si al cambiar resolucion algun texto en pantalla s
 					t_des += 1
 					l_comandos.insert(i+t_des, (t_chr+sT.pop(0), pos))
 
-def normalizeTime(mili, desface=0):
-	
-	secs = (mili // 1000) + desface
-	mins = (secs // 60)
-	hrs  = (mins // 60)
-	
-	time = str(hrs%24).zfill(2)+':'+str(mins%60).zfill(2)+':'+str(secs%60).zfill(2)
-	
-	return time
-
-def anormalizeTime(time, mili=False):
-	m = 0
-	if type(time) == datetime:
-		m = int(str(time)[-6:-3])
-		time = str(time)[11:-7]
-		
-	time = time.split(':')
-	time[1] = int(time[0])*60 + int(time[1])	# Convertimos las horas en minutos y se lo sumamos a los minutos.
-	time = time[1]*60 + int(time[2])			# Convertimos los minutos en segundos y se lo sumamos a los segundos.
-	if mili:
-		time = time * 1000						# Convertimos los segundos en milisegundos.
-		time += m
-	return time
-
 def printTFiles(Prefijo, t_files=[]):
 	
 	global l_comandos
@@ -355,31 +271,7 @@ def printTFiles(Prefijo, t_files=[]):
 		if not '.' in t_files[x][-5:]:
 			t_files[x] += '/'
 	
-	l_comandos = add_comand(l_comandos, [''] + ['../'] + t_files + [''])
-
-def temporizer(secs=1):
-	global temporizer_init
-	
-	secs = secs*1000
-	actual = anormalizeTime(datetime.now(), True)
-	
-	if temporizer_init == 0:
-		temporizer_init = actual
-	
-	if temporizer_init+secs <= actual:
-		temporizer_init = 0
-		return True
-	
-	return False
-
-def waiting(pos, t):
-	threads[pos] = 1
-	time.sleep(t)
-	threads[pos] = 0
-
-def invoke(pos, t):
-	threads[pos] = threading.Thread(target=waiting, args=[pos, t])
-	threads[pos].start()
+	l_comandos = Helps.Fun.add_comand(l_comandos, [''] + ['../'] + t_files + [''])
 
 #===================================================================================================
 #===================================================================================================
@@ -395,7 +287,7 @@ def main():
 	
 	# Inicializaciones =================================================
 	
-	ss_x, ss_y = get_screen_size()
+	ss_x, ss_y = Helps.Utilidades.get_screen_size()
 	# ~ s_x = ss_x//2-RESOLUCION[s_res][0]//2
 	# ~ s_y = ss_y//2-RESOLUCION[s_res][1]//2
 	# ~ print(ss_x, ss_y, RESOLUCION[s_res], s_x, s_y)
@@ -406,31 +298,31 @@ def main():
 	# ~ screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.FULLSCREEN | pygame.HWSURFACE | pygame.DOUBLEBUF)
 	screen.fill(COLOR['Negro'])													# Rellena el Fondo de Negro.
 	
-	BGimg_Intro = load_image('images/black_background.jpg')						# Carga el Fondo de la Ventana.
+	BGimg_Intro = Helps.Fun.load_image('images/black_background.jpg')						# Carga el Fondo de la Ventana.
 	BGimg_Intro = pygame.transform.scale(BGimg_Intro, RESOLUCION[s_res])		# Cambia la resolucion de la imagen.
-	BGimg_General = load_image('images/background.bmp')							# Carga el Fondo de la Ventana.
+	BGimg_General = Helps.Fun.load_image('images/background.bmp')							# Carga el Fondo de la Ventana.
 	BGimg_General = pygame.transform.scale(BGimg_General, RESOLUCION[s_res])	# Cambia la resolucion de la imagen.
-	BGimg_Login = load_image('images/login_background.bmp')						# Carga el Fondo de la Ventana.
+	BGimg_Login = Helps.Fun.load_image('images/login_background.bmp')						# Carga el Fondo de la Ventana.
 	BGimg_Login = pygame.transform.scale(BGimg_Login, RESOLUCION[s_res])		# Cambia la resolucion de la imagen.
 	
 	Icono  = pygame.image.load('images/Icon.png')			# Carga el icono del Juego.
 	
-	btn_delete    = Boton('images/iconos/delete.bmp')	# Boton de Ojo Mostrar u Ocultar Password.
-	btn_show_pass = Boton('images/iconos/show_pass.bmp')	# Boton de Ojo Mostrar u Ocultar Password.
-	btn_ajustes   = Boton('images/iconos/Ajustes.bmp')		# Boton de Ajustes.
-	btn_apagar    = Boton('images/iconos/Apagar.bmp')		# Boton de Apagar.
-	btn_atajos    = Boton('images/iconos/Atajos.bmp')		# Boton de Atajos.
-	btn_avances   = Boton('images/iconos/Avances.bmp')		# Boton de Avances.
-	btn_bateria   = Boton('images/iconos/Bateria.bmp')		# Boton de Bateria.
-	btn_cerebro   = Boton('images/iconos/Cerebro.bmp')		# Boton de Cerebro.
-	btn_chip      = Boton('images/iconos/Chip.bmp')			# Boton de Chip.
-	btn_conexion  = Boton('images/iconos/Conexion.bmp')		# Boton de Conexion.
-	btn_consola   = Boton('images/iconos/Consola.bmp')		# Boton de Consola.
-	btn_dystopia  = Boton('images/iconos/Dystopia.bmp')		# Boton de Dystopia.
-	btn_laberinto = Boton('images/iconos/Laberinto.bmp')	# Boton de Laberinto.
-	btn_mail      = Boton('images/iconos/Mail.bmp')			# Boton de Mail.
-	btn_usb       = Boton('images/iconos/USB.bmp')			# Boton de USB.
-	btn_virus     = Boton('images/iconos/Virus.bmp')		# Boton de Virus.
+	btn_delete    = Helps.Boton('images/iconos/delete.bmp')	# Boton de Ojo Mostrar u Ocultar Password.
+	btn_show_pass = Helps.Boton('images/iconos/show_pass.bmp')	# Boton de Ojo Mostrar u Ocultar Password.
+	btn_ajustes   = Helps.Boton('images/iconos/Ajustes.bmp')		# Boton de Ajustes.
+	btn_apagar    = Helps.Boton('images/iconos/Apagar.bmp')		# Boton de Apagar.
+	btn_atajos    = Helps.Boton('images/iconos/Atajos.bmp')		# Boton de Atajos.
+	btn_avances   = Helps.Boton('images/iconos/Avances.bmp')		# Boton de Avances.
+	btn_bateria   = Helps.Boton('images/iconos/Bateria.bmp')		# Boton de Bateria.
+	btn_cerebro   = Helps.Boton('images/iconos/Cerebro.bmp')		# Boton de Cerebro.
+	btn_chip      = Helps.Boton('images/iconos/Chip.bmp')			# Boton de Chip.
+	btn_conexion  = Helps.Boton('images/iconos/Conexion.bmp')		# Boton de Conexion.
+	btn_consola   = Helps.Boton('images/iconos/Consola.bmp')		# Boton de Consola.
+	btn_dystopia  = Helps.Boton('images/iconos/Dystopia.bmp')		# Boton de Dystopia.
+	btn_laberinto = Helps.Boton('images/iconos/Laberinto.bmp')	# Boton de Laberinto.
+	btn_mail      = Helps.Boton('images/iconos/Mail.bmp')			# Boton de Mail.
+	btn_usb       = Helps.Boton('images/iconos/USB.bmp')			# Boton de USB.
+	btn_virus     = Helps.Boton('images/iconos/Virus.bmp')		# Boton de Virus.
 	
 	l_icons = [													# Lista actual de iconos a imprimir.
 			btn_ajustes,
@@ -508,7 +400,7 @@ def main():
 	ticks      = 0			# Contador de Ticks.
 	Comando    = ''			# Comando en linea actual.
 	p_pos      = 0			# Posicion del Puntero, para manipular en que posicion estara en la cadena 'Comando'. p_pos = 5 significaria entonces que estara el puntero en el caracter 5.
-	t_act_sys  = Helps.getTimeActiveSystem() # Tiempo Activo del Sistema
+	t_act_sys  = Helps.Utilidades.getTimeActiveSystem() # Tiempo Activo del Sistema
 	
 	# Dimensiones de Consola:
 	# P = Punto inicial. T = Tamaño. M = Margen. L = linea
@@ -642,7 +534,7 @@ def main():
 		# Validaciones de la Musica:
 		#===============================================================
 		if ticks % 60 == 0 and not introduction:
-			song_time = normalizeTime(music.get_pos(), song_desface)
+			song_time = Helps.Fun.normalizeTime(music.get_pos(), song_desface)
 			if l_canciones_activas:				# Si hay canciones activas, entonces...
 				if not music.get_busy():		# Si no esta activa la cancion, entonces...
 						song_pos = (song_pos+1) % len(playlist)				# Cambia la cancion
@@ -722,10 +614,7 @@ def main():
 			intro_text_pos_y = 0
 			
 			if intro_text_pos < len(intro_text):
-				thr_pos = 0
-				if threads[thr_pos] == None: invoke(thr_pos, .03)
-				if not threads[thr_pos]:
-					threads[thr_pos] = None
+				if not threads.isActive('Intervalo Entre Caracteres', 0.03):
 					intro_text_pos += 1
 			
 		else:
@@ -786,25 +675,25 @@ def main():
 							]
 							
 							if not (login_new or del_user_ac):
-								if match_x_y(x, y, tb_user):
+								if Helps.Fun.match_x_y(x, y, tb_user):
 									if   login_pos == 1: username = Comando
 									elif login_pos == 2: password = Comando
 									Comando = username
 									p_pos = len(Comando)
 									login_pos = 1
 										
-								elif match_x_y(x, y, tb_pass):
+								elif Helps.Fun.match_x_y(x, y, tb_pass):
 									if   login_pos == 1: username = Comando
 									elif login_pos == 2: password = Comando
 									Comando = password
 									p_pos = len(Comando)
 									login_pos = 2
 								
-								elif match_x_y(x, y, b_ul):
+								elif Helps.Fun.match_x_y(x, y, b_ul):
 									if login_list_active: login_list_active = False
 									else: login_list_active = True
 								
-								elif match_x_y(x, y, btn_login):
+								elif Helps.Fun.match_x_y(x, y, btn_login):
 									
 									if login_pos == 1 and Comando:
 										username = Comando
@@ -834,27 +723,27 @@ def main():
 												login_btn_pos = 2
 												login_new = False
 								
-								elif match_x_y(x, y, btn_close): login_btn_close = True
+								elif Helps.Fun.match_x_y(x, y, btn_close): login_btn_close = True
 								
 								if login_list_active:
 									for u, p, box, d in login_rect_user_list:
-										if match_x_y(x, y, box):
+										if Helps.Fun.match_x_y(x, y, box):
 											username = u
 											password = p
 											if   login_pos == 1: Comando = username; p_pos = len(Comando)
 											elif login_pos == 2: Comando = password; p_pos = len(Comando)
-										elif match_x_y(x, y, d):
+										elif Helps.Fun.match_x_y(x, y, d):
 											del_user_ac_name = u
 											del_user_ac = True
 								
 							else:
-								if match_x_y(x, y, b_btn_c):
+								if Helps.Fun.match_x_y(x, y, b_btn_c):
 									if del_user_ac:
 										del_user_ac_accept = False
 										del_user_ac = False
 									else:
 										login_new = False
-								elif match_x_y(x, y, b_btn_a):
+								elif Helps.Fun.match_x_y(x, y, b_btn_a):
 									if del_user_ac:
 										del_user_ac_accept = True
 										del_user_ac = False
@@ -862,7 +751,7 @@ def main():
 										login_new = False
 										login = True
 							
-							if match_x_y(x, y, b_sp):
+							if Helps.Fun.match_x_y(x, y, b_sp):
 								if login_show_pass: login_show_pass = False
 								else: login_show_pass = True
 							
@@ -924,7 +813,7 @@ def main():
 													os.environ['SDL_VIDEO_CENTERED'] = '1'
 													screen = pygame.display.set_mode(RESOLUCION[s_res], pygame.NOFRAME)			# Objeto Que Crea La Ventana.
 													
-											BGimg_General = load_image('images/background.bmp')											# Carga el Fondo de la Ventana.
+											BGimg_General = Helps.Fun.load_image('images/background.bmp')											# Carga el Fondo de la Ventana.
 											BGimg_General = pygame.transform.scale(BGimg_General, RESOLUCION[s_res])							# Cambia la resolucion de la imagen.
 											
 											l_com_lim = ( RESOLUCION_CMD[s_res][1]-45) // T_pix_y								# Limite de lineas en consola
@@ -1370,7 +1259,7 @@ def main():
 							
 							temp2 = playlist[song_pos][2]['Duration']
 							print(temp2)
-							temp2 = anormalizeTime(temp2, True)		# Convierte el texto de Duracion a Milisegundos.
+							temp2 = Helps.Fun.anormalizeTime(temp2, True)		# Convierte el texto de Duracion a Milisegundos.
 							print(temp2)
 							if temp > temp2: temp = temp2
 							
@@ -1431,7 +1320,7 @@ def main():
 							
 							# Inserta un caracter en la posicion p_pos del Comando.
 							temp = CARACTERES if vista_actual == l_vistas['Consola'] else LOGIN_CARACTERES
-							if not evento.unicode == '' and evento.unicode in temp: Comando = i_let(Comando, evento.unicode, p_pos)
+							if not evento.unicode == '' and evento.unicode in temp: Comando = Helps.Fun.i_let(Comando, evento.unicode, p_pos)
 							else:
 								# Si no, se restablecen los valores, significa que no se presiono ninguna de las teclas anteriores a partir del ultimo IF.
 								p_pos -= 1
@@ -1693,7 +1582,8 @@ def main():
 					carga_pos2 = [carga_pos[0]-5, carga_pos[1]-5, int(len(text)*(tam_f)/4)*2 + 15, 30]
 					rect_opaco(screen, carga_pos2, COLOR['Rojo'], 120)
 					dibujarTexto(text, carga_pos, FUENTES['Inc-R 18'], COLOR['Blanco'])	# Dibuja texto en Pantalla.
-					if temporizer(1.5): login_error = False
+					# ~ if temporizer(1.5): login_error = False
+					if not threads.isActive('Login Error', 1.5): login_error = False
 				elif login_new or del_user_ac:
 					rect_pos_login_new = [ RESOLUCION[s_res][0]//2 - 150, int((RESOLUCION[s_res][1]//2)+55), 300, 160 ]
 					round_rect(screen, rect_pos_login_new, COLOR['VF'], 3, 1, (*COLOR['VS'], 100))
@@ -1750,7 +1640,7 @@ def main():
 						carga_pos2 = [carga_pos[0]-5, carga_pos[1]-5, int(len(text)*tam_f/4)*4+10, 30]
 						rect_opaco(screen, carga_pos2, COLOR['Negro'])
 						dibujarTexto(text+temp, carga_pos, FUENTES['Inc-R 18'], COLOR['Gris'])	# Dibuja texto en Pantalla.
-						if temporizer(1.2) and db_con_thread_finish:
+						if not threads.isActive('Login Carga', 1.2) and db_con_thread_finish:
 							vista_actual = l_vistas['Consola']					# Vista Actual.
 							Comando = ''
 							p_pos = 0
@@ -1787,7 +1677,7 @@ def main():
 					# Reproduce el Audio 1/4 Info Login:
 					if play_dialog1:
 						if not play_dialogo:
-							if temporizer(1): # Inicia el Dialogo:
+							if not threads.isActive('Dialogo 1', 1): # Inicia el Dialogo:
 								# ~ dialogo.fadeout(1000)
 								dialogo = pygame.mixer.Sound(dialogos[1])
 								dialogo.play()
@@ -1802,7 +1692,7 @@ def main():
 					# Reproduce el Audio 2/4 Info Login:
 					if play_dialog2 and not login_carga:
 						if not play_dialogo:
-							if temporizer(1): # Inicia el Dialogo:
+							if not threads.isActive('Dialogo 2', 1): # Inicia el Dialogo:
 								# ~ dialogo.fadeout(1000)
 								dialogo = pygame.mixer.Sound(dialogos[2])
 								dialogo.play()
@@ -1818,7 +1708,7 @@ def main():
 						# Reproduce el Audio 3/4 Info Login:
 						if username and (login_pos == 2 and Comando):
 							if not play_dialogo:
-								if temporizer(1): # Inicia el Dialogo:
+								if not threads.isActive('Dialogo 3.1', 1): # Inicia el Dialogo:
 									# ~ dialogo.fadeout(1000)
 									dialogo = pygame.mixer.Sound(dialogos[3])
 									dialogo.play()
@@ -1826,7 +1716,7 @@ def main():
 									play_dialogo = True
 									play_time = getGlobalTime(1) + int(dialogo.get_length())
 							elif play_time <= getGlobalTime(1):
-								if temporizer(1):
+								if not threads.isActive('Dialogo 3.2', 1):
 									play_time = 999999
 									play_dialogo = False
 									play_dialog3 = False
@@ -1835,7 +1725,7 @@ def main():
 						if login_new:
 							# Reproduce el Audio 4/4 Info Login:
 							if not play_dialogo:
-								if temporizer(1): # Inicia el Dialogo:
+								if not threads.isActive('Dialogo 4.1', 1): # Inicia el Dialogo:
 									# ~ dialogo.fadeout(1000)
 									dialogo = pygame.mixer.Sound(dialogos[4])
 									dialogo.play()
@@ -1843,7 +1733,7 @@ def main():
 									play_dialogo = True
 									play_time = getGlobalTime(1) + int(dialogo.get_length())
 							elif play_time <= getGlobalTime(1):
-								if temporizer(1):
+								if not threads.isActive('Dialogo 4.2', 1):
 									play_time = 999999
 									play_dialogo = False
 									play_dialog4 = False
@@ -1996,7 +1886,7 @@ def main():
 									textos = t1
 									break
 							
-							l_comandos = add_comand(l_comandos, textos)
+							l_comandos = Helps.Fun.add_comand(l_comandos, textos)
 							
 							if Comando == 'exit': logout = True
 							elif Comando == 'cls':  l_comandos = []
@@ -2103,26 +1993,10 @@ def main():
 					pygame.draw.rect(screen, COLOR['VN'], recuadro2, 1)
 					dibujarTexto('Lista de Canciones Disponibles:', [recuadro[0]+20, 40*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
 					
-					# Todas las canciones disponibles:
-					ljust = 45
-					combinaciones = [
-								'Creador - Nombre de Canción'.ljust(ljust-2)+'Duración',
-								'Mega Drive - Converter'.ljust(ljust)+'6:30',
-								'Mega Drive - Source Code'.ljust(ljust)+'4:53',
-								'Mega Drive - Seas Of Infinity'.ljust(ljust)+'2:08',
-								'Dynatron - Pulse Power'.ljust(ljust)+'6:00',
-								'Dynatron - Vox Magnetismi'.ljust(ljust)+'3:46',
-								'Varien - Born of Blood, Risen From Ash'.ljust(ljust)+'4:06',
-								'Varien - Blood Hunter'.ljust(ljust)+'3:47',
-								'Varien - Of Foxes and Hounds'.ljust(ljust)+'5:04',
-								'Kroww - Hysteria'.ljust(ljust)+'5:14',
-								'Scandroid - Thriller (Fury Weekend Remix)'.ljust(ljust)+'4:52',
-								'Neovaii - Easily'.ljust(ljust)+'4:18',
-								'Stephen - Crossfire'.ljust(ljust)+'4:31',
-							]
 					ajust_pos_y += 1
+					
 					# Dibuja en pantalla cada uno de los textos, con un recuadro ajustado a la linea de texto.
-					for i, comb in enumerate(combinaciones):
+					for i, comb in enumerate(Helps.Musica(45).canciones):
 						if i == 1: ajust_pos_y += 1
 							
 						ajust_pos_y += 1
@@ -2182,19 +2056,20 @@ def main():
 					contenido = [recuadro[0]+5, recuadro[1]]
 					rect_opaco(screen, recuadro, COLOR['VN'])
 					pygame.draw.rect(screen, VERDE, recuadro, 1)
-					dibujarTexto('Tiempo Transcurrido: '+normalizeTime(segundos*1000), contenido, FUENTES['Inc-R 18'], VERDE_C)
+					dibujarTexto('Tiempo Transcurrido: '+Helps.Fun.normalizeTime(segundos*1000), contenido, FUENTES['Inc-R 18'], VERDE_C)
 					#======================================================================================================================
 					
 					#======================================================================================================================
 					# Mitad Derecha.
 					#======================================================================================================================
 					
-					thr_pos = 0
-					if threads[thr_pos] == None: invoke(thr_pos, 1)
-					if not threads[thr_pos]:
-						threads[thr_pos] = None
+					# ~ thr_pos = 0
+					# ~ if threads.t[thr_pos] == None: threads.invoke(thr_pos, 1)
+					# ~ if not threads.t[thr_pos]:
+						# ~ threads.t[thr_pos] = None
+					if not threads.isActive('Tiempo Activo', 1):
 						Helps.Data.updateMemory()
-						t_act_sys = Helps.getTimeActiveSystem()
+						t_act_sys = Helps.Utilidades.getTimeActiveSystem()
 						
 						# ~ try: Helps.setTopWindow(TITULO+' '+__version__)
 						# ~ except: pass
@@ -2255,28 +2130,8 @@ def main():
 					pygame.draw.rect(screen, COLOR['VN'], recuadro2, 1)
 					dibujarTexto('Combinaciones de Teclas:', [recuadro[0]+20, 40*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
 					
-					# Todas las combinaciones posibles de Teclas:
-					combinaciones = [
-								'Esc: Para Cerrar el Juego.',
-								'F10: Captura de Pantalla.',
-								'F11: Poner/Quitar Pantalla Completa.',
-								'Ctrl + F: Poner/Quitar Pantalla Completa.',
-								'Ctrl + P: Captura de Pantalla.',
-								'Ctrl + J: Poner Canción Anterior.',
-								'Ctrl + K: Pausar/Continuar Canción.',
-								'Ctrl + L: Poner Canción Siguiente.',
-								'Ctrl + M: Poner/Quitar Mute para la Música.',
-								'Ctrl + Felcha Derecha: Adelantar la Canción en 10 Segundos.',
-								'Ctrl + Felcha Izquierda: Retroceder la Canción en 10 Segundos.',
-								'Ctrl + \'+\': Subir Volumen de la Música en 1%. Mantener pulsado para subir el volumen rapidamente.',
-								'Ctrl + \'-\': Bajar Volumen de la Música en 1%. Mantener pulsado para bajar el volumen rapidamente.',
-								'Ctrl + Shift + L: Limpiar Terminal.',
-								'Ctrl + Shift + \'+\': Subir Volumen de la Música en 10%.',
-								'Ctrl + Shift + \'-\': Bajar Volumen de la Música en 10%.',
-							]
-					
 					# Dibuja en pantalla cada uno de los textos, con un recuadro ajustado a la linea de texto.
-					for comb in combinaciones:
+					for comb in Helps.Atajos.atajos:
 						ajust_pos_y += 1
 						if len(comb) > 64:
 							recuadro2 = [recuadro[0]+30, 50+25*ajust_pos_y, RESOLUCION_CMD[s_res][0]-70, 45]
@@ -2482,7 +2337,7 @@ resoluciones = [
 	]
 
 RESOLUCION = []
-size = get_screen_size()
+size = Helps.Utilidades.get_screen_size()
 
 for i, (x, y) in enumerate(resoluciones):
 	if size[0] > x and size[1] > y:
@@ -2530,7 +2385,7 @@ dialogos = [
 	'dialogos/tutorial 02-04.wav'
 ]
 
-if Helps.isWindows():
+if Helps.Utilidades.isWindows():
 	for name in dialogos:
 		if not os.path.exists(name):
 			# Convierte a Wav los Dialogos: Utiliza ffmpeg de 32 bits, funcional en sistemas Windows de 32 (x86) y 64 bits (x64).
@@ -2542,7 +2397,7 @@ DBName = 'odin/dystopia.odin'
 
 # Variables Globales: ==================================================
 
-threads = [None for x in range(5)]
+threads = Helps.Threads()
 
 screen = None				# Objeto Que Crea La Ventana.
 btn_x, btn_y = 40, 40		# Proporciones de los botones.
@@ -2550,7 +2405,6 @@ l_comandos = []
 l_canciones_activas = []
 music_checkbox_down = False
 global_time_init = 0
-temporizer_init = 0
 db_con_thread_finish = False
 song_vol = 5
 song_vol_temp = 0
