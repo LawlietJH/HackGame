@@ -1,4 +1,4 @@
-# Odyssey in Dystopia. v1.2.1
+# Odyssey in Dystopia. v1.2.4
 
 ## Juego emulador de consola de comandos. En Desarrollo, Aún No Jugable.
 
@@ -11,11 +11,9 @@ Atualmente este proyecto se encuentra en fase de Desarrollo, con la implementaci
 
 ### Combinación de Teclas Disponibles:
 
-* __Esc__: Para Cerrar el Juego.
-* __F10__: Captura de Pantalla.
-* __F11__: Poner/Quitar Pantalla Completa.
-* __Ctrl + F__: Poner/Quitar Pantalla Completa.
-* __Ctrl + P__: Captura de Pantalla.
+* __Esc__: Para Cerrar Sesión Actual.
+* __F10 o Ctrl + P__: Hacer Captura de Pantalla.
+* __F11 o Ctrl + F__: Poner/Quitar Pantalla Completa.
 * __Ctrl + J__: Poner Canción Anterior.
 * __Ctrl + K__: Pausar/Continuar Canción.
 * __Ctrl + L__: Poner Canción Siguiente.
