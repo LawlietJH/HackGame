@@ -9,7 +9,7 @@ from datetime import datetime
 #=======================================================================
 
 TITULO  = 'Odyssey in Dystopia'		# Nombre
-__version__ = 'v1.2.4'				# Version
+__version__ = 'v1.2.5'				# Version
 __author__ = 'LawlietJH'			# Desarrollador
 
 #=======================================================================
@@ -128,7 +128,7 @@ class Console:
 		self.system = [
 			['root',    'system',   'dr-x', 'folder', '0'],
 			['root',    'user',     'dr-x', 'folder', '1'],
-			['root',    'boot.ini', '----', self.binary()+self.binary(), '2'],
+			['root',    'boot.ini', '----', self.binary(1024, 2048), '2'],
 			['system',  'config',   'dr-x', 'folder', '01'],
 			['system',  'logs',     'drwx', 'folder', '00'],
 			['user',     username,  'dr-x', 'folder', '10'],
@@ -141,10 +141,12 @@ class Console:
 			'help',			# Pedir la ayuda de comandos.
 			'save',			# Guarda la Partida.
 			'cls',			# Limpiar Pantalla.
+			'clear',		# Limpiar Pantalla.
 			'exit',			# Salir de Consola, cerrar el Juego.
+			'logout',		# Salir de Consola, cerrar el Juego.
 			'cd',			# Permite cambiar de directorio.
-			'dir',			# Lista los Archivos y Carpetas.
 			'ls',			# Lista los Archivos y Carpetas.
+			'dir',			# Lista los Archivos y Carpetas.
 			'cat',			# Leer Archivo como texto plano.
 			'type',			# Leer Archivo como texto plano.
 			'chmod',		# Cambiar los permisos.
@@ -366,28 +368,37 @@ class Console:
 			
 			elif lcommand == 2:
 				command = command[1]
-				if command == 'chmod':  self.response = [Helps.Content.chmod+Helps.Content.permisos]
+				if   command == 'cd': self.response = [Helps.Content.cd]
 				elif command == 'save': self.response = [Helps.Content.save]
-				elif command == 'cls':  self.response = [Helps.Content.cls]
-				elif command == 'exit': self.response = [Helps.Content.exit_]
+				elif command == 'chmod': self.response = [Helps.Content.chmod+Helps.Content.permisos]
+				elif command in ['ls', 'dir']: self.response = [Helps.Content.ls]
+				elif command in ['cat', 'type']: self.response = [Helps.Content.cat]
+				elif command in ['cls', 'clear']: self.response = [Helps.Content.cls]
+				elif command in ['exit', 'logout']: self.response = [Helps.Content.exit_]
+				else: self.response = None
+			
+			else: self.response = None
 		
 		elif cnd == 'save':
 			if lcommand == 1:
 				self.response = ['', 'Partida Guardada: '+str(datetime.now())[:-7], '']
 			else:
-				self.response = ['', 'No es un comando valido','',0]
+				# ~ self.response = ['', 'No es un comando valido','',0]
+				self.response = None
 		
-		elif cnd == 'cls':
+		elif cnd == 'cls' or cnd == 'clear':
 			if lcommand == 1:
 				self.response = []
 			else:
-				self.response = ['', 'No es un comando valido','',0]
+				# ~ self.response = ['', 'No es un comando valido','',0]
+				self.response = None
 		
-		elif cnd == 'exit':
+		elif cnd == 'exit' or cnd == 'logout':
 			if lcommand == 1:
 				self.response = ['','Cerrando...','']
 			else:
-				self.response = ['', 'No es un comando valido','',0]
+				# ~ self.response = ['', 'No es un comando valido','',0]
+				self.response = None
 		
 		elif cnd == 'mkdir':
 			if lcommand == 1:
@@ -553,7 +564,7 @@ class Console:
 				commandMatch(command, c_path)
 				
 			elif lcommand > 2:
-				# ~ temp = ''
+				
 				command = command[1:]
 				command = ' '.join(command)
 				
@@ -567,9 +578,9 @@ class Console:
 				self.response = None
 				return self.response
 			
-			if '/' in command:				# Pendiente <---- Leer archivo en carpetas de otra ubicacion.
-				self.response = None
-				return self.response
+			# ~ if '/' in command:				# Pendiente <---- Leer archivo en carpetas de otra ubicacion.
+				# ~ self.response = None
+				# ~ return self.response
 		
 		elif cnd == 'chmod':
 			

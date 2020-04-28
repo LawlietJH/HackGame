@@ -12,13 +12,15 @@ import os
 
 #=======================================================================
 
-TITULO  = 'Odyssey in Dystopia'		# Nombre
-__version__ = 'v1.2.4'				# Version
-__author__ = 'LawlietJH'			# Desarrollador
+TITULO      = 'Odyssey in Dystopia'	# Nombre
+__version__ = 'v1.2.5'				# Version
+__author__  = 'LawlietJH'			# Desarrollador
 
 #=======================================================================
 #=======================================================================
 #=======================================================================
+
+
 
 class Database:
 	
@@ -129,7 +131,7 @@ class Database:
 		where = 'WHERE {}'.format(where) if where else ''
 		
 		query = '{} {} {};'.format(base, setr, where)
-		print(query)
+		# ~ print(query)
 		self.con.execute(query)
 		
 		if verb > 0: print('\n Table \'{}\' updated successfully.'.format(table))
@@ -237,7 +239,8 @@ class Database:
 		
 		lc_pos = elems.index('l_comandos')
 		
-		lis[lc_pos] = lis[lc_pos].replace('"',"___").replace("'","__")
+		# ~ lis[lc_pos] = lis[lc_pos].replace('"',"___").replace("'","__")
+		lis[lc_pos] = Helps.encode_bz2(lis[lc_pos])			# Comprime el texto con el Cifrado BZ2 y luego lo convierte a Hexadecimal.
 		
 		setr = [
 			(elems[0], lis[0]),
@@ -356,7 +359,7 @@ class Database:
 					'l_canciones_activas', 'l_comandos',
 					'l_com_ps', 'con_tam_buffer', 'cant_scroll'],
 				[	# Datos a cargar
-					[ idUser, 20, 0, '[]', '[]', 0, 150, 3 ]
+					[ idUser, 20, 0, '[]', Helps.encode_bz2('[]'), 0, 150, 3 ]
 				]
 			]
 		]
@@ -465,6 +468,10 @@ class Database:
 
 
 
+#=======================================================================
+#=======================================================================
+#=======================================================================
+
 def initDB(DBName, con):
 	
 	#===============================
@@ -501,15 +508,7 @@ def initDB(DBName, con):
 		db = Database(DBName)
 		user = db.getData('User')
 		
-		if not user:
-			con = db.createUser(con, verb)
-			# ~ db.cur.close()
-			# ~ db = None
-			# ~ try:
-				# ~ os.remove(DBName)
-				# ~ raise TypeError('\nDatos Corruptos: '+DBName+'. Eliminado.')
-			# ~ except:
-				# ~ raise TypeError('\nDatos Corruptos: '+DBName)
+		if not user: con = db.createUser(con, verb)
 	
 	if db:
 		
@@ -536,9 +535,10 @@ def initDB(DBName, con):
 			
 			# Actualizar los Datos de Consola desde la DB.
 			temp = [*db.getData('UserConfig', where='idUser='+str(idUser), c=1)[2:]]
-			print(temp)
+			# ~ print(temp)
 			exec('temp[2] = '+temp[2])
-			exec('temp[3] = '+temp[3].replace('___','"').replace('__',"'"))
+			# ~ exec('temp[3] = '+temp[3].replace('___','"').replace('__',"'"))
+			exec('temp[3] = '+Helps.decode_bz2(temp[3]))
 			con.temporal = temp
 			# ~ print(con.temporal)
 		else:
@@ -547,6 +547,8 @@ def initDB(DBName, con):
 	db.con.close()
 	
 	return con
+
+
 
 # ~ from helps import Helps
 # ~ from consola import Console

@@ -6,6 +6,7 @@ otros/
 odin/*.odin
 musica/*.py
 musica/Mega Drive
+dialogos/*.wav
 images/otras/
 fuentes/otras/
 capturas/otras/

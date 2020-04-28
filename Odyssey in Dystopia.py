@@ -23,9 +23,9 @@ from win32con import VK_CAPITAL		# python -m pip install pywin32
 
 #=======================================================================
 
-TITULO  = 'Odyssey in Dystopia'		# Nombre
-__version__ = 'v1.2.4'				# Version
-__author__ = 'LawlietJH'			# Desarrollador
+TITULO      = 'Odyssey in Dystopia'	# Nombre
+__version__ = 'v1.2.5'				# Version
+__author__  = 'LawlietJH'			# Desarrollador
 
 #=======================================================================
 #=======================================================================
@@ -40,7 +40,7 @@ def setFontSize(tam):
 
 #===================================================================================================
 
-def dibujarTexto(texto, posicion, fuente, color):		# Dibuja Texto En Pantalla.
+def dibujarTexto(texto, posicion, fuente, color): # Dibuja Texto En Pantalla.
 	
 	Texto = fuente.render(texto, 1, color)		# Se Pasa El Texto Con La Fuente Especificada.
 	screen.blit(Texto, posicion)				# Se Dibuja En Pantalla El Texto en la Posición Indicada.
@@ -59,8 +59,7 @@ def dibujarTextoTemporal(c_ticks, msn, ticks, ret=True):
 		else: return c_ticks	# Resetea el contador de ticks.
 	return c_ticks
 
-def rect_opaco(screen, surface, color=(0,0,0), alpha=128):		# Rectangulo Opaco, sirve para crear rectangulos transparentes.
-	
+def rect_opaco(screen, surface, color=(0,0,0), alpha=128): # Rectangulo Opaco, sirve para crear rectangulos transparentes.
 	img = pygame.Surface(surface[2:])
 	img.set_alpha(alpha)
 	img.fill(color)
@@ -70,11 +69,17 @@ def rect_opaco(screen, surface, color=(0,0,0), alpha=128):		# Rectangulo Opaco, 
 # Hilos
 
 def saveThread():
+	temp = [
+		str(song_vol),   str(song_pos), str(sorted(l_canciones_activas)),
+		str(l_comandos), str(l_com_ps), str(con_tam_buffer),
+		str(cant_scroll)
+	]
 	db_temp = Database(DBName)
-	db_temp.updateUserFilesAll(console)
-	db_temp.orderUserFiles()				# Ordena todos los datos en la Tabla UserFiles en la Base de Datos.
-	db_temp.con.commit()
-	db_temp.con.close()
+	db_temp.updateUserConfig(console.username, temp)					# Actualiza la configuracion del Usuario.
+	db_temp.updateUserFilesAll(console)									# Actualiza los datos sobre los archivos del usuario.
+	db_temp.orderUserFiles()											# Ordena todos los datos en la Tabla UserFiles en la Base de Datos.
+	db_temp.con.commit()												# Guarda los cambios.
+	db_temp.con.close()													# Cierra la Base de Datos.
 	if debug: print('Session Saved at: '+str(datetime.now())[:-7])
 
 def dbConnectionThread():
@@ -149,7 +154,7 @@ def u_puntero(con, l_con, cant, p_pos):	# Actualizar puntero. U = Update.
 	
 	return puntero
 
-def clic_boton(screen, pos, rec=0):	# Detecta un Clic en las coordenadas de un boton, contando la posicion de botones derecha a izquierda.
+def clic_boton(pos, rec=0):	# Detecta un Clic en las coordenadas de un boton, contando la posicion de botones derecha a izquierda.
 	
 	x_pos = RESOLUCION[s_res][0]-btn_x-15*((rec%10)+1)-btn_x*(rec%10)
 	y_pos = 5 + (52 if rec >= 10 else 0)
@@ -161,54 +166,66 @@ def clic_boton(screen, pos, rec=0):	# Detecta un Clic en las coordenadas de un b
 	
 	return False
 
-def clic_music_checkbox(evento, x_pos, y_pos, pos):
+# ~ def clic_music_checkbox2(x_pos, y_pos, pos):
 	
-	global music_checkbox_down
+	# ~ x_pos = RESOLUCION[s_res][0]-btn_x-15*((rec%10)+1)-btn_x*(rec%10)
+	# ~ y_pos = 5 + (52 if rec >= 10 else 0)
+	# ~ x, y  = pos
 	
-	x_pos -= 20
-	tam_x, tam_y = 15, 20
+	# ~ if x > x_pos and x < x_pos + btn_x + 10:
+		# ~ if y > y_pos and y < btn_y + y_pos + 10:
+			# ~ return True
 	
-	if pos in l_canciones_activas:
+	# ~ return False
+
+# ~ def clic_music_checkbox(evento, x_pos, y_pos, pos):
+	
+	# ~ global music_checkbox_down
+	
+	# ~ x_pos -= 20
+	# ~ tam_x, tam_y = 15, 20
+	
+	# ~ if pos in l_canciones_activas:
 		
-		rect_opaco(screen, [x_pos+3, y_pos+3, tam_x-6, tam_y-6], COLOR['Verde'], 200)
+		# ~ rect_opaco(screen, [x_pos+3, y_pos+3, tam_x-6, tam_y-6], VERDE, 200)
 		
-	if evento.type == pygame.MOUSEMOTION:
+	# ~ if evento.type == pygame.MOUSEMOTION:
 		
-		x, y = evento.pos
+		# ~ x, y = evento.pos
 		
-		if  (x >= x_pos and x <= x_pos+tam_x) \
-		and (y >= y_pos and y <= y_pos+tam_y):
+		# ~ if  (x >= x_pos and x <= x_pos+tam_x) \
+		# ~ and (y >= y_pos and y <= y_pos+tam_y):
 			
-			rect_opaco(screen, [x_pos, y_pos, tam_x, tam_y], COLOR['Verde'])
+			# ~ rect_opaco(screen, [x_pos, y_pos, tam_x, tam_y], VERDE)
 	
-	elif evento.type == pygame.MOUSEBUTTONDOWN:
+	# ~ elif evento.type == pygame.MOUSEBUTTONDOWN:
 		
-		if evento.button == 1 and music_checkbox_down == False:
+		# ~ if evento.button == 1 and music_checkbox_down == False:
 			
-			x, y = evento.pos
+			# ~ x, y = evento.pos
 			
-			if  (x >= x_pos and x <= x_pos+tam_x) \
-			and (y >= y_pos and y <= y_pos+tam_y):
+			# ~ if  (x >= x_pos and x <= x_pos+tam_x) \
+			# ~ and (y >= y_pos and y <= y_pos+tam_y):
 				
-				music_checkbox_down = True
+				# ~ music_checkbox_down = True
 			
-	elif evento.type == pygame.MOUSEBUTTONUP and music_checkbox_down:
+	# ~ elif evento.type == pygame.MOUSEBUTTONUP and music_checkbox_down:
 		
-		if evento.button == 1:
+		# ~ if evento.button == 1:
 			
-			x, y = evento.pos
+			# ~ x, y = evento.pos
 			
-			if  (x >= x_pos and x <= x_pos+tam_x) \
-			and (y >= y_pos and y <= y_pos+tam_y):
+			# ~ if  (x >= x_pos and x <= x_pos+tam_x) \
+			# ~ and (y >= y_pos and y <= y_pos+tam_y):
 				
-				if pos in l_canciones_activas:
-					l_canciones_activas.pop(l_canciones_activas.index(pos))
-				else:
-					l_canciones_activas.append(pos)
+				# ~ if pos in l_canciones_activas:
+					# ~ l_canciones_activas.pop(l_canciones_activas.index(pos))
+				# ~ else:
+					# ~ l_canciones_activas.append(pos)
 					
-				music_checkbox_down = False
+				# ~ music_checkbox_down = False
 				
-	pygame.draw.rect(screen, COLOR['Verde'], [x_pos, y_pos, tam_x, tam_y], 1)
+	# ~ pygame.draw.rect(screen, VERDE, [x_pos, y_pos, tam_x, tam_y], 1)
 
 def splitText(text):
 	
@@ -305,28 +322,28 @@ def main():
 	BGimg_Login = Helps.Fun.load_image('images/login_background.bmp')						# Carga el Fondo de la Ventana.
 	BGimg_Login = pygame.transform.scale(BGimg_Login, RESOLUCION[s_res])		# Cambia la resolucion de la imagen.
 	
-	Icono  = pygame.image.load('images/Icon.png')			# Carga el icono del Juego.
+	Icono  = pygame.image.load('images/Icon.png')						# Carga el icono del Juego.
 	
-	btn_delete    = Helps.Boton('images/iconos/delete.bmp')	# Boton de Ojo Mostrar u Ocultar Password.
-	btn_show_pass = Helps.Boton('images/iconos/show_pass.bmp')	# Boton de Ojo Mostrar u Ocultar Password.
-	btn_ajustes   = Helps.Boton('images/iconos/Ajustes.bmp')		# Boton de Ajustes.
-	btn_apagar    = Helps.Boton('images/iconos/Apagar.bmp')		# Boton de Apagar.
-	btn_atajos    = Helps.Boton('images/iconos/Atajos.bmp')		# Boton de Atajos.
-	btn_avances   = Helps.Boton('images/iconos/Avances.bmp')		# Boton de Avances.
-	btn_bateria   = Helps.Boton('images/iconos/Bateria.bmp')		# Boton de Bateria.
-	btn_cerebro   = Helps.Boton('images/iconos/Cerebro.bmp')		# Boton de Cerebro.
-	btn_chip      = Helps.Boton('images/iconos/Chip.bmp')			# Boton de Chip.
-	btn_conexion  = Helps.Boton('images/iconos/Conexion.bmp')		# Boton de Conexion.
-	btn_consola   = Helps.Boton('images/iconos/Consola.bmp')		# Boton de Consola.
-	btn_dystopia  = Helps.Boton('images/iconos/Dystopia.bmp')		# Boton de Dystopia.
-	btn_laberinto = Helps.Boton('images/iconos/Laberinto.bmp')	# Boton de Laberinto.
-	btn_mail      = Helps.Boton('images/iconos/Mail.bmp')			# Boton de Mail.
-	btn_usb       = Helps.Boton('images/iconos/USB.bmp')			# Boton de USB.
-	btn_virus     = Helps.Boton('images/iconos/Virus.bmp')		# Boton de Virus.
+	btn_delete    = Helps.Boton('images/iconos/delete.bmp')				# Boton de Ojo Mostrar u Ocultar Password.
+	btn_show_pass = Helps.Boton('images/iconos/show_pass.bmp')			# Boton de Ojo Mostrar u Ocultar Password.
+	btn_ajustes   = Helps.Boton('images/iconos/Ajustes.bmp')			# Boton de Ajustes.
+	btn_apagar    = Helps.Boton('images/iconos/Apagar.bmp')				# Boton de Apagar.
+	btn_atajos    = Helps.Boton('images/iconos/Atajos.bmp')				# Boton de Atajos.
+	btn_avances   = Helps.Boton('images/iconos/Avances.bmp')			# Boton de Avances.
+	btn_bateria   = Helps.Boton('images/iconos/Bateria.bmp')			# Boton de Bateria.
+	btn_cerebro   = Helps.Boton('images/iconos/Cerebro.bmp')			# Boton de Cerebro.
+	btn_chip      = Helps.Boton('images/iconos/Chip.bmp')				# Boton de Chip.
+	btn_conexion  = Helps.Boton('images/iconos/Conexion.bmp')			# Boton de Conexion.
+	btn_consola   = Helps.Boton('images/iconos/Consola.bmp')			# Boton de Consola.
+	btn_dystopia  = Helps.Boton('images/iconos/Dystopia.bmp')			# Boton de Dystopia.
+	btn_laberinto = Helps.Boton('images/iconos/Laberinto.bmp')			# Boton de Laberinto.
+	btn_mail      = Helps.Boton('images/iconos/Mail.bmp')				# Boton de Mail.
+	btn_usb       = Helps.Boton('images/iconos/USB.bmp')				# Boton de USB.
+	btn_virus     = Helps.Boton('images/iconos/Virus.bmp')				# Boton de Virus.
 	
-	l_icons = [													# Lista actual de iconos a imprimir.
+	l_icons = l_icons_orig = [											# Lista actual de iconos a imprimir.
+			btn_apagar,
 			btn_ajustes,
-			# ~ btn_apagar,
 			# ~ btn_avances,
 			btn_atajos,
 			# ~ btn_bateria,
@@ -341,41 +358,26 @@ def main():
 			# ~ btn_virus
 		]
 	
-	pygame.display.set_icon(Icono)								# Agrega el icono a la ventana.
-	pygame.display.set_caption(TITULO+' '+__version__)			# Titulo de la Ventana del Juego.
+	pygame.display.set_icon(Icono)										# Agrega el icono a la ventana.
+	pygame.display.set_caption(TITULO+' '+__version__)					# Titulo de la Ventana del Juego.
 	
-	pygame.init()												# Inicia El Juego.
-	pygame.mixer.init()											# Inicializa el Mesclador.
-	
-	playlist = [
-		('musica/Mega Drive - Converter.mp3',                     0, {'By':'Mega Drive', 'Song':'Converter',                     'Album':'Mega Drive',       'Duration':'00:06:30', 'Released':'2013/11/18', 'Sountrack':'2',  'Type':'MP3 192kbps'}),
-		('musica/Mega Drive - Source Code.mp3',                   1, {'By':'Mega Drive', 'Song':'Source Code',                   'Album':'199XAD',           'Duration':'00:04:53', 'Released':'2019/10/04', 'Sountrack':'11', 'Type':'MP3 192kbps'}),
-		('musica/Mega Drive - Seas Of Infinity.mp3',              2, {'By':'Mega Drive', 'Song':'Seas Of Infinity',              'Album':'Seas Of Infinity', 'Duration':'00:02:08', 'Released':'2017/05/18', 'Sountrack':'1',  'Type':'MP3 192kbps'}),
-		('musica/Dynatron - Pulse Power.mp3',                     3, {'By':'Dynatron',   'Song':'Pulse Power',                   'Album':'Escape Velocity',  'Duration':'00:06:00', 'Released':'2012/11/22', 'Sountrack':'8',  'Type':'MP3 192kbps'}),
-		('musica/Dynatron - Vox Magnetismi.mp3',                  4, {'By':'Dynatron',   'Song':'Vox Magnetismi',                'Album':'Escape Velocity',  'Duration':'00:03:46', 'Released':'2012/11/22', 'Sountrack':'5',  'Type':'MP3 192kbps'}),
-		('musica/Varien - Born of Blood, Risen From Ash.mp3',     5, {'By':'Varien',     'Song':'Born of Blood, Risen From Ash', 'Album':'',                 'Duration':'00:04:06', 'Released':'2019/04/05', 'Sountrack':'',   'Type':'MP3 192kbps'}),
-		('musica/Varien - Blood Hunter.mp3',                      6, {'By':'Varien',     'Song':'Blood Hunter',                  'Album':'',                 'Duration':'00:03:47', 'Released':'2018/02/10', 'Sountrack':'',   'Type':'MP3 192kbps'}),
-		('musica/Varien - Of Foxes and Hounds.mp3',               7, {'By':'Varien',     'Song':'Of Foxes and Hounds',           'Album':'',                 'Duration':'00:05:04', 'Released':'2018/04/02', 'Sountrack':'',   'Type':'MP3 192kbps'}),
-		('musica/Kroww - Hysteria.mp3',                           8, {'By':'Kroww',      'Song':'Hysteria',                      'Album':'',                 'Duration':'00:05:14', 'Released':'2019/09/24', 'Sountrack':'',   'Type':'MP3 192kbps'}),
-		('musica/Scandroid - Thriller (Fury Weekend Remix).mp3',  9, {'By':'Scandroid',  'Song':'Thriller',                      'Album':'',                 'Duration':'00:04:52', 'Released':'2018/10/15', 'Sountrack':'',   'Type':'MP3 128kbps'}),
-		('musica/Neovaii - Easily.mp3',                          10, {'By':'Neovaii',    'Song':'Easily',                        'Album':'',                 'Duration':'00:04:18', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
-		('musica/Stephen - Crossfire.mp3',                       11, {'By':'Stephen',    'Song':'Crossfire',                     'Album':'',                 'Duration':'00:04:31', 'Released':'//',         'Sountrack':'',   'Type':'MP3 128kbps'}),
-	]
+	pygame.init()														# Inicia El Juego.
+	pygame.mixer.init()													# Inicializa el Mesclador.
 	
 	if debug: l_canciones_activas = []
 	# ~ else: l_canciones_activas = [i for i in range(len(playlist))]
 	
-	music = pygame.mixer.music									# Indicamos quien será la variable para Manipular el Soundtrack.
+	music = pygame.mixer.music											# Indicamos quien será la variable para Manipular el Soundtrack.
 	# ~ song_pos = 0
 	# ~ song_actual = None
-	# ~ song_pos = random.randint(0, len(playlist)-1)				# Genera un numero random entre 0 y la longitud de la lista de canciones menos 1.
-	# ~ song_actual = playlist[song_pos][0]							# Selecciona la cancion en la posicion song_pos.
-	# ~ music.load(song_actual)										# Carga el Soundtrack
+	# ~ song_pos = random.randint(0, len(playlist)-1)					# Genera un numero random entre 0 y la longitud de la lista de canciones menos 1.
+	# ~ song_actual = playlist[song_pos][0]								# Selecciona la cancion en la posicion song_pos.
+	# ~ music.load(song_actual)											# Carga el Soundtrack
 	
 	# ~ music.set_endevent(pygame.USEREVENT)
-	# ~ music.stop()							# Detiene la cancion.
-	# ~ music.rewind()							# Reinicia la cancion desde el segundo 0.
-	# ~ music.set_pos(60.0)						# Inicia en el segundo 60 de la cancion.
+	# ~ music.stop()													# Detiene la cancion.
+	# ~ music.rewind()													# Reinicia la cancion desde el segundo 0.
+	# ~ music.set_pos(60.0)												# Inicia en el segundo 60 de la cancion.
 	
 	FUENTES = {
 		   'Inc-R 18':pygame.font.Font("fuentes/Inconsolata-Regular.ttf", 18),
@@ -386,11 +388,6 @@ def main():
 		   'Wendy 18':pygame.font.Font("fuentes/Wendy.ttf", 18)
 		  }
 	
-	VERDE   = COLOR['Verde']
-	VERDE_C = COLOR['Verde Claro']
-	AZUL    = COLOR['Azul']
-	AZUL_C  = COLOR['Azul Claro']
-	
 	# Variables ========================================================
 	
 	game_over = False				# Variable Que Permite indicar si se termino el juego o no.
@@ -398,8 +395,9 @@ def main():
 	
 	segundos   = 0			# Contador de Tiempo, 1 seg por cada 60 Ticks.
 	ticks      = 0			# Contador de Ticks.
-	Comando    = ''			# Comando en linea actual.
 	p_pos      = 0			# Posicion del Puntero, para manipular en que posicion estara en la cadena 'Comando'. p_pos = 5 significaria entonces que estara el puntero en el caracter 5.
+	Comando    = ''			# Comando en linea actual.
+	transicion = False		# Variables de Transiciones
 	t_act_sys  = Helps.Utilidades.getTimeActiveSystem() # Tiempo Activo del Sistema
 	
 	# Dimensiones de Consola:
@@ -461,7 +459,7 @@ def main():
 	#===================================================================
 	# Variables de la Musica:
 	
-	# ~ song_vol           = 0					# Volumen al 0%
+	song_vol           = 0					# Volumen al 0%
 	# ~ song_pos           = 0
 	song_vol_pres_min  = False
 	song_vol_pres_plus = False
@@ -531,34 +529,6 @@ def main():
 	# Inicio Del Juego:
 	while game_over is False:
 		
-		# Validaciones de la Musica:
-		#===============================================================
-		if ticks % 60 == 0 and not introduction:
-			song_time = Helps.Fun.normalizeTime(music.get_pos(), song_desface)
-			if l_canciones_activas:				# Si hay canciones activas, entonces...
-				if not music.get_busy():		# Si no esta activa la cancion, entonces...
-						song_pos = (song_pos+1) % len(playlist)				# Cambia la cancion
-						while not song_pos in l_canciones_activas:			# Si el numero de cancion no esta en la lista de canciones activas,
-							song_pos = (song_pos+1) % len(playlist)			# Sigue cambiando a la siguiente.
-						music.load(playlist[song_pos][0])					# Carga la cancion
-						music.play()										# Reproduce la cancion.
-						song_desface = 0									# Reinicia la variable de desface que controla el avance de tiempo con CTRL+Felcha Derecha o Izquierda.
-						song_break = 0										# Reinicia la variable de espera de 3 segundos
-				else:
-					# Esta seccion verifica si la canción actual aun sigue en la lista de canciones activas. Sino, tratará de cambiarla inmediatamente.
-					temp = song_pos
-					while not temp in l_canciones_activas:
-						temp = (temp+1) % len(playlist)
-					if not temp == song_pos:
-						song_pos = temp
-						music.stop()
-						music.load(playlist[song_pos][0])
-						music.play()
-						song_desface = 0
-			else:
-				music.stop()
-		#===============================================================
-		
 		ticks += 1
 		
 		# Chequeo Constante de Eventos del Teclado:
@@ -574,7 +544,7 @@ def main():
 				dialogo.play()
 				dialogo.set_volume(.5)
 				
-				music.load(playlist[2][0])
+				music.load(Helps.Playlist.musica[10][0])
 				music.set_volume(.2)
 				music.play()
 				
@@ -591,15 +561,17 @@ def main():
 				elif t == '_':
 					intro_text_pos_x -= 1
 					continue
-				dibujarTexto(t, [50+(8*intro_text_pos_x), 50+(intro_text_pos_y*30)], FUENTES['Inc-R 16'], COLOR['Verde Claro'])	# Dibuja texto en Pantalla.
+				dibujarTexto(t, [50+(8*intro_text_pos_x), 50+(intro_text_pos_y*30)], FUENTES['Inc-R 16'], VERDE_C)	# Dibuja texto en Pantalla.
 			
 			# ~ if temporizer(time):
 			if intro_text_pos >= len(intro_text):
 				music.fadeout(3000)					# 3 segundos
 				intro_pause = True
 			
+			# Transicion Cierre de Introduccion
 			if intro_pause:
 				dialogo.fadeout(3000)
+				transicion = True
 				temp_secs = 3
 				calc = (255/(temp_secs*60))
 				rect_opaco(screen, [0, 0, *RESOLUCION[s_res]], COLOR['Negro'], int(intro_ticks_count*calc))
@@ -609,6 +581,7 @@ def main():
 					intro_ticks_count = 0
 					vista_actual = l_vistas['Login']
 					intro_pause = False
+					transicion = False
 			
 			intro_text_pos_x = 0
 			intro_text_pos_y = 0
@@ -620,16 +593,17 @@ def main():
 		else:
 			
 			for evento in events:
-				
+				if transicion: break
 				# ~ print(evento)
 				
-				if evento.type == pygame.QUIT: game_over = True		# Si Se Presiona El Botón Cerrar, Cerrara El Juego.
+				if evento.type == pygame.QUIT: game_over = True			# Si Se Presiona El Botón Cerrar, Cerrara El Juego.
 				
-				elif evento.type == pygame.MOUSEBUTTONDOWN:			# Manipulación del Mouse.
+				elif evento.type == pygame.MOUSEBUTTONDOWN:				# Manipulación del Mouse.
 					
 					# evento.button:
-					# Clic  Izq = 1 - Clic  Cen = 2 - Clic Der = 3
-					# Rueda Arr = 4 - Rueda Aba = 5
+					# Clic Izq = 1 - Rueda Arr = 4
+					# Clic Cen = 2 - Rueda Aba = 5
+					# Clic Der = 3
 					
 					# ~ print(evento.pos)
 					if evento.button == 1:
@@ -675,13 +649,14 @@ def main():
 							]
 							
 							if not (login_new or del_user_ac):
+								
 								if Helps.Fun.match_x_y(x, y, tb_user):
 									if   login_pos == 1: username = Comando
 									elif login_pos == 2: password = Comando
 									Comando = username
 									p_pos = len(Comando)
 									login_pos = 1
-										
+								
 								elif Helps.Fun.match_x_y(x, y, tb_pass):
 									if   login_pos == 1: username = Comando
 									elif login_pos == 2: password = Comando
@@ -757,17 +732,21 @@ def main():
 							
 						elif vista_actual == l_vistas['Consola']:
 							
-							if clic_boton(screen, evento.pos, 0):
+							if clic_boton(evento.pos, 0): logout = True
+							
+							elif clic_boton(evento.pos, 1):
 								vista_actual = l_vistas['Ajustes']	# Detecta si se presiono el primer boton.
 								l_icons = [
+									btn_apagar,
 									btn_consola,
 									# ~ btn_ajustes,
 									btn_atajos,
 								]
 							
-							elif clic_boton(screen, evento.pos, 1):
+							elif clic_boton(evento.pos, 2):
 								vista_actual = l_vistas['Atajos']	# Detecta si se presiono el primer boton.
 								l_icons = [
+									btn_apagar,
 									btn_consola,
 									btn_ajustes,
 									# ~ btn_atajos,
@@ -775,17 +754,21 @@ def main():
 							
 						elif vista_actual == l_vistas['Ajustes']:
 							
-							if clic_boton(screen, evento.pos, 0):
+							if clic_boton(evento.pos, 0): logout = True
+							
+							elif clic_boton(evento.pos, 1):
 								vista_actual = l_vistas['Consola']	# Detecta si se presiono el primer boton.
 								l_icons = [
+									btn_apagar,
 									# ~ btn_consola,
 									btn_ajustes,
 									btn_atajos,
 								]
 							
-							elif clic_boton(screen, evento.pos, 1):
+							elif clic_boton(evento.pos, 2):
 								vista_actual = l_vistas['Atajos']	# Detecta si se presiono el primer boton.
 								l_icons = [
+									btn_apagar,
 									btn_consola,
 									btn_ajustes,
 									# ~ btn_atajos,
@@ -833,19 +816,44 @@ def main():
 								
 							else: c_res = False
 							
+							pos_y = 1
+							# ~ recuadro = [ajust_init_x, ajust_init_y*ajust_pos_y, 540, RESOLUCION_CMD[s_res][1]-180]
+							for i, comb in enumerate(Helps.Musica(54).canciones):
+								
+								rect1 = [ajust_init_x+10, 200+25*pos_y,  15, 20]
+								rect2 = [ajust_init_x+30, 200+25*pos_y, 500, 20]
+								
+								if Helps.Fun.match_x_y(x, y, rect1):
+									if i in l_canciones_activas: l_canciones_activas.pop(l_canciones_activas.index(i))
+									else: l_canciones_activas.append(i)
+								if Helps.Fun.match_x_y(x, y, rect2):
+									if not i in l_canciones_activas: l_canciones_activas.append(i)
+									if not song_pos == pos_y-1:
+										song_pos = pos_y-1
+										music.load(Helps.Playlist.musica[song_pos][0])		# Carga la cancion
+										music.play()										# Reproduce la cancion.
+										song_desface = 0									# Reinicia la variable de desface que controla el avance de tiempo con CTRL+Felcha Derecha o Izquierda.
+										song_break = 0										# Reinicia la variable de espera de 3 segundos
+									
+								pos_y += 1
+								
 						elif vista_actual == l_vistas['Atajos']:
 							
-							if clic_boton(screen, evento.pos, 0):
+							if clic_boton(evento.pos, 0): logout = True
+							
+							elif clic_boton(evento.pos, 1):
 								vista_actual = l_vistas['Consola']	# Detecta si se presiono el primer boton.
 								l_icons = [
+									btn_apagar,
 									# ~ btn_consola,
 									btn_ajustes,
 									btn_atajos,
 								]
 							
-							elif clic_boton(screen, evento.pos, 1):
+							elif clic_boton(evento.pos, 2):
 								vista_actual = l_vistas['Ajustes']	# Detecta si se presiono el primer boton.
 								l_icons = [
+									btn_apagar,
 									btn_consola,
 									# ~ btn_ajustes,
 									btn_atajos,
@@ -869,7 +877,7 @@ def main():
 				
 				#=================================================================================
 				
-				elif evento.type == pygame.KEYDOWN:		# Manipulación del Teclado.
+				elif evento.type == pygame.KEYDOWN:						# Manipulación del Teclado.
 					
 					# Al presionar cualquier tecla.
 					k_down = True
@@ -1194,9 +1202,9 @@ def main():
 					elif evento.key == pygame.K_j and evento.mod == 64:			# mod = 64 = Ctrl
 						if l_canciones_activas:
 							
-							song_pos = (song_pos-1) % len(playlist)
+							song_pos = (song_pos-1) % len(Helps.Playlist.musica)
 							while not song_pos in l_canciones_activas:
-								song_pos = (song_pos-1) % len(playlist)
+								song_pos = (song_pos-1) % len(Helps.Playlist.musica)
 							
 							music.fadeout(song_fade_secs*1000)
 							song_change_down = True
@@ -1207,9 +1215,9 @@ def main():
 					# Ctrl + 'L': Cancion Siguiente
 					elif evento.key == pygame.K_l and evento.mod == 64:			# mod = 64 = Ctrl
 						if l_canciones_activas:
-							song_pos = (song_pos+1) % len(playlist)
+							song_pos = (song_pos+1) % len(Helps.Playlist.musica)
 							while not song_pos in l_canciones_activas:
-								song_pos = (song_pos+1) % len(playlist)
+								song_pos = (song_pos+1) % len(Helps.Playlist.musica)
 							music.fadeout(song_fade_secs*1000)
 							song_change_up = True
 							song_desface = 0
@@ -1227,86 +1235,84 @@ def main():
 						
 					# Ctrl + '-': Volumen - 1%
 					elif evento.key ==  47 and evento.mod == 64:				# mod = 64 = Ctrl
-						if song_vol > 0: song_vol -= 1
-						music.set_volume(song_vol/100)
-						s_song_vol = True
-						s_song_vol_ticks = 0
-						song_vol_pres_min = True
+						if not vista_actual in [l_vistas['Intro'], l_vistas['Login']]:
+							if song_vol > 0: song_vol -= 1
+							music.set_volume(song_vol/100)
+							s_song_vol = True
+							s_song_vol_ticks = 0
+							song_vol_pres_min = True
 						
 					# Ctrl + '+': Volumen + 1%
 					elif evento.key ==  93 and evento.mod == 64:				# mod = 64 = Ctrl
-						if song_vol < 100: song_vol += 1
-						music.set_volume(song_vol/100)
-						s_song_vol = True
-						s_song_vol_ticks = 0
-						song_vol_pres_plus = True
+						if not vista_actual in [l_vistas['Intro'], l_vistas['Login']]:
+							if song_vol < 100: song_vol += 1
+							music.set_volume(song_vol/100)
+							s_song_vol = True
+							s_song_vol_ticks = 0
+							song_vol_pres_plus = True
 							
 					# Ctrl + M: Mute.
 					elif evento.key == 109 and evento.mod == 64:				# mod = 64 = Ctrl
-						song_vol = 0
-						music.set_volume(song_vol/100)
-						s_song_vol = True
-						s_song_vol_ticks = 0
-						song_vol_pres_plus = True
+						if not vista_actual in [l_vistas['Intro'], l_vistas['Login']]:
+							song_vol = 0
+							music.set_volume(song_vol/100)
+							s_song_vol = True
+							s_song_vol_ticks = 0
+							song_vol_pres_plus = True
 						
 					# Ctrl + Flecha Derecha: Avanzar 10 segundos de la Cancion.
-					elif evento.key == 275 and evento.mod == 64:
-						if l_canciones_activas:
-							song_desface += 10
-							temp = music.get_pos()
-							
-							temp += (song_desface*1000)
-							
-							temp2 = playlist[song_pos][2]['Duration']
-							print(temp2)
-							temp2 = Helps.Fun.anormalizeTime(temp2, True)		# Convierte el texto de Duracion a Milisegundos.
-							print(temp2)
-							if temp > temp2: temp = temp2
-							
-							music.stop()
-							music.load(playlist[song_pos][0])
-							song_desface = int(temp/1000)
-							
-							music.play(start=song_desface)
+					elif evento.key == 275 and evento.mod == 64:				# mod = 64 = Ctrl. keys: 273 = Arriba, 274 = Abajo, 275 = Derecha, 276 = Izquierda.
+						if not vista_actual in [l_vistas['Intro'], l_vistas['Login']]:
+							if l_canciones_activas:
+								song_desface += 10
+								temp = music.get_pos()
+								temp += (song_desface*1000)
+								temp2 = Helps.Playlist.musica[song_pos][2]['Duration']
+								temp2 = Helps.Fun.anormalizeTime(temp2, True)		# Convierte el texto de Duracion a Milisegundos.
+								if temp > temp2: temp = temp2
+								music.stop()
+								music.load(Helps.Playlist.musica[song_pos][0])
+								song_desface = int(temp/1000)
+								music.play(start=song_desface)
 						
 					# Ctrl + Flecha Izquierda: Retroceder 10 segundos de la Cancion.
-					elif evento.key == 276 and evento.mod == 64:
-						if l_canciones_activas:
-							song_desface -= 10
-							if song_desface < 0: song_desface = 0
-							
-							temp = music.get_pos()
-							temp += song_desface*1000
-							
-							if temp < 0: temp = 0
-							
-							music.stop()
-							music.load(playlist[song_pos][0])
-							song_desface = int(temp/1000)
-							
-							music.play(start=song_desface)
+					elif evento.key == 276 and evento.mod == 64:				# mod = 64 = Ctrl. keys: 273 = Arriba, 274 = Abajo, 275 = Derecha, 276 = Izquierda.
+						if not vista_actual in [l_vistas['Intro'], l_vistas['Login']]:
+							if l_canciones_activas:
+								song_desface -= 10
+								if song_desface < 0: song_desface = 0
+								temp = music.get_pos()
+								temp += song_desface*1000
+								if temp < 0: temp = 0
+								music.stop()
+								music.load(Helps.Playlist.musica[song_pos][0])
+								song_desface = int(temp/1000)
+								music.play(start=song_desface)
 						
 					# Ctrl + Shift + L: Limpiar Pantalla.
-					elif evento.key == 108 and evento.mod == 65:				# mod = 64 = Ctrl
-						l_comandos = []
+					elif evento.key == 108 and evento.mod == 65:				# mod = 65 = Ctrl + Shift
+						if vista_actual == l_vistas['Consola']:
+							l_comandos = []
 					
 					# Ctrl + Shift + '-': Volumen - 10%
-					elif evento.key ==  47 and evento.mod == 65:				# mod = 64 = Ctrl
-						if song_vol > 0: song_vol -= 10
-						if song_vol < 0: song_vol = 0
-						music.set_volume(song_vol/100)
-						s_song_vol = True
-						s_song_vol_ticks = 0
-						song_vol_pres_min = True
+					elif evento.key ==  47 and evento.mod == 65:				# mod = 65 = Ctrl + Shift
+						if not vista_actual in [l_vistas['Intro'], l_vistas['Login']]:
+							if song_vol > 0: song_vol -= 10
+							if song_vol < 0: song_vol = 0
+							music.set_volume(song_vol/100)
+							s_song_vol = True
+							s_song_vol_ticks = 0
+							song_vol_pres_min = True
 						
 					# Ctrl + Shift + '+': Volumen + 10%
-					elif evento.key ==  93 and evento.mod == 65:				# mod = 64 = Ctrl
-						if song_vol < 100: song_vol += 10
-						if song_vol > 100: song_vol = 100
-						music.set_volume(song_vol/100)
-						s_song_vol = True
-						s_song_vol_ticks = 0
-						song_vol_pres_plus = True
+					elif evento.key ==  93 and evento.mod == 65:				# mod = 65 = Ctrl + Shift
+						if not vista_actual in [l_vistas['Intro'], l_vistas['Login']]:
+							if song_vol < 100: song_vol += 10
+							if song_vol > 100: song_vol = 100
+							music.set_volume(song_vol/100)
+							s_song_vol = True
+							s_song_vol_ticks = 0
+							song_vol_pres_plus = True
 						
 					# ~ print(evento)
 					
@@ -1400,6 +1406,7 @@ def main():
 							else:
 								if k_char:						# Mientras se este presionado una letra, un numero o un espacio, se seguira agregando caracteres.
 									if len(Comando) < pos_limit:
+										print(True)
 										Comando = Comando[:p_pos] + Comando[p_pos-1] + Comando[p_pos:]
 										p_pos += 1
 					
@@ -1416,12 +1423,12 @@ def main():
 				text = TITULO + ' ' + __version__
 				text_pos = [10, RESOLUCION[s_res][1] - 25]
 				rect_opaco(screen, [text_pos[0], text_pos[1], int(len(text)*tam_f/4)*2, tam_f], COLOR['Negro'], 50)
-				dibujarTexto(text, text_pos, FUENTES['Inc-R 12'], COLOR['Verde Claro'])	# Dibuja texto en Pantalla.
+				dibujarTexto(text, text_pos, FUENTES['Inc-R 12'], AZUL_C)									# Dibuja texto en Pantalla.
 				
-				text = str(datetime.now())[-15:-7]									# Hora Actual.
-				text_pos = [RESOLUCION[s_res][0]//2 - int(len(text)*tam_f/4), 20]	# Centro de Pantalla.
-				rect_opaco(screen, [text_pos[0], text_pos[1], int(len(text)*tam_f/4)*2, tam_f], COLOR['Negro'], 50)
-				dibujarTexto(text, text_pos, FUENTES['Inc-R '+str(tam_f)], COLOR['Gris'])	# Dibuja texto en Pantalla.
+				text = str(datetime.now())[-15:-7]																		# Hora Actual.
+				text_pos = [RESOLUCION[s_res][0]//2 - int(len(text)*tam_f/4), 20]										# Centro de Pantalla.
+				rect_opaco(screen, [text_pos[0]-2, text_pos[1], int(len(text)*tam_f/4)*2+4, tam_f+1], COLOR['Negro'], 50)
+				dibujarTexto(text, text_pos, FUENTES['Inc-R '+str(tam_f)], COLOR['Gris'])								# Dibuja texto en Pantalla.
 				
 				# Usuario: =================================================
 				text_color = VERDE_C if login_pos == 1 else VERDE
@@ -1514,7 +1521,7 @@ def main():
 				# Boton Mostrar/Ocultar Password ===========================
 				rect_pos_show_pass = [ rect_pos2[0]+rect_pos2[2] + 20, rect_pos2[1], 30, 30 ]
 				temp = 150 if not login_show_pass else 200
-				round_rect(screen, rect_pos_show_pass, COLOR['VF'], 3, 1, (*COLOR['Verde'], temp))
+				round_rect(screen, rect_pos_show_pass, COLOR['VF'], 3, 1, (*VERDE, temp))
 				screen.blit(btn_show_pass.image, rect_pos_show_pass)
 				rect_pos_show_pass_line = [
 					[ rect_pos_show_pass[0]+24, rect_pos_show_pass[1]+5  ],
@@ -1538,7 +1545,7 @@ def main():
 					rect_pos_login[1]+5
 				]
 				round_rect(screen, rect_pos_login, COLOR['VF'], 3, 1, (*COLOR['VS'], 250))
-				dibujarTexto(text, rect_pos_login_text, FUENTES['Inc-R '+str(tam_f)], COLOR['Verde Claro'])	# Dibuja texto en Pantalla.
+				dibujarTexto(text, rect_pos_login_text, FUENTES['Inc-R '+str(tam_f)], VERDE_C)	# Dibuja texto en Pantalla.
 				# ==========================================================
 				
 				# ==========================================================
@@ -1553,7 +1560,7 @@ def main():
 					rect_pos_close[1]+5
 				]
 				round_rect(screen, rect_pos_close, COLOR['VF'], 3, 1, (*COLOR['VS'], 250))
-				dibujarTexto('Cerrar', rect_pos_close_text, FUENTES['Inc-R '+str(tam_f)], COLOR['Verde Claro'])	# Dibuja texto en Pantalla.
+				dibujarTexto('Cerrar', rect_pos_close_text, FUENTES['Inc-R '+str(tam_f)], VERDE_C)	# Dibuja texto en Pantalla.
 				# ==========================================================
 				
 				if not login:
@@ -1561,7 +1568,7 @@ def main():
 					rect_pos = rect_pos1 if login_pos == 1 else rect_pos2
 					temp = [[rect_pos[0]+6+pos, rect_pos[1]+4], [rect_pos[0]+6+pos, rect_pos[1]+25]]
 					temp2 = [rect_pos[0]+5, rect_pos[1]+5]
-					if ticks < 30 and not login_new: pygame.draw.line(screen, COLOR['Verde'], temp[0], temp[1], 2)		# Dibuja el puntero en pantalla.
+					if ticks < 30 and not login_new: pygame.draw.line(screen, VERDE, temp[0], temp[1], 2)		# Dibuja el puntero en pantalla.
 					if not login_show_pass and login_pos == 2:
 						dibujarTexto('*'*len(Comando), temp2, FUENTES['Inc-R '+str(tam_f)], VERDE)	# Dibuja texto en Pantalla.
 					else:
@@ -1578,11 +1585,10 @@ def main():
 				
 				if login_error:
 					text = 'Contraseña Incorrecta'
-					carga_pos  = [RESOLUCION[s_res][0]//2-int(len(text)*(tam_f)/4), (RESOLUCION[s_res][1]//2)+10]
+					carga_pos  = [RESOLUCION[s_res][0]//2-int(len(text)*(tam_f)/4), (RESOLUCION[s_res][1]//2)+60]
 					carga_pos2 = [carga_pos[0]-5, carga_pos[1]-5, int(len(text)*(tam_f)/4)*2 + 15, 30]
 					rect_opaco(screen, carga_pos2, COLOR['Rojo'], 120)
 					dibujarTexto(text, carga_pos, FUENTES['Inc-R 18'], COLOR['Blanco'])	# Dibuja texto en Pantalla.
-					# ~ if temporizer(1.5): login_error = False
 					if not threads.isActive('Login Error', 1.5): login_error = False
 				elif login_new or del_user_ac:
 					rect_pos_login_new = [ RESOLUCION[s_res][0]//2 - 150, int((RESOLUCION[s_res][1]//2)+55), 300, 160 ]
@@ -1607,15 +1613,15 @@ def main():
 					rect_pos_btn_cancel = [RESOLUCION[s_res][0]//2 - 130, int((RESOLUCION[s_res][1]//2)+170), 100, 30]
 					rect_pos_btn_accept = [RESOLUCION[s_res][0]//2 + 30, int((RESOLUCION[s_res][1]//2)+170), 100, 30]
 					if login_new:
-						color1 = COLOR['Verde'] if login_btn_pos == 2 else COLOR['Verde Claro']
-						color2 = COLOR['Verde Claro'] if login_btn_pos == 2 else COLOR['Verde']
+						color1 = VERDE if login_btn_pos == 2 else VERDE_C
+						color2 = VERDE_C if login_btn_pos == 2 else VERDE
 					elif del_user_ac:
-						color1 = COLOR['Verde'] if del_user_ac_btn_pos == 2 else COLOR['Verde Claro']
-						color2 = COLOR['Verde Claro'] if del_user_ac_btn_pos == 2 else COLOR['Verde']
+						color1 = VERDE if del_user_ac_btn_pos == 2 else VERDE_C
+						color2 = VERDE_C if del_user_ac_btn_pos == 2 else VERDE
 					dibujarTexto(texto3, [ rect_pos_btn_cancel[0]+15, rect_pos_btn_cancel[1]+5 ], FUENTES['Inc-R 18'], color1)	# Dibuja texto en Pantalla.
 					dibujarTexto(texto4, [ rect_pos_btn_accept[0]+20, rect_pos_btn_accept[1]+5 ], FUENTES['Inc-R 18'], color2)	# Dibuja texto en Pantalla.
-					round_rect(screen, rect_pos_btn_cancel, COLOR['VF'], 3, 1, (*COLOR['Verde'], 100))
-					round_rect(screen, rect_pos_btn_accept, COLOR['VF'], 3, 1, (*COLOR['Verde'], 100))
+					round_rect(screen, rect_pos_btn_cancel, COLOR['VF'], 3, 1, (*VERDE, 100))
+					round_rect(screen, rect_pos_btn_accept, COLOR['VF'], 3, 1, (*VERDE, 100))
 					
 				# Conecta la cuenta:
 				if username and password and not login_carga and login:
@@ -1624,16 +1630,17 @@ def main():
 					threading.Thread(target=dbConnectionThread).start()
 					login_carga = True
 				
+				# Transicion Cierre Vista Login
 				if login_carga:
-					
 					if dialogo: dialogo.stop()
+					transicion = True
 					temp_secs = 1
 					calc = (255/(temp_secs*60))
 					rect_opaco(screen, [0, 0, *RESOLUCION[s_res]], COLOR['Negro'], int(intro_ticks_count*calc))
 					intro_ticks_count += 1
 					if intro_ticks_count >= temp_secs*60:
-						
 						# tam_f = 16
+						transicion = False
 						temp = ' .'*(ticks//19)
 						text = 'Cargando'
 						carga_pos  = [RESOLUCION[s_res][0]//2-int(len(text+' '*6)*tam_f/4)-5, RESOLUCION[s_res][1]//2-10]
@@ -1649,8 +1656,10 @@ def main():
 							intro_ticks_count = 0
 				
 				# ~ if intro_ticks_count > 0 and not login_carga:
+				# Transicion Inicio Vista Login
 				if login_init and not login_carga:
 					temp_secs = 1
+					transicion = True
 					calc = (255/(temp_secs*60))
 					rect_opaco(screen, [0, 0, *RESOLUCION[s_res]], COLOR['Negro'], 255-int(intro_ticks_count*(255/(temp_secs*60))))
 					intro_ticks_count += 1
@@ -1658,6 +1667,7 @@ def main():
 						play_dialogo = False
 						intro_ticks_count = 0
 						login_init = False
+						transicion = False
 				
 				# Elimina un usuario especifico:
 				if del_user_ac_accept:
@@ -1739,6 +1749,35 @@ def main():
 									play_dialog4 = False
 				
 			else:
+				
+				# Validaciones de la Musica:
+				#===============================================================
+				if ticks % 60 == 0 and not introduction:
+					song_time = Helps.Fun.normalizeTime(music.get_pos(), song_desface)
+					if l_canciones_activas:													# Si hay canciones activas, entonces...
+						if not music.get_busy():											# Si no esta activa la cancion, entonces...
+								song_pos = (song_pos+1) % len(Helps.Playlist.musica)		# Cambia la cancion
+								while not song_pos in l_canciones_activas:					# Si el numero de cancion no esta en la lista de canciones activas,
+									song_pos = (song_pos+1) % len(Helps.Playlist.musica)	# Sigue cambiando a la siguiente.
+								music.load(Helps.Playlist.musica[song_pos][0])				# Carga la cancion
+								music.play()												# Reproduce la cancion.
+								song_desface = 0											# Reinicia la variable de desface que controla el avance de tiempo con CTRL+Felcha Derecha o Izquierda.
+								song_break = 0												# Reinicia la variable de espera de 3 segundos
+						else:
+							# Esta seccion verifica si la canción actual aun sigue en la lista de canciones activas. Sino, tratará de cambiarla inmediatamente.
+							temp = song_pos
+							while not temp in l_canciones_activas:
+								temp = (temp+1) % len(Helps.Playlist.musica)
+							if not temp == song_pos:
+								song_pos = temp
+								music.stop()
+								music.load(Helps.Playlist.musica[song_pos][0])
+								music.play()
+								song_desface = 0
+					else:						# Si la lista de canciones activas esta vacia.
+						if music.get_busy():	# Y Si la musica aun esta sonando.
+							music.stop()		# Se detiene.
+				#===============================================================
 				
 				# Logica de Linea de Comandos
 				if vista_actual == l_vistas['Consola']:
@@ -1848,14 +1887,14 @@ def main():
 					
 					p_puntero = u_puntero(con, l_con, len(Prefijo), p_pos)
 					
-					if ticks < 30: pygame.draw.line(screen, COLOR['Gris'], p_puntero[0], p_puntero[1], 2)		# Dibuja el puntero en pantalla.
+					if ticks <= 30: pygame.draw.line(screen, COLOR['Gris'], p_puntero[0], p_puntero[1], 2)		# Dibuja el puntero en pantalla.
 					
 					temp_y, temp_x = t_con[1], t_con[2]
 					temp = console.sysname
-					dibujarTexto(temp, [temp_x-(len(temp)*6), temp_y+2], FUENTES['Inc-R 12'], VERDE_C)
+					dibujarTexto(temp, [temp_x-(len(temp)*6), temp_y+2], FUENTES['Inc-R 12'], AZUL_C)			# Dibuja la version de Consola, esquina superior derecha.
 					
 					#===================================================================================================
-						
+					
 					# Si se activa un Comando Lo Ejecuta.
 					if exe:
 						if console.validate(Comando):
@@ -1868,7 +1907,7 @@ def main():
 								textos = []
 							
 							temp = textos[:]
-							for x in temp:							# Aplica los saltos de linea '\n' que esten en el texto.
+							for x in temp:								# Aplica los saltos de linea '\n' que esten en el texto.
 								if x == '' or x == 0: continue
 								else:
 									temp = x.split('\n')
@@ -1876,7 +1915,7 @@ def main():
 										textos = temp
 							
 							temp = textos[:]
-							for i, x in enumerate(temp):			# Aplica salto de linea al desbordar la ventana.
+							for i, x in enumerate(temp):				# Aplica salto de linea al desbordar la ventana.
 								if x == '' or x == 0: continue
 								else:
 									sT = splitText(x)
@@ -1888,8 +1927,8 @@ def main():
 							
 							l_comandos = Helps.Fun.add_comand(l_comandos, textos)
 							
-							if Comando == 'exit': logout = True
-							elif Comando == 'cls':  l_comandos = []
+							if   Comando in ['exit','logout']: logout = True
+							elif Comando in ['cls','clear']: l_comandos = []
 							elif Comando == 'save': save_game = True
 							elif Comando.split(' ')[0] == 'cd':
 								Prefijo = console.actualPath() + ' '											# Actualiza el Path
@@ -1951,6 +1990,7 @@ def main():
 					dibujarTexto(Prefijo+Comando[:pos_limit_r-len(Prefijo)+1], p_letra, FUENTES[Font_def], VERDE_C)	# Dibuja lo que vas escribiendo.
 					#===================================================================================================
 					
+					# Transicion Inicio de Sesion
 					if login_carga:
 						if song_vol < song_vol_temp:
 							song_vol += song_vol_temp/60
@@ -1958,6 +1998,7 @@ def main():
 						else:
 							song_vol = song_vol_temp
 							music.set_volume(song_vol / 100)
+						transicion = True
 						temp_secs = 1
 						calc = (255/(temp_secs*60))
 						rect_opaco(screen, [0, 0, *RESOLUCION[s_res]], COLOR['Negro'], 255-int(intro_ticks_count*calc))
@@ -1967,6 +2008,7 @@ def main():
 							music.set_volume(song_vol / 100)
 							intro_ticks_count = 0
 							login_carga = False
+							transicion = False
 				
 				#===================================================================================================
 				
@@ -1982,7 +2024,7 @@ def main():
 					# Recuadro: Mitad Izquierda. Musica.
 					ajust_pos_y = 3
 					# ~ recuadro  = [ajust_init_x, ajust_init_y*ajust_pos_y, RESOLUCION_CMD[s_res][0]-160, RESOLUCION_CMD[s_res][1]-180]
-					recuadro  = [ajust_init_x, ajust_init_y*ajust_pos_y, 540, RESOLUCION_CMD[s_res][1]-180]
+					recuadro = [ajust_init_x, ajust_init_y*ajust_pos_y, 540, RESOLUCION_CMD[s_res][1]-180]
 					rect_opaco(screen, recuadro, COLOR['VS'])
 					pygame.draw.rect(screen, VERDE, recuadro, 1)
 					
@@ -1991,39 +2033,34 @@ def main():
 					recuadro2 = [recuadro[0]+15, recuadro[1]+10, 290, 20]
 					rect_opaco(screen, recuadro2, COLOR['VS'])
 					pygame.draw.rect(screen, COLOR['VN'], recuadro2, 1)
-					dibujarTexto('Lista de Canciones Disponibles:', [recuadro[0]+20, 40*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
+					dibujarTexto('Lista de Canciones Disponibles:', [recuadro[0]+20, 1+40*ajust_pos_y], FUENTES['Inc-R 16'], VERDE_C)
 					
 					ajust_pos_y += 1
 					
 					# Dibuja en pantalla cada uno de los textos, con un recuadro ajustado a la linea de texto.
-					for i, comb in enumerate(Helps.Musica(45).canciones):
-						if i == 1: ajust_pos_y += 1
-							
+					for i, comb in enumerate(Helps.Musica(54).canciones):
+						
 						ajust_pos_y += 1
-						if len(comb) > 64:
-							# ~ recuadro2 = [recuadro[0]+30, 50+25*ajust_pos_y, RESOLUCION_CMD[s_res][0]-200, 45]
-							recuadro2 = [recuadro[0]+30, 50+25*ajust_pos_y, 500, 45]
-							rect_opaco(screen, recuadro2, COLOR['VS'])
-							pygame.draw.rect(screen, COLOR['VN'], recuadro2, 1)
-							comb_p1 = '_'
-							comb_pos = 64
-							while comb_p1[:comb_pos][-1] != ' ':
-								comb_pos -= 1
-								comb_p1 = comb[:comb_pos]
-							comb_p2 = ' '*(len(comb_p1.split(':')[0])+2)+comb[comb_pos:]
-							dibujarTexto(comb_p1, [recuadro[0]+40, 50+25*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
-							ajust_pos_y += 1
-							dibujarTexto(comb_p2, [recuadro[0]+40, 50+25*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
-						else:
-							# ~ recuadro2 = [recuadro[0]+30, 50+25*ajust_pos_y, RESOLUCION_CMD[s_res][0]-200, 20]
-							recuadro2 = [recuadro[0]+30, 50+25*ajust_pos_y, 500, 20]
-							rect_opaco(screen, recuadro2, COLOR['VS'])
-							pygame.draw.rect(screen, COLOR['VN'], recuadro2, 1)
-							dibujarTexto(comb, [recuadro[0]+40, 50+25*ajust_pos_y], FUENTES['Inc-R 18'], VERDE_C)
 						
 						if i >= 1:
-							# Imprime recuadro de checkbox:
-							clic_music_checkbox(evento, recuadro[0]+30, 50+25*ajust_pos_y, i-1)
+							recuadro2 = [recuadro[0]+10, 50+25*ajust_pos_y, 15, 20]
+							rect_opaco(screen, recuadro2, COLOR['VS'])
+							pygame.draw.rect(screen, VERDE, recuadro2, 1)					# Dibuja el contorno del recuadro pequeño para las selecciones de canciones.
+							
+							if i-1 in l_canciones_activas:
+								temp = [recuadro2[0]+3, recuadro2[1]+3, 9, 14]
+								pygame.draw.rect(screen, VERDE, temp, 0)					# Dibuja el Recuadro pequeño relleno, indicador de cancion activa.
+						
+						recuadro3 = [recuadro[0]+30, 50+25*ajust_pos_y, 500, 20]
+						rect_opaco(screen, recuadro3, COLOR['VS'])
+						
+						if i-1 == song_pos and i-1 in l_canciones_activas:
+							pygame.draw.rect(screen, VERDE, recuadro3, 1)					# Dibuja recuadro resaltado, indicador de cancion actual activa.
+						else:
+							pygame.draw.rect(screen, COLOR['VN'], recuadro3, 1)				# Dibuja recuadro normal para canciones.
+						
+						dibujarTexto(comb, [recuadro[0]+40, 52+25*ajust_pos_y], FUENTES['Inc-R 16'], VERDE_C)	# Dibuja el nombre de la cancion y su duracion.
+						
 					#======================================================================================================================
 					
 					#======================================================================================================================
@@ -2068,26 +2105,34 @@ def main():
 					# ~ if not threads.t[thr_pos]:
 						# ~ threads.t[thr_pos] = None
 					if not threads.isActive('Tiempo Activo', 1):
-						Helps.Data.updateMemory()
+						Helps.Data.updateVariables()
 						t_act_sys = Helps.Utilidades.getTimeActiveSystem()
 						
 						# ~ try: Helps.setTopWindow(TITULO+' '+__version__)
 						# ~ except: pass
 					
 					plus_der = 600
-					ajust_pos_ys = [
-						1.5,
-						2,
-						3.5,
-						4,
-						4.5
-					]
 					texts = [
 						'Tamaño de Buffer de la Terminal: '+str(con_tam_buffer),
-						'Cantidad de Desplante de Scroll: '+str(cant_scroll),
-						'RAM Usada: '+str(Helps.Data.fm_used)[:-3].ljust(5)+'/'+str(Helps.Data.fm_total)[:-3].rjust(5)+' GB -->'+str(Helps.Data.fm_percent).rjust(6)+'%',
-						'RAM Usada por este Juego: '+Helps.Data.memory_use.rjust(10),
-						'Tiempo Activo del Sistema: '+t_act_sys.rjust(9)
+						'Cantidad de Desplante de Scroll: '+str(cant_scroll).rjust(3),
+						
+						'RAM Usada: '+str(Helps.Data.fm_used)[:-3].ljust(
+							5)+'/'+str(Helps.Data.fm_total)[:-3].rjust(
+							5)+' GB -->'+str(Helps.Data.fm_percent).rjust(
+							6)+'%',
+						'RAM Usada por este Juego: '+Helps.Data.memory_use.rjust(
+							36-len('RAM Usada por este Juego: ')),
+						'Porcentaje de CPU En Uso: '+str(Helps.Data.cpu_per).rjust(
+							36-len('Porcentaje de CPU En Uso: ')-1)+'%',
+						'Tiempo Activo del Sistema: '+t_act_sys.rjust(
+							36-len('Tiempo Activo del Sistema: ')),
+					]
+					
+					ajust_pos_ys = [
+						1.5, 2
+					] + [
+						3.5 + (.5*i) 
+						for i in range(len(texts)-2)
 					]
 					
 					for i, t in enumerate(texts):
@@ -2158,20 +2203,20 @@ def main():
 				
 				# Imprimir los Datos de Soundtrack.
 				if l_canciones_activas:
-					temp = [RESOLUCION[s_res][0]-440, RESOLUCION[s_res][1]-23, 435, 19]
+					temp = [RESOLUCION[s_res][0]-500, RESOLUCION[s_res][1]-23, 495, 19]
 					rect_opaco(screen, temp, COLOR['Negro'], 125)
-					song_data = playlist[song_pos][2]['By']+' - '+playlist[song_pos][2]['Song']
-					song_data = song_data.rjust(40)
+					song_data = Helps.Playlist.musica[song_pos][2]['By']+' - '+Helps.Playlist.musica[song_pos][2]['Song']
+					song_data = song_data.rjust(50)
 					temp = song_time[3:] if not song_time[3:] == '59:59' else '00:00'
-					dibujarTexto(song_data+'    Transcurrido: '+ temp + ' - ' + playlist[song_pos][2]['Duration'][3:],
-						[RESOLUCION[s_res][0]-440, RESOLUCION[s_res][1]-20], FUENTES['Inc-R 12'], COLOR['Verde Claro'])
+					dibujarTexto(song_data+'    Transcurrido: '+ temp + ' - ' + Helps.Playlist.musica[song_pos][2]['Duration'][3:],
+						[RESOLUCION[s_res][0]-500, RESOLUCION[s_res][1]-20], FUENTES['Inc-R 12'], VERDE_C)
 				else:
-					temp = [RESOLUCION[s_res][0]-440, RESOLUCION[s_res][1]-23, 435, 19]
+					temp = [RESOLUCION[s_res][0]-500, RESOLUCION[s_res][1]-23, 495, 19]
 					rect_opaco(screen, temp, COLOR['Negro'], 125)
 					song_data = ' - '
-					song_data = song_data.rjust(40)
+					song_data = song_data.rjust(50)
 					dibujarTexto(song_data+'    Transcurrido: 00:00 - 00:00',
-						[RESOLUCION[s_res][0]-440, RESOLUCION[s_res][1]-20], FUENTES['Inc-R 12'], COLOR['Verde Claro'])
+						[RESOLUCION[s_res][0]-500, RESOLUCION[s_res][1]-20], FUENTES['Inc-R 12'], VERDE_C)
 				#===================================================================================================
 				
 				# Si se cambia de cancion: Esto es para hacer efecto de Fadeout, el sonido disminuye lentamente.
@@ -2179,7 +2224,7 @@ def main():
 					
 					if song_fade_ticks == 60*song_fade_secs:
 						music.stop()
-						music.load(playlist[song_pos][0])
+						music.load(Helps.Playlist.musica[song_pos][0])
 						music.play()
 						song_fade_ticks = 0
 						song_change_down = False
@@ -2201,19 +2246,21 @@ def main():
 					s_song_vol_ticks = dibujarTextoTemporal(s_song_vol_ticks, 'Volumen: '+str(song_vol)+'%'+(' Mute' if song_vol == 0 else ''), 50)
 					if s_song_vol_ticks == 0:
 						s_song_vol = False
-				
+					
 				#===================================================================================================
 				#===================================================================================================
 				#===================================================================================================
 				
-				# Actualiza la Base de Datos
-				# ~ if segundos % 300 == 0 and ticks == 0:
-					# ~ threading.Thread(target=saveThread).start()
+				# AutoGuardado Cada 5 mins.
+				if segundos % 300 == 0 and ticks == 60:
+					# Actualiza la Base de Datos
+					threading.Thread(target=saveThread).start()
 				
 				if game_over or save_game or (segundos % 60 == 0 and ticks == 0):
 					# Ejemplo de Hilos:
-					# ~ x = threading.Thread(target=thread_function, args=(1,2,))
-					# ~ x.start()
+					# x = threading.Thread(target=thread_function, args=(1,2,))
+					# x.start()
+					# Actualiza la Base de Datos
 					threading.Thread(target=saveThread).start()
 					save_game = False
 			
@@ -2223,14 +2270,17 @@ def main():
 				if s_shot_ticks == 0:
 					s_shot = False
 		
+		# Transicion Cierre de Sesion
 		if login_btn_close or logout:
 			if music.get_busy():
 				music.fadeout(3000)
-			temp_secs = 1.5
+			transicion = True
+			temp_secs = 1
 			calc = (255/(temp_secs*60))
 			rect_opaco(screen, [0, 0, *RESOLUCION[s_res]], COLOR['Negro'], int(intro_ticks_count*calc))
 			intro_ticks_count += 1
 			if intro_ticks_count >= temp_secs*60:
+				transicion = False
 				intro_ticks_count = 0
 				if not logout:
 					game_over = True
@@ -2239,20 +2289,9 @@ def main():
 					
 					threading.Thread(target=saveThread).start()
 					
-					temp = [
-						str(song_vol), str(song_pos),
-						str(l_canciones_activas), str(l_comandos),
-						str(l_com_ps), str(con_tam_buffer),
-						str(cant_scroll)
-					]
-					
-					db = Database(DBName)
-					db.updateUserConfig(console.username, temp)
-					db.con.commit()
-					db.con.close()
-					
-					vista_actual = l_vistas['Login']
-					l_canciones_activas = []
+					vista_actual = l_vistas['Login']					# Actualiza la vista para ir a Login.
+					l_canciones_activas = []							# Resetea la lista de canciones activas.
+					l_icons = l_icons_orig								# Resetea la lista de iconos.
 					
 					segundos   = 0			# Contador de Tiempo, 1 seg por cada 60 Ticks.
 					ticks      = 0			# Contador de Ticks.
@@ -2266,7 +2305,7 @@ def main():
 					
 					s_full_ticks = 0				# Indica el tiempo en ticks que se mostrara un texto.
 					s_shot_ticks = 0				# Indica el tiempo en ticks que se mostrara un texto.
-					s_song_vol_ticks = 0			# Indica el tiempo en ticks que se mostrara un texto.
+					# ~ s_song_vol_ticks = 0			# Indica el tiempo en ticks que se mostrara un texto.
 					
 					# Cache de comandos para las teclas de Flecha Arriba y Abajo.
 					cache_com = []
@@ -2327,6 +2366,11 @@ COLOR  = {
 		  'Morado':   ( 76,  11,  95), 'Purpura':     ( 56,  11,  97)
 		 }	# Diccionario de Colores.
 
+VERDE   = COLOR['Verde']
+VERDE_C = COLOR['Verde Claro']
+AZUL    = COLOR['Azul']
+AZUL_C  = COLOR['Azul Claro']
+
 resoluciones = [
 		# ~ ( 720,  480),	# 480p. Tamaño de La Ventana, Ancho (640) y Alto  (480).
 		(1280,  720),	# 720p
@@ -2362,12 +2406,12 @@ LOGIN_CARACTERES  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 LOGIN_CARACTERES += 'abcdefghijklmnopqrstuvwxyz'
 LOGIN_CARACTERES += '1234567890' + '-_'
 
-s_res     = -2								# Seleccion de Resolucion Por defecto. -2: la penultima Resolucion agregada.
-T_pix     = 7								# Tamaño de Pixeles entre cada letra en linea de comandos.
-T_pix_y   = T_pix*2							# Tamaño de Pixeles entre cada salto de linea en la linea de comandos.
-T_rep     = 3								# Tiempo de repeticion entre caracteres al dejar tecla presionada.
-Font_tam  = 14								# Para hacer manipulación del tamaño de algunos textos en pantalla.
-Font_def  = 'Inc-R '+str(Font_tam)			# Fuente por defecto y tamaño de Fuente.
+s_res    = -2								# Seleccion de Resolucion Por defecto. -2: la penultima Resolucion agregada.
+T_pix    = 7								# Tamaño de Pixeles entre cada letra en linea de comandos.
+T_pix_y  = T_pix*2							# Tamaño de Pixeles entre cada salto de linea en la linea de comandos.
+T_rep    = 3								# Tiempo de repeticion entre caracteres al dejar tecla presionada.
+Font_tam = 14								# Para hacer manipulación del tamaño de algunos textos en pantalla.
+Font_def = 'Inc-R '+str(Font_tam)			# Fuente por defecto y tamaño de Fuente.
 
 l_vistas = {
 	'Intro':   0,
@@ -2389,7 +2433,7 @@ if Helps.Utilidades.isWindows():
 	for name in dialogos:
 		if not os.path.exists(name):
 			# Convierte a Wav los Dialogos: Utiliza ffmpeg de 32 bits, funcional en sistemas Windows de 32 (x86) y 64 bits (x64).
-			os.system(os.getcwd()+'/dialogos/ffmpeg.exe -i "{}.mp3" "{}" -n > Nul & cls'.format(name[:-4], name))
+			os.system(os.getcwd()+'/dialogos/ffmpeg.exe -i "{}.mp3" "{}" -n 2> nul'.format(name[:-4], name))
 else:
 	raise TypeError('\n\n\n\t\tActualmente Solo funciona en Windows!')
 
@@ -2412,7 +2456,7 @@ song_pos = 0
 cant_scroll = 3
 
 l_comandos = []			# Lista de comandos ejecutados.
-l_com_ps   = 0			# Poicion actual de lista de comandos ejecutados mostrados, 0 equivale a los mas recientes.
+l_com_ps = 0			# Poicion actual de lista de comandos ejecutados mostrados, 0 equivale a los mas recientes.
 con_tam_buffer = 150	# Tamanio de buffer de consola.
 
 
@@ -2423,7 +2467,7 @@ pos_limit_r = None							# Limite Real de letras en linea de comandos.
 console     = None
 Prefijo     = None							# Simbolo de prefijo para comandos.
 
-VolCtrl = VolumeCtrl()						# Controlador de Volumnes.
+VolCtrl = VolumeCtrl()						# Controlador de Volumen.
 # ~ print(VolCtrl.setVol(20))				# Cambia el Volumen
 # ~ print(VolCtrl.getVol())					# Obtiene el Porcentaje de Volumen de 0 a 100
 # ~ VolCtrl().setMute(0)					# 1 = Poner en Mute, 0 = Quitar Mute.
